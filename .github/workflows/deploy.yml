@@ -30,10 +30,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Set this repo variable in GitHub → Settings → Variables → Actions
-          # if you're deploying to username.github.io/repo-name (no custom domain).
-          # Leave unset (or set to /) for a custom domain like mdmc.co.
-          VITE_BASE_URL: ${{ vars.VITE_BASE_URL || '/' }}
+          # Change to / when a custom domain (mdmc.co) is configured.
+          VITE_BASE_URL: /mdmc-global/
 
       - uses: actions/upload-pages-artifact@v3
         with:
