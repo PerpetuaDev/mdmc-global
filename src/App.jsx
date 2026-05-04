@@ -1,12 +1,20 @@
 import { useState, useEffect, cloneElement } from 'react'
 import { useT } from './i18n.jsx'
-import PROJECTS from './data.js'
+import STATIC_PROJECTS from './data.js'
+import { fetchProjects } from './strapi.js'
 import { Header, Footer, JpSuggestionPrompt } from './chrome.jsx'
 import { HomePage, WorkPage, AboutPage, ContactPage, ProjectPage } from './pages.jsx'
 
 export default function App() {
   const [route, setRoute] = useState({ page: 'home', id: null })
+  const [projects, setProjects] = useState(STATIC_PROJECTS)
   const t = useT()
+
+  useEffect(() => {
+    fetchProjects()
+      .then((data) => { if (data.length > 0) setProjects(data) })
+      .catch(() => {})
+  }, [])
 
   const navigate = (page, id = null) => {
     setRoute({ page, id })
@@ -32,7 +40,7 @@ export default function App() {
 
   let crumbs = null
   if (route.page === 'project') {
-    const proj = PROJECTS.find((p) => p.id === route.id)
+    const proj = projects.find((p) => p.id === route.id)
     crumbs = [
       { label: t('crumb.work'), href: 'work' },
       { label: proj ? proj.name : 'Project' },
@@ -46,12 +54,12 @@ export default function App() {
   }
 
   let view
-  if (route.page === 'home')         view = <HomePage navigate={navigate} />
-  else if (route.page === 'work')    view = <WorkPage navigate={navigate} />
+  if (route.page === 'home')         view = <HomePage navigate={navigate} projects={projects} />
+  else if (route.page === 'work')    view = <WorkPage navigate={navigate} projects={projects} />
   else if (route.page === 'about')   view = <AboutPage />
   else if (route.page === 'contact') view = <ContactPage />
-  else if (route.page === 'project') view = <ProjectPage id={route.id} navigate={navigate} />
-  else                               view = <HomePage navigate={navigate} />
+  else if (route.page === 'project') view = <ProjectPage id={route.id} navigate={navigate} projects={projects} />
+  else                               view = <HomePage navigate={navigate} projects={projects} />
 
   return (
     <>

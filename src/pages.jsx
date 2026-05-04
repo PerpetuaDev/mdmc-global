@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useT, useSite, NL } from './i18n.jsx'
-import PROJECTS from './data.js'
 
-export function HomePage({ navigate }) {
+export function HomePage({ navigate, projects = [] }) {
   const t = useT()
-  const featured = PROJECTS.slice(0, 4)
+  const featured = projects.slice(0, 4)
   const [idx, setIdx] = useState(0)
 
   useEffect(() => {
@@ -56,7 +55,7 @@ export function HomePage({ navigate }) {
 
       <section className="work-section">
         <div className="work-grid">
-          {PROJECTS.slice(0, 6).map((p) => (
+          {projects.slice(0, 6).map((p) => (
             <WorkCard key={p.id} project={p} navigate={navigate} />
           ))}
         </div>
@@ -85,14 +84,14 @@ export function WorkCard({ project, navigate }) {
   )
 }
 
-export function WorkPage({ navigate }) {
+export function WorkPage({ navigate, projects = [] }) {
   const t = useT()
   return (
     <main className="page">
       <section className="work-section with-top">
         <h2 className="section-title">{t('work.title')}</h2>
         <div className="work-grid">
-          {PROJECTS.map((p) => (
+          {projects.map((p) => (
             <WorkCard key={p.id} project={p} navigate={navigate} />
           ))}
         </div>
@@ -281,11 +280,11 @@ export function ContactPage() {
           <div className="right">
             <div className="contact-block">
               <div className="label">{t('contact.label.newWork')}</div>
-              <a className="value" href="mailto:hello@mdmc.studio">hello@mdmc.studio</a>
+              <a className="value" href="mailto:team@mdmc.co">team@mdmc.co</a>
             </div>
             <div className="contact-block">
-              <div className="label">{t('contact.label.press')}</div>
-              <a className="value" href="mailto:press@mdmc.studio">press@mdmc.studio</a>
+              <div className="label">{t('contact.label.careers')}</div>
+              <a className="value" href="mailto:careers@mdmc.co">careers@mdmc.co</a>
             </div>
             <div className="contact-block">
               <div className="label">{t('contact.label.christchurch')}</div>
@@ -305,9 +304,9 @@ export function ContactPage() {
             <div className="contact-block">
               <div className="label">{t('contact.label.yokohama')}</div>
               <div className="value">
-                1-7-20 Shinyamashita<br />
-                Naka Ward, Yokohama<br />
-                Kanagawa 231-0801
+                5-57-2 Kitanakadori, Naka Ward<br />
+                Yokohama 231-0003<br />
+                KITANAKA BRICK &amp; WHITE South, 2F
               </div>
             </div>
           </div>
@@ -354,15 +353,15 @@ export function ContactPage() {
   )
 }
 
-export function ProjectPage({ id, navigate }) {
+export function ProjectPage({ id, navigate, projects = [] }) {
   const t = useT()
-  const project = PROJECTS.find((p) => p.id === id) || PROJECTS[0]
-  const curIdx = PROJECTS.indexOf(project)
-  const [previewIdx, setPreviewIdx] = useState((curIdx + 1) % PROJECTS.length)
-  useEffect(() => { setPreviewIdx((curIdx + 1) % PROJECTS.length) }, [curIdx])
-  const next = PROJECTS[previewIdx]
-  const goPrev = (e) => { e.preventDefault(); e.stopPropagation(); setPreviewIdx((previewIdx - 1 + PROJECTS.length) % PROJECTS.length) }
-  const goNext = (e) => { e.preventDefault(); e.stopPropagation(); setPreviewIdx((previewIdx + 1) % PROJECTS.length) }
+  const project = projects.find((p) => p.id === id) || projects[0] || {}
+  const curIdx = projects.indexOf(project)
+  const [previewIdx, setPreviewIdx] = useState(projects.length > 1 ? (curIdx + 1) % projects.length : 0)
+  useEffect(() => { setPreviewIdx(projects.length > 1 ? (curIdx + 1) % projects.length : 0) }, [curIdx, projects.length])
+  const next = projects[previewIdx] || project
+  const goPrev = (e) => { e.preventDefault(); e.stopPropagation(); setPreviewIdx((previewIdx - 1 + projects.length) % projects.length) }
+  const goNext = (e) => { e.preventDefault(); e.stopPropagation(); setPreviewIdx((previewIdx + 1) % projects.length) }
 
   return (
     <main className="page">
@@ -408,7 +407,7 @@ export function ProjectPage({ id, navigate }) {
       >
         <div className="np-meta">
           <span className="label">{t('project.next')}</span>
-          <span className="np-index">{String(previewIdx + 1).padStart(2, '0')} / {String(PROJECTS.length).padStart(2, '0')}</span>
+          <span className="np-index">{String(previewIdx + 1).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}</span>
         </div>
         <div className={`np-thumb ${next.cls}`}>
           <span className="ph-label">{next.name.toUpperCase()}</span>

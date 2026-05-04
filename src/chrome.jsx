@@ -144,19 +144,19 @@ export function Footer({ navigate }) {
       city: 'Christchurch',
       addr: ['Level 2, 47 Salisbury St', 'Christchurch 8013'],
       tz: 'Pacific/Auckland',
-      email: 'christchurch@mdmc.studio',
+      email: 'nz@mdmc.co',
     },
     {
       city: 'Sydney',
       addr: ['Level 5, 50 Holt St', 'Surry Hills NSW 2010'],
       tz: 'Australia/Sydney',
-      email: 'sydney@mdmc.studio',
+      email: 'au@mdmc.co',
     },
     {
       city: 'Yokohama',
-      addr: ['1-7-20 Shinyamashita', 'Naka Ward, Yokohama 231-0801'],
+      addr: ['5-57-2 Kitanakadori, Naka Ward', 'Yokohama 231-0003'],
       tz: 'Asia/Tokyo',
-      email: 'yokohama@mdmc.studio',
+      email: 'team@mdmc.co',
     },
   ]
   const year = new Date().getFullYear()
