@@ -37,18 +37,15 @@ const STRINGS = {
 
     "about.team.title": "The team",
     "about.team.portrait": "PORTRAIT",
-    "about.team.role.partnerDesign": "Partner, Design",
-    "about.team.role.partnerStrategy": "Partner, Strategy",
-    "about.team.role.designDirector": "Design Director",
-    "about.team.role.seniorDesigner": "Senior Designer",
-    "about.team.role.brandDesigner": "Brand Designer",
-    "about.team.role.productDesigner": "Product Designer",
+    "about.team.role.ceo": "CEO",
+    "about.team.role.fullstackDev": "Full-stack Developer",
+    "about.team.role.graphicDesigner": "Graphic Designer & Illustrator",
 
     "contact.headline": "Tell us what you're working on.",
     "contact.label.newWork": "New work",
     "contact.label.careers": "Careers",
     "contact.label.christchurch": "Christchurch",
-    "contact.label.sydney": "Sydney",
+    "contact.label.sydney": "North Sydney",
     "contact.label.yokohama": "Yokohama",
 
     "contact.form.name": "Name",
@@ -160,12 +157,9 @@ const STRINGS = {
 
     "about.team.title": "チーム",
     "about.team.portrait": "ポートレート",
-    "about.team.role.partnerDesign": "パートナー、デザイン",
-    "about.team.role.partnerStrategy": "パートナー、ストラテジー",
-    "about.team.role.designDirector": "デザインディレクター",
-    "about.team.role.seniorDesigner": "シニアデザイナー",
-    "about.team.role.brandDesigner": "ブランドデザイナー",
-    "about.team.role.productDesigner": "プロダクトデザイナー",
+    "about.team.role.ceo": "CEO",
+    "about.team.role.fullstackDev": "フルスタックデベロッパー",
+    "about.team.role.graphicDesigner": "グラフィックデザイナー & イラストレーター",
 
     "jp.about.eyebrow.greeting": "ご挨拶",
     "jp.about.greeting.title": "「長く、誠実に。」その姿勢で、皆さまと向き合います。",
@@ -207,7 +201,7 @@ const STRINGS = {
     "contact.label.newWork": "新規ご相談",
     "contact.label.careers": "採用情報",
     "contact.label.christchurch": "クライストチャーチ",
-    "contact.label.sydney": "シドニー",
+    "contact.label.sydney": "ノースシドニー",
     "contact.label.yokohama": "横浜",
 
     "contact.form.name": "お名前",

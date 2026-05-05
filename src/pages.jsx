@@ -109,14 +109,9 @@ export function AboutPage() {
 function AboutPageEn() {
   const t = useT()
   const team = [
-    ['Maya Devereux',   'about.team.role.partnerDesign'],
-    ['Daniel Mwangi',   'about.team.role.partnerStrategy'],
-    ['Mariko Chen',     'about.team.role.designDirector'],
-    ['Ciaran O\'Reilly', 'about.team.role.designDirector'],
-    ['Sofia Barros',    'about.team.role.seniorDesigner'],
-    ['Theo Lindqvist',  'about.team.role.seniorDesigner'],
-    ['Aïcha Diop',      'about.team.role.brandDesigner'],
-    ['Wren Tanaka',     'about.team.role.productDesigner'],
+    ['Liam Finlayson',  'about.team.role.ceo'],
+    ['Mitchell McMaugh', 'about.team.role.fullstackDev'],
+    ['Monique Park',    'about.team.role.graphicDesigner'],
   ]
   return (
     <main className="page">
@@ -131,7 +126,6 @@ function AboutPageEn() {
           <h1 className="ae-headline">{t('about.headline')}</h1>
           <div className="ae-lede">
             <p>{t('about.lede.1')}</p>
-            <p>{t('about.lede.2')}</p>
           </div>
 
           <ol className="ae-list">
@@ -297,8 +291,8 @@ export function ContactPage() {
             <div className="contact-block">
               <div className="label">{t('contact.label.sydney')}</div>
               <div className="value">
-                Level 5, 50 Holt St<br />
-                Surry Hills NSW 2010
+                100 Arthur Street, Level 10<br />
+                North Sydney NSW 2060
               </div>
             </div>
             <div className="contact-block">

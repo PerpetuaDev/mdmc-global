@@ -103,7 +103,7 @@ export function Header({ route, navigate, crumbs }) {
             aria-pressed={locale === 'ja'}
             onClick={() => setLocale('ja')}
           >
-            JA
+            JP
           </button>
         </div>
       </div>
@@ -147,8 +147,8 @@ export function Footer({ navigate }) {
       email: 'nz@mdmc.co',
     },
     {
-      city: 'Sydney',
-      addr: ['Level 5, 50 Holt St', 'Surry Hills NSW 2010'],
+      city: 'North Sydney',
+      addr: ['100 Arthur Street, Level 10', 'North Sydney NSW 2060'],
       tz: 'Australia/Sydney',
       email: 'au@mdmc.co',
     },
