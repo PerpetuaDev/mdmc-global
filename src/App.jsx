@@ -1,18 +1,22 @@
 import { useState, useEffect, cloneElement } from 'react'
 import { useT } from './i18n.jsx'
 import STATIC_PROJECTS from './data.js'
-import { fetchProjects } from './strapi.js'
+import { fetchProjects, fetchMembers } from './strapi.js'
 import { Header, Footer, JpSuggestionPrompt } from './chrome.jsx'
 import { HomePage, WorkPage, AboutPage, ContactPage, ProjectPage } from './pages.jsx'
 
 export default function App() {
   const [route, setRoute] = useState({ page: 'home', id: null })
   const [projects, setProjects] = useState(STATIC_PROJECTS)
+  const [members, setMembers] = useState([])
   const t = useT()
 
   useEffect(() => {
     fetchProjects()
       .then((data) => { if (data.length > 0) setProjects(data) })
+      .catch(() => {})
+    fetchMembers()
+      .then((data) => { if (data.length > 0) setMembers(data) })
       .catch(() => {})
   }, [])
 
@@ -56,7 +60,7 @@ export default function App() {
   let view
   if (route.page === 'home')         view = <HomePage navigate={navigate} projects={projects} />
   else if (route.page === 'work')    view = <WorkPage navigate={navigate} projects={projects} />
-  else if (route.page === 'about')   view = <AboutPage />
+  else if (route.page === 'about')   view = <AboutPage members={members} />
   else if (route.page === 'contact') view = <ContactPage />
   else if (route.page === 'project') view = <ProjectPage id={route.id} navigate={navigate} projects={projects} />
   else                               view = <HomePage navigate={navigate} projects={projects} />

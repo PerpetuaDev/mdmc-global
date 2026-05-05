@@ -12,7 +12,7 @@ export function HomePage({ navigate, projects = [] }) {
   }, [featured.length])
 
   const current = featured[idx]
-  const isDark = current.id === 'northway'
+  const isDark = current.cls === 'thumb-northway'
 
   return (
     <main className="page">
@@ -21,13 +21,16 @@ export function HomePage({ navigate, projects = [] }) {
           {featured.map((p, i) => (
             <div
               key={p.id}
-              className={`hero-slide ${p.id} ${i === idx ? 'active' : ''}`}
+              className={`hero-slide ${p.cls} ${i === idx ? 'active' : ''}`}
               onClick={() => navigate('project', p.id)}
               role="button"
               tabIndex={i === idx ? 0 : -1}
               aria-label={`Open ${p.name}`}
             >
-              <span className="ph-label">{t('home.hero.placeholder', { name: p.name.toUpperCase() })}</span>
+              {p.thumbnail
+                ? <img src={p.thumbnail} alt={p.name} />
+                : <span className="ph-label">{t('home.hero.placeholder', { name: p.name.toUpperCase() })}</span>
+              }
               <h2>{p.name}</h2>
               <p>{p.desc}</p>
             </div>
@@ -73,7 +76,10 @@ export function WorkCard({ project, navigate }) {
       onClick={(e) => { e.preventDefault(); navigate('project', project.id) }}
     >
       <div className={`work-thumb ${project.cls}`}>
-        <span className="ph-label">{t('home.work.placeholder', { name: project.name.toUpperCase() })}</span>
+        {project.thumbnail
+          ? <img src={project.thumbnail} alt={project.name} />
+          : <span className="ph-label">{t('home.work.placeholder', { name: project.name.toUpperCase() })}</span>
+        }
       </div>
       <h3>{project.name}</h3>
       <p className="desc">{project.desc}</p>
@@ -100,19 +106,21 @@ export function WorkPage({ navigate, projects = [] }) {
   )
 }
 
-export function AboutPage() {
+export function AboutPage({ members = [] }) {
   const site = useSite()
   if (site === 'japan') return <AboutPageJa />
-  return <AboutPageEn />
+  return <AboutPageEn members={members} />
 }
 
-function AboutPageEn() {
+const STATIC_TEAM = [
+  { id: 'liam',    name: 'Liam Finlayson',   role: 'CEO',                              portrait: null },
+  { id: 'mitch',   name: 'Mitchell McMaugh',  role: 'Full-stack Developer',             portrait: null },
+  { id: 'monique', name: 'Monique Park',       role: 'Graphic Designer & Illustrator',  portrait: null },
+]
+
+function AboutPageEn({ members = [] }) {
   const t = useT()
-  const team = [
-    ['Liam Finlayson',  'about.team.role.ceo'],
-    ['Mitchell McMaugh', 'about.team.role.fullstackDev'],
-    ['Monique Park',    'about.team.role.graphicDesigner'],
-  ]
+  const team = members.length > 0 ? members : STATIC_TEAM
   return (
     <main className="page">
       <section className="about-hero-image">
@@ -151,13 +159,16 @@ function AboutPageEn() {
 
         <h2 className="section-title ae-team-title">{t('about.team.title')}</h2>
         <div className="team-grid">
-          {team.map(([name, roleKey]) => (
-            <div key={name} className="team-card">
+          {team.map((member) => (
+            <div key={member.id} className="team-card">
               <div className="portrait">
-                <span className="ph-label">{t('about.team.portrait')}</span>
+                {member.portrait
+                  ? <img src={member.portrait} alt={member.name} />
+                  : <span className="ph-label">{t('about.team.portrait')}</span>
+                }
               </div>
-              <h4>{name}</h4>
-              <p>{t(roleKey)}</p>
+              <h4>{member.name}</h4>
+              <p>{member.role}</p>
             </div>
           ))}
         </div>
@@ -367,7 +378,10 @@ export function ProjectPage({ id, navigate, projects = [] }) {
           </div>
         </div>
         <div className={`project-image ${project.cls}`}>
-          <span className="ph-label">{t('project.key', { name: project.name.toUpperCase() })}</span>
+          {project.thumbnail
+            ? <img src={project.thumbnail} alt={project.name} />
+            : <span className="ph-label">{t('project.key', { name: project.name.toUpperCase() })}</span>
+          }
         </div>
       </section>
 
@@ -380,18 +394,28 @@ export function ProjectPage({ id, navigate, projects = [] }) {
       </section>
 
       <section className="project-images">
-        <div className={`img wide ${project.cls}`}>
-          <span className="ph-label">{t('project.detail.full')}</span>
-        </div>
-        <div className={`img ${project.cls}`}>
-          <span className="ph-label">{t('project.detail.02')}</span>
-        </div>
-        <div className={`img ${project.cls}`}>
-          <span className="ph-label">{t('project.detail.03')}</span>
-        </div>
-        <div className={`img wide ${project.cls}`}>
-          <span className="ph-label">{t('project.detail.case')}</span>
-        </div>
+        {project.images && project.images.length > 0 ? (
+          project.images.map((src, i) => (
+            <div key={i} className={`img ${i === 0 || i === project.images.length - 1 ? 'wide' : ''} ${project.cls}`}>
+              <img src={src} alt={`${project.name} ${i + 1}`} />
+            </div>
+          ))
+        ) : (
+          <>
+            <div className={`img wide ${project.cls}`}>
+              <span className="ph-label">{t('project.detail.full')}</span>
+            </div>
+            <div className={`img ${project.cls}`}>
+              <span className="ph-label">{t('project.detail.02')}</span>
+            </div>
+            <div className={`img ${project.cls}`}>
+              <span className="ph-label">{t('project.detail.03')}</span>
+            </div>
+            <div className={`img wide ${project.cls}`}>
+              <span className="ph-label">{t('project.detail.case')}</span>
+            </div>
+          </>
+        )}
       </section>
 
       <a
@@ -404,7 +428,10 @@ export function ProjectPage({ id, navigate, projects = [] }) {
           <span className="np-index">{String(previewIdx + 1).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}</span>
         </div>
         <div className={`np-thumb ${next.cls}`}>
-          <span className="ph-label">{next.name.toUpperCase()}</span>
+          {next.thumbnail
+            ? <img src={next.thumbnail} alt={next.name} />
+            : <span className="ph-label">{next.name.toUpperCase()}</span>
+          }
         </div>
         <div className="np-foot">
           <span className="name">{next.name}</span>

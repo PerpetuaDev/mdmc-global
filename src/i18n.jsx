@@ -37,9 +37,6 @@ const STRINGS = {
 
     "about.team.title": "The team",
     "about.team.portrait": "PORTRAIT",
-    "about.team.role.ceo": "CEO",
-    "about.team.role.fullstackDev": "Full-stack Developer",
-    "about.team.role.graphicDesigner": "Graphic Designer & Illustrator",
 
     "contact.headline": "Tell us what you're working on.",
     "contact.label.newWork": "New work",
@@ -157,9 +154,6 @@ const STRINGS = {
 
     "about.team.title": "チーム",
     "about.team.portrait": "ポートレート",
-    "about.team.role.ceo": "CEO",
-    "about.team.role.fullstackDev": "フルスタックデベロッパー",
-    "about.team.role.graphicDesigner": "グラフィックデザイナー & イラストレーター",
 
     "jp.about.eyebrow.greeting": "ご挨拶",
     "jp.about.greeting.title": "「長く、誠実に。」その姿勢で、皆さまと向き合います。",
