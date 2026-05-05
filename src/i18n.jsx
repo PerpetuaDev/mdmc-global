@@ -81,7 +81,6 @@ const STRINGS = {
     "footer.follow": "Follow",
     "footer.copy": "© 2026 MDMC Group Inc.",
 
-    "jp.about.eyebrow.greeting": "A message from the Yokohama studio",
     "jp.about.greeting.title": "“Long, honest work.” That's how we meet our clients.",
     "jp.about.greeting.p1": "Thank you for visiting MDMC Yokohama. Since our founding in 2017, we have worked with companies and public-sector teams across branding, product design, and websites.",
     "jp.about.greeting.p2": "From Yokohama, we focus on staying close to our clients in Japan — visiting sites in person, listening carefully, and reading problems with care. With three offices abroad, we bring both a global perspective and the precision Japanese craft has long valued.",
@@ -155,7 +154,6 @@ const STRINGS = {
     "about.team.title": "チーム",
     "about.team.portrait": "ポートレート",
 
-    "jp.about.eyebrow.greeting": "ご挨拶",
     "jp.about.greeting.title": "「長く、誠実に。」その姿勢で、皆さまと向き合います。",
     "jp.about.greeting.p1": "このたびは、MDMC横浜のページをご覧いただき、誠にありがとうございます。私たちは2017年の創業以来、ブランディング、プロダクトデザイン、ウェブサイトといった領域で、企業や行政の皆さまと共に歩んでまいりました。",
     "jp.about.greeting.p2": "横浜オフィスでは、日本国内のお客さまに寄り添い、現場に足を運び、丁寧に課題を読み解くことを何よりも大切にしております。海外3拠点との連携により、グローバルな視点と、日本のものづくりが培ってきた緻密さの両方をご提供できることを強みとしています。",
@@ -306,6 +304,7 @@ export function setSite(site) {
   try { localStorage.setItem(SITE_KEY, site) } catch (e) {}
   document.documentElement.setAttribute('data-site', site)
   window.dispatchEvent(new CustomEvent(SITE_EVENT, { detail: site }))
+  setLocale(site === 'japan' ? 'ja' : 'en')
 }
 
 export function useSite() {

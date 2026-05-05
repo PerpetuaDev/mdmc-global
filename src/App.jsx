@@ -1,5 +1,5 @@
 import { useState, useEffect, cloneElement } from 'react'
-import { useT } from './i18n.jsx'
+import { useT, useSite } from './i18n.jsx'
 import STATIC_PROJECTS from './data.js'
 import { fetchProjects, fetchMembers } from './strapi.js'
 import { Header, Footer, JpSuggestionPrompt } from './chrome.jsx'
@@ -10,15 +10,17 @@ export default function App() {
   const [projects, setProjects] = useState(STATIC_PROJECTS)
   const [members, setMembers] = useState([])
   const t = useT()
+  const site = useSite()
+  const locale = site === 'japan' ? 'ja' : 'en'
 
   useEffect(() => {
-    fetchProjects()
+    fetchProjects(locale)
       .then((data) => { if (data.length > 0) setProjects(data) })
       .catch(() => {})
     fetchMembers()
       .then((data) => { if (data.length > 0) setMembers(data) })
       .catch(() => {})
-  }, [])
+  }, [locale])
 
   const navigate = (page, id = null) => {
     setRoute({ page, id })

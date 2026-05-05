@@ -1,6 +1,6 @@
 const BASE = import.meta.env.DEV
   ? '/strapi/api'
-  : (import.meta.env.VITE_STRAPI_URL ?? 'https://grateful-excellence-5154b8bd7e.strapiapp.com/api')
+  : (import.meta.env.VITE_STRAPI_URL ?? 'https://upbeat-approval-82a9e54c20.strapiapp.com/api')
 const TOKEN = import.meta.env.VITE_STRAPI_TOKEN ?? ''
 
 // Cycles through placeholder gradient classes for work cards / hero slides.
@@ -9,8 +9,8 @@ const CLASSES = [
   'thumb-coast', 'thumb-mira', 'thumb-paragon', 'thumb-orchard', 'thumb-soma',
 ]
 
-// Strapi 5 richtext can be a plain string or the blocks JSON format.
-function blockToText(value) {
+// Strapi 5 richtext blocks → array of paragraph strings.
+function blocksToText(value) {
   if (!value) return ''
   if (typeof value === 'string') return value
   if (Array.isArray(value)) {
@@ -22,37 +22,42 @@ function blockToText(value) {
   return String(value)
 }
 
+function blocksToParagraphs(value) {
+  if (!value) return []
+  if (typeof value === 'string') return value.split('\n').filter(Boolean)
+  if (Array.isArray(value)) {
+    return value
+      .map((block) => (block.children || []).map((c) => c.text ?? '').join(''))
+      .filter(Boolean)
+  }
+  return []
+}
+
 function bestUrl(media) {
   if (!media) return null
   return media.formats?.large?.url ?? media.url ?? null
 }
 
 function mapProject(item, index) {
-  const clientName = item.project_client?.client_name ?? ''
-  const offices = Array.isArray(item.related_offices) ? item.related_offices : []
-  const region = offices[0]?.office_name ?? ''
-  const year = item.project_date
-    ? String(new Date(item.project_date).getFullYear())
+  const year = item.date
+    ? String(new Date(item.date).getFullYear())
     : ''
-  const body = [item.project_comment2, item.project_comment3, item.project_comment4]
-    .map(blockToText)
-    .filter(Boolean)
-  const images = Array.isArray(item.project_images)
-    ? item.project_images.map(bestUrl).filter(Boolean)
+  const images = Array.isArray(item.images)
+    ? item.images.map(bestUrl).filter(Boolean)
     : []
 
   return {
     id: item.documentId ?? String(item.id),
-    name: item.project_title ?? '',
-    client: clientName,
-    desc: blockToText(item.project_description),
+    name: item.title ?? '',
+    client: item.client ?? '',
+    desc: item.description ?? '',
     year,
-    services: item.service_type ? [item.service_type] : [],
-    sector: item.industry ?? '',
-    region,
-    intro: blockToText(item.project_comment1),
-    body,
-    thumbnail: bestUrl(item.thumbnail_image),
+    services: item.services ? [item.services] : [],
+    sector: item.sector ?? '',
+    region: item.region ?? '',
+    intro: blocksToText(item.intro),
+    body: blocksToParagraphs(item.body),
+    thumbnail: bestUrl(item.thumbnail),
     images,
     cls: CLASSES[index % CLASSES.length],
   }
@@ -64,7 +69,7 @@ function mapMember(item) {
     id: item.documentId ?? String(item.id),
     name: nameParts.join(' '),
     role: item.role ?? '',
-    portrait: item.portrait_image?.formats?.medium?.url ?? item.portrait_image?.url ?? null,
+    portrait: item.portrait?.formats?.medium?.url ?? item.portrait?.url ?? null,
   }
 }
 
@@ -72,18 +77,18 @@ export async function fetchMembers() {
   const headers = { 'Content-Type': 'application/json' }
   if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
 
-  const url = `${BASE}/members?populate=*&sort=id:asc`
+  const url = `${BASE}/members?populate=*&sort=order:asc`
   const res = await fetch(url, { headers })
   if (!res.ok) throw new Error(`Strapi ${res.status}`)
   const { data } = await res.json()
   return Array.isArray(data) ? data.map(mapMember) : []
 }
 
-export async function fetchProjects() {
+export async function fetchProjects(locale = 'en') {
   const headers = { 'Content-Type': 'application/json' }
   if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
 
-  const url = `${BASE}/projects?populate=*&sort=project_date:desc`
+  const url = `${BASE}/projects?populate=*&sort=date:desc&locale=${locale}`
   const res = await fetch(url, { headers })
   if (!res.ok) throw new Error(`Strapi ${res.status}`)
   const { data } = await res.json()

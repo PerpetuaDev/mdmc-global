@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useT, useLocale, useSite, setSite, setLocale } from './i18n.jsx'
+import { useT, useSite, setSite } from './i18n.jsx'
 import mdmcLogo from './assets/mdmc-logo.png'
 
 export function Header({ route, navigate, crumbs }) {
   const t = useT()
-  const locale = useLocale()
   const site = useSite()
   const [scrolled, setScrolled] = useState(false)
 
@@ -84,26 +83,6 @@ export function Header({ route, navigate, crumbs }) {
           >
             <span className="site-code">JP</span>
             Japan
-          </button>
-        </div>
-        <span className="header-divider" aria-hidden="true"></span>
-        <div className="lang-switch" role="group" aria-label="Language">
-          <button
-            type="button"
-            className={`lang-opt${locale === 'en' ? ' selected' : ''}`}
-            aria-pressed={locale === 'en'}
-            onClick={() => setLocale('en')}
-          >
-            EN
-          </button>
-          <span className="lang-sep" aria-hidden="true">/</span>
-          <button
-            type="button"
-            className={`lang-opt${locale === 'ja' ? ' selected' : ''}`}
-            aria-pressed={locale === 'ja'}
-            onClick={() => setLocale('ja')}
-          >
-            JP
           </button>
         </div>
       </div>

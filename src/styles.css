@@ -904,10 +904,10 @@ img { display: block; max-width: 100%; }
 
 .jp-eyebrow {
   display: block;
-  font-family: var(--type-display);
-  font-size: 32px; font-weight: 500; letter-spacing: -0.01em;
-  color: var(--fg);
-  margin-bottom: 48px;
+  font-family: var(--type-sans);
+  font-size: 14px; font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 14px;
 }
 
 /* Greeting band */

@@ -192,7 +192,6 @@ function AboutPageJa() {
     <main className="page jp-about">
       <section className="jp-greeting">
         <div className="jp-greeting-inner">
-          <span className="jp-eyebrow">{t('jp.about.eyebrow.greeting')}</span>
           <h1 className="jp-greeting-title">{t('jp.about.greeting.title')}</h1>
           <div className="jp-greeting-body">
             <p>{t('jp.about.greeting.p1')}</p>
