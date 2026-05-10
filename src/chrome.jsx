@@ -6,6 +6,7 @@ export function Header({ route, navigate, crumbs }) {
   const t = useT()
   const site = useSite()
   const [scrolled, setScrolled] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -13,6 +14,13 @@ export function Header({ route, navigate, crumbs }) {
     onScroll()
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  useEffect(() => { setMenuOpen(false) }, [route])
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [menuOpen])
 
   const isHome = route === 'home'
 
@@ -22,71 +30,116 @@ export function Header({ route, navigate, crumbs }) {
     { id: 'contact', label: t('nav.contact') },
   ]
 
+  const handleNav = (id) => { setMenuOpen(false); navigate(id) }
+
   return (
-    <header className={`site-header${scrolled ? ' compact' : ''}${isHome ? ' home' : ' sub'}`}>
-      {isHome ? (
-        <a className="brand" onClick={(e) => { e.preventDefault(); navigate('home') }} href="#" aria-label="MDMC home">
-          <img src={mdmcLogo} alt="MDMC" />
-        </a>
-      ) : (
-        <div className="crumbs">
-          {(crumbs || []).map((c, i) => (
-            <>
-              {c.href ? (
-                <a key={`a-${i}`} className="crumb-faint" onClick={(e) => { e.preventDefault(); navigate(c.href) }} href="#">
-                  {c.label}
-                </a>
-              ) : (
-                <span key={`s-${i}`}>{c.label}</span>
-              )}
-              {i < crumbs.length - 1 && <span key={`sep-${i}`} className="crumb-sep">/</span>}
-            </>
-          ))}
-        </div>
-      )}
-
-      {isHome ? (
-        <nav className="nav" aria-label="Primary">
-          {NAV_ITEMS.map((n) => (
-            <a
-              key={n.id}
-              href="#"
-              className={route === n.id ? 'active' : ''}
-              onClick={(e) => { e.preventDefault(); navigate(n.id) }}
-            >
-              {n.label}
+    <>
+      <header className={`site-header${scrolled ? ' compact' : ''}${isHome ? ' home' : ' sub'}`}>
+        {isHome ? (
+          <a className="brand" onClick={(e) => { e.preventDefault(); handleNav('home') }} href="#" aria-label="MDMC home">
+            <img src={mdmcLogo} alt="MDMC" />
+          </a>
+        ) : (
+          <>
+            <div className="crumbs">
+              {(crumbs || []).flatMap((c, i) => [
+                c.href
+                  ? <a key={`a-${i}`} className="crumb-faint" onClick={(e) => { e.preventDefault(); handleNav(c.href) }} href="#">{c.label}</a>
+                  : <span key={`s-${i}`}>{c.label}</span>,
+                i < crumbs.length - 1 && <span key={`sep-${i}`} className="crumb-sep">/</span>,
+              ]).filter(Boolean)}
+            </div>
+            <a className="brand brand-sub-mobile" onClick={(e) => { e.preventDefault(); handleNav('home') }} href="#" aria-label="MDMC home">
+              <img src={mdmcLogo} alt="MDMC" />
             </a>
-          ))}
-        </nav>
-      ) : (
-        <a className="brand brand-center" onClick={(e) => { e.preventDefault(); navigate('home') }} href="#" aria-label="MDMC home">
-          <img src={mdmcLogo} alt="MDMC" />
-        </a>
-      )}
+          </>
+        )}
 
-      <div className="header-controls">
-        <div className="site-switch" role="group" aria-label="Site">
+        {isHome ? (
+          <nav className="nav" aria-label="Primary">
+            {NAV_ITEMS.map((n) => (
+              <a
+                key={n.id}
+                href="#"
+                className={route === n.id ? 'active' : ''}
+                onClick={(e) => { e.preventDefault(); handleNav(n.id) }}
+              >
+                {n.label}
+              </a>
+            ))}
+          </nav>
+        ) : (
+          <a className="brand brand-center" onClick={(e) => { e.preventDefault(); handleNav('home') }} href="#" aria-label="MDMC home">
+            <img src={mdmcLogo} alt="MDMC" />
+          </a>
+        )}
+
+        <div className="header-controls">
+          <div className="site-switch" role="group" aria-label="Site">
+            <button
+              type="button"
+              className={`site-chip${site === 'global' ? ' selected' : ''}`}
+              aria-pressed={site === 'global'}
+              onClick={() => { if (site !== 'global') { setSite('global'); handleNav('home') } }}
+            >
+              <span className="site-code">INT</span>
+              {t('footer.site.global')}
+            </button>
+            <button
+              type="button"
+              className={`site-chip${site === 'japan' ? ' selected' : ''}`}
+              aria-pressed={site === 'japan'}
+              onClick={() => { if (site !== 'japan') { setSite('japan'); handleNav('home') } }}
+            >
+              <span className="site-code">JP</span>
+              {t('footer.site.japan')}
+            </button>
+          </div>
           <button
-            type="button"
-            className={`site-chip${site === 'global' ? ' selected' : ''}`}
-            aria-pressed={site === 'global'}
-            onClick={() => { if (site !== 'global') { setSite('global'); navigate('home') } }}
+            className={`hamburger-btn${menuOpen ? ' is-open' : ''}`}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((o) => !o)}
           >
-            <span className="site-code">INT</span>
-            {t('footer.site.global')}
-          </button>
-          <button
-            type="button"
-            className={`site-chip${site === 'japan' ? ' selected' : ''}`}
-            aria-pressed={site === 'japan'}
-            onClick={() => { if (site !== 'japan') { setSite('japan'); navigate('home') } }}
-          >
-            <span className="site-code">JP</span>
-            {t('footer.site.japan')}
+            <span /><span /><span />
           </button>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {menuOpen && (
+        <div className="mobile-menu" role="dialog" aria-label="Site navigation">
+          <nav className="mobile-nav">
+            {NAV_ITEMS.map((n) => (
+              <a key={n.id} href="#" onClick={(e) => { e.preventDefault(); handleNav(n.id) }}>
+                {n.label}
+              </a>
+            ))}
+          </nav>
+          <div className="mobile-menu-footer">
+            <div className="site-switch" role="group" aria-label="Site">
+              <button
+                type="button"
+                className={`site-chip${site === 'global' ? ' selected' : ''}`}
+                aria-pressed={site === 'global'}
+                onClick={() => { if (site !== 'global') { setSite('global'); handleNav('home') } else { setMenuOpen(false) } }}
+              >
+                <span className="site-code">INT</span>
+                {t('footer.site.global')}
+              </button>
+              <button
+                type="button"
+                className={`site-chip${site === 'japan' ? ' selected' : ''}`}
+                aria-pressed={site === 'japan'}
+                onClick={() => { if (site !== 'japan') { setSite('japan'); handleNav('home') } else { setMenuOpen(false) } }}
+              >
+                <span className="site-code">JP</span>
+                {t('footer.site.japan')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

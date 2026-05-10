@@ -53,7 +53,7 @@ const STRINGS = {
     "contact.form.message": "What are you working on?",
     "contact.form.send": "Send",
     "contact.form.gotIt": "Got it.",
-    "contact.form.thanks": "Thanks, {name}. A partner will read this within a working day and get back to you personally — not a form reply.",
+    "contact.form.thanks": "Thanks, {name}. A team member will read this within a working day and get back to you personally.",
     "contact.form.error": "Something went wrong — please try again or email us directly.",
 
     "crumb.home": "Home",
@@ -177,7 +177,7 @@ const STRINGS = {
     "contact.form.message": "どんなことに取り組まれていますか?",
     "contact.form.send": "送信",
     "contact.form.gotIt": "受け取りました。",
-    "contact.form.thanks": "{name}様、ありがとうございます。営業日中にパートナーが直接拝読し、定型文ではないご返信を差し上げます。",
+    "contact.form.thanks": "{name}様、ありがとうございます。営業日中にチームメンバーが直接拝読し、ご返信を差し上げます。",
     "contact.form.error": "送信中にエラーが発生しました。もう一度お試しいただくか、直接メールでお問い合わせください。",
 
     "crumb.home": "ホーム",

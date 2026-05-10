@@ -75,7 +75,7 @@ img { display: block; max-width: 100%; }
 .site-header {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 100;
   background: var(--bg);
   display: grid;
   /* home: brand + nav grouped left, lang far right */
@@ -182,6 +182,66 @@ img { display: block; max-width: 100%; }
 }
 .site-chip.selected .site-code,
 .site-chip:hover .site-code { color: var(--muted); }
+
+/* Mobile-only logo on sub-pages */
+.brand-sub-mobile { display: none; }
+
+/* Hamburger button — hidden on desktop */
+.hamburger-btn {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  width: 24px;
+  padding: 4px 0;
+  flex-shrink: 0;
+}
+.hamburger-btn span {
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: var(--fg);
+  transition: transform .25s ease, opacity .2s ease;
+}
+.hamburger-btn.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.is-open span:nth-child(2) { opacity: 0; }
+.hamburger-btn.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Mobile full-screen menu */
+.mobile-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  padding: 130px var(--pad-x) 48px;
+  animation: menu-fade .18s ease;
+}
+@keyframes menu-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.mobile-nav {
+  display: flex;
+  flex-direction: column;
+}
+.mobile-nav a {
+  display: block;
+  font-size: 18px;
+  font-family: var(--type-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--fg);
+}
+.mobile-nav a:first-child { border-top: 1px solid var(--rule); }
+.mobile-menu-footer {
+  margin-top: auto;
+  padding-top: 32px;
+}
+.mobile-menu-footer .site-switch { gap: 28px; }
+.mobile-menu-footer .site-chip { font-size: 16px; }
 
 /* Hairline divider between site and language */
 .header-divider {
@@ -899,6 +959,11 @@ img { display: block; max-width: 100%; }
 
 @media (max-width: 1100px) {
   .footer-v2.editorial .fv2e-studios { grid-template-columns: 1fr; gap: 32px; }
+  .work-section { padding-bottom: 48px; }
+  .footer-v2.editorial .fv2e-top { padding-bottom: 32px; margin-bottom: 32px; }
+  [data-site='japan'] .fv2e-bigcta { font-size: 36px; white-space: nowrap; }
+  [data-site='japan'] .fv2e-bigcta .arrow { margin-left: calc(-0.4em - 24px); }
+  [data-site='global'] .fv2e-bigcta .arrow { margin-left: -0.3em; }
 }
 .page {
   animation: pageIn .6s cubic-bezier(.2,.7,.2,1);
@@ -1100,8 +1165,9 @@ img { display: block; max-width: 100%; }
   .footer { grid-template-columns: 1fr; text-align: left; }
   .footer-center, .footer-right { text-align: left; }
   .footer-right .social { justify-content: flex-start; }
-  .manifesto { font-size: 20px; padding: 120px var(--pad-x); grid-template-columns: 1fr; }
+  .manifesto { font-size: 20px; padding: 48px var(--pad-x); grid-template-columns: 1fr; }
   .manifesto > div { grid-column: 1; }
+  .manifesto br { display: none; }
   .nav { gap: 32px; margin-left: 80px; }
   .header-controls { gap: 18px; }
   .site-switch { gap: 14px; }
@@ -1113,15 +1179,20 @@ img { display: block; max-width: 100%; }
   .work-grid { grid-template-columns: 1fr; }
   .team-grid { grid-template-columns: 1fr; }
   .nav { display: none; }
-  .site-header { grid-template-columns: 1fr auto; }
-  .hero-slide { padding: 24px; }
-  .hero-slide h2 { font-size: 22px; }
-  .hero-slide p { font-size: 16px; }
-  .header-controls { gap: 16px; }
-  .site-switch { gap: 14px; }
-  .site-chip { font-size: 14px; }
-  .site-chip .site-code { display: none; }
-  .lang-switch { font-size: 10px; }
+  .crumbs { display: none; }
+  .brand-center { display: none; }
+  .brand-sub-mobile { display: flex; }
+  .site-header,
+  .site-header.sub { grid-template-columns: 1fr auto; padding-right: var(--pad-x); }
+  .site-header .site-switch { display: none; }
+  .hamburger-btn { display: flex; }
+  .header-controls { gap: 16px; align-items: center; }
+  .hero-frame { aspect-ratio: 1 / 1; }
+  .hero-slide { padding: 24px 24px 19px; }
+  .hero-slide h2 { font-size: 16px; margin-bottom: 0; }
+  .hero-slide p { display: none; }
+  .hero-dots { left: 24px; right: auto; bottom: 46px; gap: 10px; }
+  .hero-dots button { width: 5px; height: 5px; }
   .header-divider { display: none; }
   .jp-prompt { left: 16px; right: 16px; bottom: 16px; max-width: none; }
 }
