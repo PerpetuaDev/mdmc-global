@@ -73,7 +73,7 @@ export function Header({ route, navigate, crumbs }) {
             onClick={() => { if (site !== 'global') { setSite('global'); navigate('home') } }}
           >
             <span className="site-code">INT</span>
-            Global
+            {t('footer.site.global')}
           </button>
           <button
             type="button"
@@ -82,7 +82,7 @@ export function Header({ route, navigate, crumbs }) {
             onClick={() => { if (site !== 'japan') { setSite('japan'); navigate('home') } }}
           >
             <span className="site-code">JP</span>
-            Japan
+            {t('footer.site.japan')}
           </button>
         </div>
       </div>
@@ -118,24 +118,27 @@ function StudioClock({ tz }) {
 export function Footer({ navigate }) {
   const t = useT()
   const site = useSite()
+  const isJapan = site === 'japan'
   const studios = [
     {
-      city: 'Christchurch',
+      city: t('footer.studio.nz'),
       addr: ['Level 2, 47 Salisbury St', 'Christchurch 8013'],
       tz: 'Pacific/Auckland',
       email: 'nz@mdmc.co',
     },
     {
-      city: 'North Sydney',
+      city: t('footer.studio.au'),
       addr: ['100 Arthur Street, Level 10', 'North Sydney NSW 2060'],
       tz: 'Australia/Sydney',
       email: 'au@mdmc.co',
     },
     {
-      city: 'Yokohama',
-      addr: ['5-57-2 Kitanakadori, Naka Ward', 'Yokohama, Kanagawa 231-0003'],
+      city: t('footer.studio.jp'),
+      addr: isJapan
+        ? ['〒231-0003 神奈川県横浜市', '中区北仲通5丁目57-2', 'KITANAKA BRICK&WHITE BRICK south 3F']
+        : ['5-57-2 Kitanakadori, Naka Ward', 'Yokohama, Kanagawa 231-0003'],
       tz: 'Asia/Tokyo',
-      email: 'team@mdmc.co',
+      email: 'contact@mdmc.co',
     },
   ]
   const year = new Date().getFullYear()
@@ -175,7 +178,7 @@ export function Footer({ navigate }) {
       </div>
 
       <div className="fv2-bottom">
-        <span>© {year} MDMC Group Inc.</span>
+        <span>© {year} {isJapan ? 'Finlayson Holdings Japan Inc.' : 'MDMC Group Inc.'}</span>
         <div className="fv2-site-switch" role="group" aria-label="Site">
           <button
             type="button"
@@ -184,7 +187,7 @@ export function Footer({ navigate }) {
             onClick={() => { if (site !== 'global') { setSite('global'); navigate('home'); window.scrollTo(0, 0) } }}
           >
             <span className="site-code">INT</span>
-            Global
+            {t('footer.site.global')}
           </button>
           <button
             type="button"
@@ -193,7 +196,7 @@ export function Footer({ navigate }) {
             onClick={() => { if (site !== 'japan') { setSite('japan'); navigate('home'); window.scrollTo(0, 0) } }}
           >
             <span className="site-code">JP</span>
-            Japan
+            {t('footer.site.japan')}
           </button>
         </div>
       </div>

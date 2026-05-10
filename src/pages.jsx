@@ -12,7 +12,7 @@ export function HomePage({ navigate, projects = [], homepage = null }) {
   }, [featured.length])
 
   const current = featured[idx] ?? {}
-  const isDark = current.cls === 'thumb-northway'
+  const isDark = current.darkHero === true
 
   return (
     <main className="page">
@@ -21,7 +21,7 @@ export function HomePage({ navigate, projects = [], homepage = null }) {
           {featured.map((p, i) => (
             <div
               key={p.id}
-              className={`hero-slide ${p.cls} ${i === idx ? 'active' : ''}`}
+              className={`hero-slide ${p.cls} ${i === idx ? 'active' : ''}${p.darkHero ? ' dark' : ''}`}
               onClick={() => navigate('project', p.id)}
               role="button"
               tabIndex={i === idx ? 0 : -1}
@@ -341,6 +341,8 @@ function AboutPageJa({ about = null }) {
 
 export function ContactPage() {
   const t = useT()
+  const site = useSite()
+  const isJapan = site === 'japan'
   const [submitted, setSubmitted] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', company: '', budget: '', message: '' })
 
@@ -359,33 +361,41 @@ export function ContactPage() {
           <div className="right">
             <div className="contact-block">
               <div className="label">{t('contact.label.newWork')}</div>
-              <a className="value" href="mailto:team@mdmc.co">team@mdmc.co</a>
+              <a className="value" href="mailto:contact@mdmc.co">contact@mdmc.co</a>
             </div>
             <div className="contact-block">
               <div className="label">{t('contact.label.careers')}</div>
-              <a className="value" href="mailto:careers@mdmc.co">careers@mdmc.co</a>
+              <a className="value" href={isJapan ? 'mailto:recruit@mdmc.co' : 'mailto:careers@mdmc.co'}>
+                {isJapan ? 'recruit@mdmc.co' : 'careers@mdmc.co'}
+              </a>
             </div>
-            <div className="contact-block">
-              <div className="label">{t('contact.label.christchurch')}</div>
-              <div className="value">
-                Level 2, 47 Salisbury St<br />
-                Christchurch Central<br />
-                Christchurch 8013
-              </div>
-            </div>
-            <div className="contact-block">
-              <div className="label">{t('contact.label.sydney')}</div>
-              <div className="value">
-                100 Arthur Street, Level 10<br />
-                North Sydney NSW 2060
-              </div>
-            </div>
+            {!isJapan && (
+              <>
+                <div className="contact-block">
+                  <div className="label">{t('contact.label.christchurch')}</div>
+                  <div className="value">
+                    Level 2, 47 Salisbury St<br />
+                    Christchurch Central<br />
+                    Christchurch 8013<br />
+                    <br />
+                    <a className="value" href="tel:+6436600336">+64 3 660 0336</a>
+                  </div>
+                </div>
+                <div className="contact-block">
+                  <div className="label">{t('contact.label.sydney')}</div>
+                  <div className="value">
+                    100 Arthur Street, Level 10<br />
+                    North Sydney NSW 2060
+                  </div>
+                </div>
+              </>
+            )}
             <div className="contact-block">
               <div className="label">{t('contact.label.yokohama')}</div>
               <div className="value">
                 5-57-2 Kitanakadori, Naka Ward<br />
                 Yokohama, Kanagawa 231-0003<br />
-                KITANAKA BRICK &amp; WHITE BRICK south, 2F–3F
+                KITANAKA BRICK &amp; WHITE BRICK south, 3F
               </div>
             </div>
           </div>
@@ -462,7 +472,7 @@ export function ProjectPage({ id, navigate, projects = [] }) {
       <section className="project-body">
         <h3>{t('project.section.overview')}</h3>
         <div className="body-text">
-          <p>{project.intro}</p>
+          {(project.intro ?? '').split('\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)}
           {project.body.map((para, i) => <p key={i}>{para}</p>)}
         </div>
       </section>

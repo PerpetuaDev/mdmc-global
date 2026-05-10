@@ -73,6 +73,12 @@ const STRINGS = {
     "project.meta.region": "Region",
     "project.meta.services": "Services",
 
+    "footer.studio.nz": "New Zealand",
+    "footer.studio.au": "Australia",
+    "footer.studio.jp": "Japan",
+    "footer.site.global": "Global",
+    "footer.site.japan": "Japan",
+
     "footer.cta.label": "Have a project in mind?",
     "footer.cta.action": "Let's talk.",
     "footer.studios": "Studios",
@@ -189,6 +195,12 @@ const STRINGS = {
     "project.meta.sector": "セクター",
     "project.meta.region": "地域",
     "project.meta.services": "サービス",
+
+    "footer.studio.nz": "ニュージーランド",
+    "footer.studio.au": "オーストラリア",
+    "footer.studio.jp": "日本",
+    "footer.site.global": "グローバル",
+    "footer.site.japan": "日本",
 
     "footer.cta.label": "ご検討中のプロジェクトはありますか?",
     "footer.cta.action": "話しましょう。",

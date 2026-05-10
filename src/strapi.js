@@ -65,6 +65,7 @@ function mapProject(item, index) {
     thumbnail: originalUrl(item.thumbnail),
     images,
     cls: CLASSES[index % CLASSES.length],
+    darkHero: item.dark_hero ?? false,
   }
 }
 
