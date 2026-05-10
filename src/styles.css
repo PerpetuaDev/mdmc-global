@@ -1166,6 +1166,9 @@ img { display: block; max-width: 100%; }
   .jp-fact-row dd, .jp-loc-value { word-break: keep-all; overflow-wrap: break-word; }
   .jp-location-grid { grid-template-columns: 1fr; }
   .project-image { aspect-ratio: 1 / 1; }
+  .project-images .img,
+  .project-images .img.tall,
+  .project-images .img.wide { aspect-ratio: 1 / 1; }
   .project-body .body-text { font-size: 18px; }
   .next-project--card .np-foot .name { font-size: 16px; }
   .project-title { font-size: 26px; }
