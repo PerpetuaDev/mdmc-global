@@ -30,8 +30,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Change to / when a custom domain (mdmc.co) is configured.
-          VITE_BASE_URL: /mdmc-global/
+          VITE_BASE_URL: /
           VITE_STRAPI_TOKEN: ${{ secrets.VITE_STRAPI_TOKEN }}
 
       - uses: actions/upload-pages-artifact@v3
