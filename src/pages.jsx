@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useT, useSite, NL } from './i18n.jsx'
 
-export function HomePage({ navigate, projects = [] }) {
+export function HomePage({ navigate, projects = [], homepage = null }) {
   const t = useT()
   const featured = projects.slice(0, 4)
   const [idx, setIdx] = useState(0)
@@ -11,7 +11,7 @@ export function HomePage({ navigate, projects = [] }) {
     return () => clearInterval(tm)
   }, [featured.length])
 
-  const current = featured[idx]
+  const current = featured[idx] ?? {}
   const isDark = current.cls === 'thumb-northway'
 
   return (
@@ -50,9 +50,12 @@ export function HomePage({ navigate, projects = [] }) {
 
       <section className="manifesto">
         <div>
-          <p><NL text={t('home.manifesto.1')} /></p>
-          <p><NL text={t('home.manifesto.2')} /></p>
-          <p><NL text={t('home.manifesto.3')} /></p>
+          {(homepage?.manifesto?.length > 0
+            ? homepage.manifesto
+            : [t('home.manifesto.1'), t('home.manifesto.2'), t('home.manifesto.3')]
+          ).map((para, i) => (
+            <p key={i}><NL text={para} /></p>
+          ))}
         </div>
       </section>
 
@@ -106,10 +109,10 @@ export function WorkPage({ navigate, projects = [] }) {
   )
 }
 
-export function AboutPage({ members = [] }) {
+export function AboutPage({ members = [], about = null }) {
   const site = useSite()
-  if (site === 'japan') return <AboutPageJa />
-  return <AboutPageEn members={members} />
+  if (site === 'japan') return <AboutPageJa about={about} />
+  return <AboutPageEn members={members} about={about} />
 }
 
 const STATIC_TEAM = [
@@ -118,39 +121,60 @@ const STATIC_TEAM = [
   { id: 'monique', name: 'Monique Park',       role: 'Graphic Designer & Illustrator',  portrait: null },
 ]
 
-function AboutPageEn({ members = [] }) {
+const FALLBACK_KV = [
+  { key: 'what', title: null, body: null, image: null },
+  { key: 'how',  title: null, body: null, image: null },
+  { key: 'who',  title: null, body: null, image: null },
+  { key: 'dont', title: null, body: null, image: null },
+]
+
+function AboutPageEn({ members = [], about = null }) {
   const t = useT()
   const team = members.length > 0 ? members : STATIC_TEAM
+
+  const ledeParagraphs = about?.lede?.length > 0
+    ? about.lede
+    : [t('about.lede.1')]
+
+  const kvItems = about?.kv_items?.length > 0
+    ? about.kv_items
+    : FALLBACK_KV.map(({ key }) => ({
+        title: t(`about.kv.${key}.dt`),
+        body: t(`about.kv.${key}.dd`),
+        image: null,
+      }))
+
   return (
     <main className="page">
       <section className="about-hero-image">
-        <div className="ah-image" aria-hidden="true">
-          <span className="ph-label">{t('project.detail.full')}</span>
+        <div className="ah-image" aria-hidden={!about?.hero_image}>
+          {about?.hero_image
+            ? <img src={about.hero_image} alt="" />
+            : <span className="ph-label">{t('project.detail.full')}</span>
+          }
         </div>
       </section>
 
       <section className="page-section about-essay-section">
         <div className="about-essay-body">
-          <h1 className="ae-headline">{t('about.headline')}</h1>
+          <h1 className="ae-headline">{about?.headline ?? t('about.headline')}</h1>
           <div className="ae-lede">
-            <p>{t('about.lede.1')}</p>
+            {ledeParagraphs.map((p, i) => <p key={i}>{p}</p>)}
           </div>
 
           <ol className="ae-list">
-            {[
-              ['about.kv.what.dt', 'about.kv.what.dd'],
-              ['about.kv.how.dt',  'about.kv.how.dd'],
-              ['about.kv.who.dt',  'about.kv.who.dd'],
-              ['about.kv.dont.dt', 'about.kv.dont.dd'],
-            ].map(([dtKey, ddKey], i) => (
-              <li key={dtKey}>
+            {kvItems.map((item, i) => (
+              <li key={i}>
                 <span className="ae-num">{String(i + 1).padStart(2, '0')}</span>
                 <div className="ae-text">
-                  <h3>{t(dtKey)}</h3>
-                  <p>{t(ddKey)}</p>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
                 </div>
-                <div className="ae-img" aria-hidden="true">
-                  <span className="ph-label">{String(i + 1).padStart(2, '0')}</span>
+                <div className="ae-img" aria-hidden={!item.image}>
+                  {item.image
+                    ? <img src={item.image} alt="" />
+                    : <span className="ph-label">{String(i + 1).padStart(2, '0')}</span>
+                  }
                 </div>
               </li>
             ))}
@@ -177,35 +201,87 @@ function AboutPageEn({ members = [] }) {
   )
 }
 
-function AboutPageJa() {
+const MAP_LAT = 35.4506521
+const MAP_LNG = 139.6361745
+
+function GoogleMap() {
+  const ref = useRef(null)
+  useEffect(() => {
+    const key = import.meta.env.VITE_GOOGLE_MAPS_KEY
+    if (!key || !ref.current) return
+    const init = () => {
+      const map = new window.google.maps.Map(ref.current, {
+        center: { lat: MAP_LAT, lng: MAP_LNG },
+        zoom: 16,
+        disableDefaultUI: true,
+        zoomControl: true,
+        styles: [
+          { elementType: 'geometry', stylers: [{ color: '#f0ede8' }] },
+          { elementType: 'labels.text.stroke', stylers: [{ color: '#f0ede8' }] },
+          { elementType: 'labels.text.fill', stylers: [{ color: '#444444' }] },
+          { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+          { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#666666' }] },
+          { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#bdd1dc' }] },
+          { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+          { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+        ],
+      })
+      new window.google.maps.Marker({ position: { lat: MAP_LAT, lng: MAP_LNG }, map })
+    }
+    if (window.google?.maps) { init(); return }
+    if (!document.getElementById('gmaps-script')) {
+      window._gmapsCb = init
+      const s = document.createElement('script')
+      s.id = 'gmaps-script'
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=_gmapsCb`
+      s.async = true
+      document.head.appendChild(s)
+    }
+  }, [])
+  return <div ref={ref} style={{ position: 'absolute', inset: 0 }} />
+}
+
+function AboutPageJa({ about = null }) {
   const t = useT()
   const facts = [
     ['jp.about.fact.shogo',    'jp.about.fact.shogo.v'],
+    ['jp.about.fact.jigyobu',  'jp.about.fact.jigyobu.v'],
     ['jp.about.fact.setsuritsu', 'jp.about.fact.setsuritsu.v'],
     ['jp.about.fact.daihyo',   'jp.about.fact.daihyo.v'],
     ['jp.about.fact.shihon',   'jp.about.fact.shihon.v'],
     ['jp.about.fact.jusho',    'jp.about.fact.jusho.v'],
     ['jp.about.fact.gyomu',    'jp.about.fact.gyomu.v'],
-    ['jp.about.fact.torihiki', 'jp.about.fact.torihiki.v'],
   ]
   return (
     <main className="page jp-about">
+      <section className="about-hero-image">
+        <div className="ah-image" aria-hidden={!about?.hero_image}>
+          {about?.hero_image
+            ? <img src={about.hero_image} alt="" />
+            : <span className="ph-label">{t('project.detail.full')}</span>
+          }
+        </div>
+      </section>
       <section className="jp-greeting">
         <div className="jp-greeting-inner">
-          <h1 className="jp-greeting-title">{t('jp.about.greeting.title')}</h1>
+          <h1 className="jp-greeting-title">{about?.greeting_title ?? t('jp.about.greeting.title')}</h1>
           <div className="jp-greeting-body">
-            <p>{t('jp.about.greeting.p1')}</p>
-            <p>{t('jp.about.greeting.p2')}</p>
-            <p>{t('jp.about.greeting.p3')}</p>
+            {(about?.greeting_body?.length > 0
+              ? about.greeting_body
+              : [t('jp.about.greeting.p1'), t('jp.about.greeting.p2'), t('jp.about.greeting.p3')]
+            ).map((p, i) => <p key={i}>{p}</p>)}
           </div>
           <div className="jp-signature">
-            <div className="jp-sig-portrait" aria-hidden="true">
-              <span className="ph-label">{t('about.team.portrait')}</span>
+            <div className="jp-sig-portrait" aria-hidden={!about?.signature_portrait}>
+              {about?.signature_portrait
+                ? <img src={about.signature_portrait} alt={about?.signature_name ?? ''} />
+                : <span className="ph-label">{t('about.team.portrait')}</span>
+              }
             </div>
             <div className="jp-sig-meta">
-              <div className="jp-sig-role">{t('jp.about.signature.role')}</div>
-              <div className="jp-sig-name">{t('jp.about.signature.name')}</div>
-              <div className="jp-sig-romaji">{t('jp.about.signature.romaji')}</div>
+              <div className="jp-sig-role">{about?.signature_role ?? t('jp.about.signature.role')}</div>
+              <div className="jp-sig-name">{about?.signature_name ?? t('jp.about.signature.name')}</div>
+              <div className="jp-sig-romaji">{about?.signature_romaji ?? t('jp.about.signature.romaji')}</div>
             </div>
           </div>
         </div>
@@ -213,7 +289,6 @@ function AboutPageJa() {
 
       <section className="jp-overview">
         <div className="jp-overview-head">
-          <span className="jp-eyebrow">{t('jp.about.eyebrow.overview')}</span>
           <h2 className="jp-overview-title">{t('jp.about.overview.title')}</h2>
         </div>
         <dl className="jp-fact-table">
@@ -236,8 +311,8 @@ function AboutPageJa() {
           <h2 className="jp-overview-title">{t('jp.about.location.title')}</h2>
         </div>
         <div className="jp-location-grid">
-          <div className="jp-map" aria-hidden="true">
-            <span className="ph-label">MAP — YOKOHAMA</span>
+          <div className="jp-map">
+            <GoogleMap />
           </div>
           <div className="jp-location-meta">
             {[
@@ -254,7 +329,7 @@ function AboutPageJa() {
                 </div>
               </div>
             ))}
-            <a className="jp-directions" href="https://maps.google.com" target="_blank" rel="noreferrer">
+            <a className="jp-directions" href="https://www.google.com/maps/search/%E3%83%8B%E3%82%B5%E3%83%B3%E3%82%AB%E3%82%A4/@35.4506521,139.6361745,18z" target="_blank" rel="noreferrer">
               {t('jp.about.location.directions')} <span aria-hidden="true">↗</span>
             </a>
           </div>
@@ -309,8 +384,8 @@ export function ContactPage() {
               <div className="label">{t('contact.label.yokohama')}</div>
               <div className="value">
                 5-57-2 Kitanakadori, Naka Ward<br />
-                Yokohama 231-0003<br />
-                KITANAKA BRICK &amp; WHITE South, 2F
+                Yokohama, Kanagawa 231-0003<br />
+                KITANAKA BRICK &amp; WHITE BRICK south, 2F–3F
               </div>
             </div>
           </div>

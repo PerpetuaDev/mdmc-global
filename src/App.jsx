@@ -1,7 +1,7 @@
 import { useState, useEffect, cloneElement } from 'react'
 import { useT, useSite } from './i18n.jsx'
 import STATIC_PROJECTS from './data.js'
-import { fetchProjects, fetchMembers } from './strapi.js'
+import { fetchProjects, fetchMembers, fetchHomepage, fetchAbout, fetchAboutJa } from './strapi.js'
 import { Header, Footer, JpSuggestionPrompt } from './chrome.jsx'
 import { HomePage, WorkPage, AboutPage, ContactPage, ProjectPage } from './pages.jsx'
 
@@ -9,16 +9,29 @@ export default function App() {
   const [route, setRoute] = useState({ page: 'home', id: null })
   const [projects, setProjects] = useState(STATIC_PROJECTS)
   const [members, setMembers] = useState([])
+  const [homepage, setHomepage] = useState(null)
+  const [about, setAbout] = useState(null)
+  const [aboutJa, setAboutJa] = useState(null)
   const t = useT()
   const site = useSite()
   const locale = site === 'japan' ? 'ja' : 'en'
 
   useEffect(() => {
+    if (locale === 'ja') setProjects([])
     fetchProjects(locale)
       .then((data) => { if (data.length > 0) setProjects(data) })
       .catch(() => {})
     fetchMembers()
       .then((data) => { if (data.length > 0) setMembers(data) })
+      .catch(() => {})
+    fetchHomepage(locale)
+      .then((data) => { if (data) setHomepage(data) })
+      .catch(() => {})
+    fetchAbout()
+      .then((data) => { if (data) setAbout(data) })
+      .catch(() => {})
+    fetchAboutJa()
+      .then((data) => { if (data) setAboutJa(data) })
       .catch(() => {})
   }, [locale])
 
@@ -60,9 +73,9 @@ export default function App() {
   }
 
   let view
-  if (route.page === 'home')         view = <HomePage navigate={navigate} projects={projects} />
+  if (route.page === 'home')         view = <HomePage navigate={navigate} projects={projects} homepage={homepage} />
   else if (route.page === 'work')    view = <WorkPage navigate={navigate} projects={projects} />
-  else if (route.page === 'about')   view = <AboutPage members={members} />
+  else if (route.page === 'about')   view = <AboutPage members={members} about={site === 'japan' ? aboutJa : about} />
   else if (route.page === 'contact') view = <ContactPage />
   else if (route.page === 'project') view = <ProjectPage id={route.id} navigate={navigate} projects={projects} />
   else                               view = <HomePage navigate={navigate} projects={projects} />

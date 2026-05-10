@@ -133,7 +133,7 @@ export function Footer({ navigate }) {
     },
     {
       city: 'Yokohama',
-      addr: ['5-57-2 Kitanakadori, Naka Ward', 'Yokohama 231-0003'],
+      addr: ['5-57-2 Kitanakadori, Naka Ward', 'Yokohama, Kanagawa 231-0003'],
       tz: 'Asia/Tokyo',
       email: 'team@mdmc.co',
     },

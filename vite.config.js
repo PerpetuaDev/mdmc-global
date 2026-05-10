@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const STRAPI_URL = 'https://grateful-excellence-5154b8bd7e.strapiapp.com'
+const STRAPI_URL = 'https://upbeat-approval-82a9e54c20.strapiapp.com'
 
 export default defineConfig({
   plugins: [react()],
