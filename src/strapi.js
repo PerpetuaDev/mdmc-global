@@ -147,6 +147,17 @@ export async function fetchAboutJa() {
   }
 }
 
+export async function submitContact({ name, email, company, budget, message }) {
+  const url = `${BASE.replace(/\/api$/, '')}/api/contact`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, company, budget, message }),
+  })
+  if (!res.ok) throw new Error(`Contact ${res.status}`)
+  return res.json()
+}
+
 export async function fetchProjects(locale = 'en') {
   const headers = { 'Content-Type': 'application/json' }
   if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`

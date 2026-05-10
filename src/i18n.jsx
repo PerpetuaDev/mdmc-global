@@ -54,6 +54,7 @@ const STRINGS = {
     "contact.form.send": "Send",
     "contact.form.gotIt": "Got it.",
     "contact.form.thanks": "Thanks, {name}. A partner will read this within a working day and get back to you personally — not a form reply.",
+    "contact.form.error": "Something went wrong — please try again or email us directly.",
 
     "crumb.home": "Home",
     "crumb.work": "Work",
@@ -177,6 +178,7 @@ const STRINGS = {
     "contact.form.send": "送信",
     "contact.form.gotIt": "受け取りました。",
     "contact.form.thanks": "{name}様、ありがとうございます。営業日中にパートナーが直接拝読し、定型文ではないご返信を差し上げます。",
+    "contact.form.error": "送信中にエラーが発生しました。もう一度お試しいただくか、直接メールでお問い合わせください。",
 
     "crumb.home": "ホーム",
     "crumb.work": "ワーク",

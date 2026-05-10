@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useT, useSite, NL } from './i18n.jsx'
+import { submitContact } from './strapi.js'
 
 export function HomePage({ navigate, projects = [], homepage = null }) {
   const t = useT()
@@ -344,13 +345,24 @@ export function ContactPage() {
   const site = useSite()
   const isJapan = site === 'japan'
   const [submitted, setSubmitted] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState(null)
   const [form, setForm] = useState({ name: '', email: '', company: '', budget: '', message: '' })
 
   const handle = (k) => (e) => setForm({ ...form, [k]: e.target.value })
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
     if (!form.name || !form.email || !form.message) return
-    setSubmitted(true)
+    setSending(true)
+    setError(null)
+    try {
+      await submitContact(form)
+      setSubmitted(true)
+    } catch {
+      setError(true)
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -430,9 +442,14 @@ export function ContactPage() {
               <label htmlFor="f-msg">{t('contact.form.message')}</label>
               <textarea id="f-msg" rows="5" required value={form.message} onChange={handle('message')} />
             </div>
+            {error && (
+              <div className="full" style={{ color: 'red', fontSize: 15 }}>
+                {t('contact.form.error')}
+              </div>
+            )}
             <div className="full">
-              <button type="submit" className="submit-btn">
-                {t('contact.form.send')} <span className="arrow">→</span>
+              <button type="submit" className="submit-btn" disabled={sending}>
+                {sending ? '…' : <>{t('contact.form.send')} <span className="arrow">→</span></>}
               </button>
             </div>
           </form>
@@ -461,12 +478,11 @@ export function ProjectPage({ id, navigate, projects = [] }) {
             {project.client} <span className="sep" aria-hidden="true">/</span> {project.year}
           </div>
         </div>
-        <div className={`project-image ${project.cls}`}>
-          {project.thumbnail
-            ? <img src={project.thumbnail} alt={project.name} />
-            : <span className="ph-label">{t('project.key', { name: project.name.toUpperCase() })}</span>
-          }
-        </div>
+        {project.thumbnail && (
+          <div className={`project-image ${project.cls}`}>
+            <img src={project.thumbnail} alt={project.name} />
+          </div>
+        )}
       </section>
 
       <section className="project-body">
@@ -477,30 +493,15 @@ export function ProjectPage({ id, navigate, projects = [] }) {
         </div>
       </section>
 
-      <section className="project-images">
-        {project.images && project.images.length > 0 ? (
-          project.images.map((src, i) => (
+      {project.images && project.images.length > 0 && (
+        <section className="project-images">
+          {project.images.map((src, i) => (
             <div key={i} className={`img ${i === 0 || i === project.images.length - 1 ? 'wide' : ''} ${project.cls}`}>
               <img src={src} alt={`${project.name} ${i + 1}`} />
             </div>
-          ))
-        ) : (
-          <>
-            <div className={`img wide ${project.cls}`}>
-              <span className="ph-label">{t('project.detail.full')}</span>
-            </div>
-            <div className={`img ${project.cls}`}>
-              <span className="ph-label">{t('project.detail.02')}</span>
-            </div>
-            <div className={`img ${project.cls}`}>
-              <span className="ph-label">{t('project.detail.03')}</span>
-            </div>
-            <div className={`img wide ${project.cls}`}>
-              <span className="ph-label">{t('project.detail.case')}</span>
-            </div>
-          </>
-        )}
-      </section>
+          ))}
+        </section>
+      )}
 
       <a
         className="next-project next-project--card"
@@ -512,10 +513,7 @@ export function ProjectPage({ id, navigate, projects = [] }) {
           <span className="np-index">{String(previewIdx + 1).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}</span>
         </div>
         <div className={`np-thumb ${next.cls}`}>
-          {next.thumbnail
-            ? <img src={next.thumbnail} alt={next.name} />
-            : <span className="ph-label">{next.name.toUpperCase()}</span>
-          }
+          {next.thumbnail && <img src={next.thumbnail} alt={next.name} />}
         </div>
         <div className="np-foot">
           <span className="name">{next.name}</span>
