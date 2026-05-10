@@ -32,6 +32,7 @@ jobs:
         env:
           VITE_BASE_URL: /
           VITE_STRAPI_TOKEN: ${{ secrets.VITE_STRAPI_TOKEN }}
+          VITE_GOOGLE_MAPS_KEY: ${{ secrets.VITE_GOOGLE_MAPS_KEY }}
 
       - uses: actions/upload-pages-artifact@v3
         with:
