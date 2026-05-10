@@ -1150,12 +1150,24 @@ img { display: block; max-width: 100%; }
   .work-grid { grid-template-columns: repeat(2, 1fr); column-gap: 32px; row-gap: 64px; }
   .team-grid { grid-template-columns: repeat(2, 1fr); }
   .about-hero, .contact-grid { grid-template-columns: 1fr; gap: 48px; }
+  .ah-image { aspect-ratio: 1 / 1; }
   .about-essay-body, .ae-list { grid-template-columns: 1fr; gap: 16px; }
   .ae-headline, .ae-lede, .ae-text, .ae-img { grid-column: 1; }
   .ae-num { grid-column: 1; padding-top: 0; margin-bottom: 4px; }
-  .ae-img { aspect-ratio: 16 / 10; margin-top: 16px; }
+  .ae-img { aspect-ratio: 16 / 10; margin-top: 32px; }
+  .ae-list li { padding-top: 20px; padding-bottom: 24px; }
+  .ae-team-title { margin-top: 40px; }
+  .about-hero-image { padding-bottom: 48px; }
+  .jp-greeting { padding-top: 48px; }
+  .jp-sig-name { font-size: 18px; }
   .jp-fact-row { grid-template-columns: 1fr; gap: 4px; }
+  .jp-fact-row dd, .jp-loc-value { word-break: keep-all; overflow-wrap: break-word; }
   .jp-location-grid { grid-template-columns: 1fr; }
+  .project-image { aspect-ratio: 1 / 1; }
+  .project-body .body-text { font-size: 18px; }
+  .next-project--card .np-foot .name { font-size: 16px; }
+  .project-title { font-size: 26px; }
+  .project-hero-meta { font-size: 14px; }
   .jp-map { aspect-ratio: 16 / 10; }
   .kv-grid { grid-template-columns: 1fr; gap: 16px; }
   .kv-grid dt { padding-bottom: 8px; border-bottom: 0; }
@@ -1178,6 +1190,9 @@ img { display: block; max-width: 100%; }
   body { font-size: 16px; }
   .work-grid { grid-template-columns: 1fr; }
   .team-grid { grid-template-columns: 1fr; }
+  .team-card .portrait { width: 75%; }
+  .team-card h4 { font-size: 20px; }
+  .team-card p { font-size: 16px; }
   .nav { display: none; }
   .crumbs { display: none; }
   .brand-center { display: none; }
