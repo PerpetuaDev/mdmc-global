@@ -296,9 +296,10 @@ img { display: block; max-width: 100%; }
   display: flex; flex-direction: column; justify-content: flex-end;
   padding: 32px;
   opacity: 0; transition: opacity .8s ease;
+  pointer-events: none;
   background: linear-gradient(135deg, #d9d9d9 0%, #cfcfcf 100%);
 }
-.hero-slide.active { opacity: 1; }
+.hero-slide.active { opacity: 1; pointer-events: auto; }
 .hero-slide.thumb-zenrise  { background: linear-gradient(170deg, #e8e3d9 0%, #c9c2b3 70%, #b8b0a0 100%); }
 .hero-slide.thumb-myocp    { background: linear-gradient(170deg, #d6dde0 0%, #b8c4cb 100%); }
 .hero-slide.thumb-northway { background: linear-gradient(170deg, #2a2a28 0%, #0e0e0d 100%); }
