@@ -19,21 +19,30 @@ function FadeImg({ className = '', ...rest }) {
   )
 }
 
-// Flips true once (and stays true) when the element scrolls into view. Drives
-// .scroll-reveal entrances for below-the-fold content — unlike .reveal, which
+// Flips true when the element scrolls into view. Drives .scroll-reveal /
+// .fade-block entrances for below-the-fold content — unlike .reveal, which
 // plays on mount and has long finished by the time the user scrolls down.
-function useInView(threshold = 0.3) {
+// Default is one-shot (stays true); pass { once: false } to also flip back
+// off when the element leaves view (two-way fades). rootMargin shifts the
+// trigger line, e.g. '0px 0px -12% 0px' fires once the element has cleared
+// the bottom 12% of the viewport.
+function useInView(threshold = 0.3, { once = true, rootMargin = '0px' } = {}) {
   const ref = useRef(null)
   const [inView, setInView] = useState(false)
   useEffect(() => {
     const el = ref.current
     if (!el || typeof IntersectionObserver === 'undefined') { setInView(true); return }
     const io = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) { setInView(true); io.disconnect() }
-    }, { threshold })
+      if (entry.isIntersecting) {
+        setInView(true)
+        if (once) io.disconnect()
+      } else if (!once) {
+        setInView(false)
+      }
+    }, { threshold, rootMargin })
     io.observe(el)
     return () => io.disconnect()
-  }, [threshold])
+  }, [threshold, once, rootMargin])
   return [ref, inView]
 }
 
@@ -571,11 +580,16 @@ function ProjectSkeleton() {
 
 export function ProjectPage({ id, navigate, projects = [], loading = false }) {
   const t = useT()
-  if (loading) return <ProjectSkeleton />
   const project = projects.find((p) => p.id === id) || projects[0] || {}
   const curIdx = projects.indexOf(project)
   const [previewIdx, setPreviewIdx] = useState(projects.length > 1 ? (curIdx + 1) % projects.length : 0)
   useEffect(() => { setPreviewIdx(projects.length > 1 ? (curIdx + 1) % projects.length : 0) }, [curIdx, projects.length])
+  // Two-way: the overview copy fades in as it scrolls up into view and back
+  // out when the user returns to the top for the clean image-only opening.
+  const [bodyRef, bodyInView] = useInView(0, { once: false, rootMargin: '0px 0px -12% 0px' })
+  // All hooks above this line — an early return before them crashes React
+  // with a hook-count mismatch when `loading` flips (was a live bug).
+  if (loading) return <ProjectSkeleton />
   const next = projects[previewIdx] || project
   const goPrev = (e) => { e.preventDefault(); e.stopPropagation(); setPreviewIdx((previewIdx - 1 + projects.length) % projects.length) }
   const goNext = (e) => { e.preventDefault(); e.stopPropagation(); setPreviewIdx((previewIdx + 1) % projects.length) }
@@ -596,7 +610,7 @@ export function ProjectPage({ id, navigate, projects = [], loading = false }) {
         )}
       </section>
 
-      <section className="project-body reveal" style={{ '--reveal-delay': '160ms' }}>
+      <section ref={bodyRef} className={`project-body fade-block${bodyInView ? ' is-inview' : ''}`}>
         <h3>{t('project.section.overview')}</h3>
         <div className="body-text">
           {(project.intro ?? '').split('\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)}

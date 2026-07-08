@@ -118,7 +118,10 @@
     max-height: none;
     margin-bottom: 0;
   }
-  .project-body { margin-top: var(--post-media-gap); }
+  /* Tighter than --post-media-gap: the flush-to-fold image already guarantees
+     the copy is below the first screenful, and it fades in on scroll anyway —
+     the wide buffer was solving a problem the flex fill already solved. */
+  .project-body { margin-top: 48px; }
 
   .about-hero-image {
     display: flex;
@@ -1439,6 +1442,17 @@ img { display: block; max-width: 100%; }
 }
 .is-inview .scroll-reveal { opacity: 1; transform: translateY(0); }
 
+/* Two-way scroll fade (useInView with once:false toggles .is-inview on the
+   element itself): content sits close below a viewport-filling image but is
+   invisible while the visitor is at the top, fades in as it scrolls up into
+   view, and fades back out on return — preserving the clean image opening. */
+.fade-block {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .6s ease, transform .6s cubic-bezier(.2, .7, .2, 1);
+}
+.fade-block.is-inview { opacity: 1; transform: translateY(0); }
+
 /* Skeleton shimmer — a soft sweep across the existing placeholder grey, so loading
    state reads as the layout settling rather than a content swap. */
 @keyframes mdmc-shimmer {
@@ -1471,6 +1485,7 @@ img { display: block; max-width: 100%; }
   .site-header { transition: none; }
   .reveal { animation: none; opacity: 1; transform: none; }
   .scroll-reveal { transition: none; opacity: 1; transform: none; }
+  .fade-block { transition: none; opacity: 1; transform: none; }
   .skeleton { animation: none; }
   .img-fade { transition: none; }
 }
