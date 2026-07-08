@@ -13,6 +13,20 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "Larsseit";
+  src: url("./assets/fonts/larsseit-regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Larsseit";
+  src: url("./assets/fonts/larsseit-medium.otf") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --bg: #ffffff;
@@ -38,6 +52,96 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Presentation scale. The design was authored on a 1920 Figma frame and reads
+   oversized on 1080p monitors; CSS zoom rescales the whole tree uniformly while
+   the fluid grid re-flows (media-query breakpoints still fire on real viewport
+   width). Scoped to desktop so phones/tablets keep native scale. */
+:root { --page-zoom: 1; }
+@media (min-width: 1024px) {
+  :root { --page-zoom: 0.85; }
+  html { zoom: var(--page-zoom); }
+}
+
+/* Tall-media height budget (pentagram-style rhythm): a wide frame never fills
+   the screen edge-to-fold — it gets the viewport height MINUS the header
+   lead-in and a deliberate whitespace band, so the image ends with breathing
+   room and the next element's top edge peeks at the fold. Width stays
+   full-bleed; object-fit: cover absorbs the flatter ratio by cropping
+   vertically — hero/wide assets are composed centre-safe for exactly this.
+   svh is scaled by zoom, hence the division: 100svh / --page-zoom = real
+   viewport height expressed in design px, so the subtrahends stay in the
+   design's own px language. */
+:root {
+  --media-bottom-gap: 80px; /* real screen px between media bottom and viewport bottom */
+  --header-h: 152px;         /* sticky header height at page top (64+52 content+36) */
+  --media-chrome: 192px;     /* sticky header + hero lead-in (design px) */
+  --post-media-gap: 120px;   /* space between a viewport-filling image and the
+                                text that follows below the fold (design px) */
+  /* Height budget: what remains of the viewport after chrome + bottom gap,
+     expressed in design px (svh is scaled by zoom, hence the division). */
+  --media-budget: calc((100svh - var(--media-bottom-gap)) / var(--page-zoom) - var(--media-chrome));
+}
+@media (min-width: 721px) {
+  .project-images .img {
+    /* Cap: when it binds, a gallery cell + bottom gap fit one screenful. */
+    max-height: var(--media-budget);
+  }
+  .project-image {
+    /* Tablet fallback: banner + its chrome (header 152 + section pad 80 +
+       title row ~45 + margin 24 ≈ 301px) fit one screenful. */
+    max-height: calc(var(--media-budget) - 108px);
+  }
+  .ah-image {
+    /* About hero: header 152 + section pad 80 = 232px chrome → −40px. */
+    max-height: calc(var(--media-budget) - 40px);
+  }
+}
+
+/* Desktop: the opening image FILLS the first screenful (pentagram-style).
+   The section is sized to exactly the viewport below the sticky header and
+   laid out as a flex column: the title row keeps its natural height (wraps
+   included) and the image flexes to consume precisely what remains, ending
+   flush with the fold. Follow-up text starts --post-media-gap below it, so
+   no body copy ever pokes into the opening screen on any screen size. */
+@media (min-width: 1024px) {
+  .project-hero {
+    display: flex;
+    flex-direction: column;
+    height: calc(100svh / var(--page-zoom) - var(--header-h));
+  }
+  .project-hero-head { flex: 0 0 auto; }
+  .project-image {
+    flex: 1 1 auto;
+    min-height: 320px; /* degenerate-window guard: below this, the page scrolls */
+    aspect-ratio: auto;
+    max-height: none;
+    margin-bottom: 0;
+  }
+  .project-body { margin-top: var(--post-media-gap); }
+
+  .about-hero-image {
+    display: flex;
+    flex-direction: column;
+    height: calc(100svh / var(--page-zoom) - var(--header-h));
+    padding-bottom: 0;
+  }
+  .ah-image {
+    flex: 1 1 auto;
+    min-height: 320px;
+    aspect-ratio: auto;
+    max-height: none;
+  }
+  .about-essay-section { padding-top: var(--post-media-gap); }
+}
+@media (min-width: 1024px) {
+  .hero-frame {
+    /* Definite height, not a cap: the home hero's bottom edge always lands
+       exactly --media-bottom-gap above the fold; object-fit: cover absorbs
+       the ratio drift (slight horizontal crop on taller screens). */
+    height: var(--media-budget);
+  }
+}
 
 html, body {
   background: var(--bg);
@@ -84,6 +188,9 @@ img { display: block; max-width: 100%; }
   padding: 64px var(--pad-x-right) 36px var(--pad-x);
   font-size: 20px;
   column-gap: 0;
+  /* The compact (detached) state changes padding — animate it so restoring
+     the full crown at scroll-top glides instead of jumping. */
+  transition: padding .35s cubic-bezier(.2, .7, .2, 1), box-shadow .35s ease;
 }
 .site-header.sub {
   /* subpages: brand centered, crumbs left, lang right */
@@ -280,8 +387,10 @@ img { display: block; max-width: 100%; }
 
 /* ---------------- Hero (home) ---------------- */
 .hero {
-  /* Figma: hero left=166, right edge flush at 1920 */
-  padding: 40px 0 0 var(--pad-x);
+  /* Originally flush right per Figma; inset to the right rail on desktop so
+     the fold-capped frame reads as a composed object, not a cropped bleed.
+     Mobile keeps the flush right edge (reset in the 720px block). */
+  padding: 40px var(--pad-x-right) 0 var(--pad-x);
 }
 .hero-frame {
   position: relative;
@@ -314,32 +423,35 @@ img { display: block; max-width: 100%; }
 }
 .hero-slide.thumb-northway .ph-label { color: rgba(255,255,255,.4); }
 
-.hero-slide h2 {
-  position: relative; z-index: 1;
-  font-family: var(--type-display);
-  font-size: 32px; font-weight: 500; letter-spacing: -0.01em;
-  margin-bottom: 8px;
+/* Hero footer — echoes the Next Project card footer (np-foot), kept subtle
+   and overlaid along the bottom edge of the frame: nav-scale name at left,
+   arrow nav at right. pointer-events pass through its empty middle so the
+   slide itself stays clickable there; .on-dark flips to white per-slide via
+   the darkHero flag. */
+.hero-foot {
+  position: absolute; left: 32px; right: 32px; bottom: 24px;
+  z-index: 2;
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 32px;
+  pointer-events: none;
 }
-.hero-slide p {
-  position: relative; z-index: 1;
-  font-size: 20px; max-width: 560px; line-height: 1.45;
+.hero-foot .name,
+.hero-foot .np-nav { pointer-events: auto; }
+.hero-foot .name {
+  font-family: "Larsseit", var(--type-sans);
+  font-size: 20px; /* matches header nav items */
+  color: var(--fg);
 }
-
-.hero-dots {
-  /* rightmost dot aligns with the right edge of the "English" header item;
-     bottom edge of dots aligns with the bottom edge of the slide description */
-  position: absolute; right: var(--pad-x-right); bottom: 32px;
-  display: flex; gap: 24px; /* 34px center-to-center − 10px dot = 24px gap */
-  align-items: center;
-}
-.hero-dots button {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: rgba(255,255,255,.5);
-  transition: background .2s, transform .2s;
-}
-.hero-dots button.active { background: #fff; transform: scale(1.15); }
-.hero-dots.dark button { background: rgba(0,0,0,.25); }
-.hero-dots.dark button.active { background: #000; }
+/* The 1px/12%-black rule reads fine on white but gets lost over imagery —
+   thicken and darken it slightly in the overlay context only. */
+.hero-foot .np-nav-rule { width: 2px; background: rgba(0, 0, 0, 0.22); }
+/* Drop the arrow group so the glyphs' ink bottoms sit on the name's visual
+   bottom (descender line — every project name has one), not its baseline;
+   measured 5px at 20px Larsseit vs 18px Söhne arrows. */
+.hero-foot .np-nav { transform: translateY(5px); }
+.hero-foot.on-dark .name,
+.hero-foot.on-dark .np-arrow { color: #fff; }
+.hero-foot.on-dark .np-nav-rule { background: rgba(255, 255, 255, 0.45); }
 
 /* ---------------- Manifesto ---------------- */
 .manifesto {
@@ -356,9 +468,11 @@ img { display: block; max-width: 100%; }
 
 /* ---------------- Work grid ---------------- */
 .work-section {
-  /* Per Figma: home work grid breaks the 166px hero rail and uses a tighter
-     ~33px outer margin (matches the project hero image bleed). */
-  padding: 0 clamp(16px, 1.72vw, 44px) 160px;
+  /* Originally broke out to a tighter ~33px margin per Figma (paired with the
+     full-bleed hero). Now that the hero sits inside the page rails, the grid
+     follows the same rails — and runs two-up so cards keep their scale while
+     the portfolio is still filling out. */
+  padding: 0 var(--pad-x-right) 160px var(--pad-x);
 }
 .work-section.with-top { padding-top: 80px; }
 
@@ -367,22 +481,19 @@ img { display: block; max-width: 100%; }
   font-size: 32px; font-weight: 500; letter-spacing: -0.01em;
   margin-bottom: 48px;
 }
-/* On the Work index page, align the title with the breadcrumb's left edge
-   (the page's --pad-x rail) rather than the work-grid's narrower margin. */
-.work-section.with-top .section-title {
-  padding-left: calc(var(--pad-x) - clamp(16px, 1.72vw, 44px));
-}
 
 .work-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  column-gap: 26px;
-  row-gap: 80px;
+  grid-template-columns: repeat(2, 1fr);
+  column-gap: 26px; /* keep the original 3-up layout's tight gutter */
+  row-gap: 64px;
 }
 .work-card { display: block; cursor: pointer; }
 .work-thumb {
   width: 100%;
-  aspect-ratio: 555 / 360;
+  /* 16:9 (was 555:360): flatter standard ratio suits the wider two-up cards
+     and keeps the tight-gutter grid from growing too tall per row. */
+  aspect-ratio: 16 / 9;
   background: var(--placeholder);
   overflow: hidden; position: relative;
   transition: transform .5s cubic-bezier(.2,.7,.2,1);
@@ -801,6 +912,9 @@ img { display: block; max-width: 100%; }
 }
 .np-nav-rule {
   width: 1px; height: 18px; background: var(--rule);
+  /* Optically center against the arrow glyphs: their ink rides 1.5px below
+     the flex-centered midline (measured against sohne-buch at 18px/lh 1). */
+  transform: translateY(1.5px);
 }
 .np-arrow {
   font-family: var(--type-sans);
@@ -1150,7 +1264,6 @@ img { display: block; max-width: 100%; }
   .nav { margin-left: 120px; gap: 48px; }
 }
 @media (max-width: 1100px) {
-  .work-grid { grid-template-columns: repeat(2, 1fr); column-gap: 32px; row-gap: 64px; }
   .team-grid { grid-template-columns: repeat(2, 1fr); }
   .about-hero, .contact-grid { grid-template-columns: 1fr; gap: 48px; }
   .ah-image { aspect-ratio: 1 / 1; }
@@ -1208,12 +1321,11 @@ img { display: block; max-width: 100%; }
   .site-header .site-switch { display: none; }
   .hamburger-btn { display: flex; }
   .header-controls { gap: 16px; align-items: center; }
+  .hero { padding-right: 0; }
   .hero-frame { aspect-ratio: 1 / 1; }
   .hero-slide { padding: 24px 24px 19px; }
-  .hero-slide h2 { font-size: 16px; margin-bottom: 0; }
-  .hero-slide p { display: none; }
-  .hero-dots { left: 24px; right: auto; bottom: 46px; gap: 10px; }
-  .hero-dots button { width: 5px; height: 5px; }
+  .hero-foot { left: 24px; right: 24px; bottom: 19px; gap: 20px; }
+  .hero-foot .name { font-size: 16px; }
   .header-divider { display: none; }
   .jp-prompt { left: 16px; right: 16px; bottom: 16px; max-width: none; }
 }
@@ -1315,6 +1427,18 @@ img { display: block; max-width: 100%; }
   will-change: opacity, transform;
 }
 
+/* Scroll-triggered reveal — .is-inview is added by an IntersectionObserver
+   (useInView) once the block scrolls into view. Slower and larger than the
+   mount-time .reveal so mid-scroll content visibly pulls the eye as it
+   arrives; stagger siblings via --sr-delay. */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .9s ease, transform .9s cubic-bezier(.2,.7,.2,1);
+  transition-delay: var(--sr-delay, 0ms);
+}
+.is-inview .scroll-reveal { opacity: 1; transform: translateY(0); }
+
 /* Skeleton shimmer — a soft sweep across the existing placeholder grey, so loading
    state reads as the layout settling rather than a content swap. */
 @keyframes mdmc-shimmer {
@@ -1344,7 +1468,9 @@ img { display: block; max-width: 100%; }
 .img-fade.is-loaded { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
+  .site-header { transition: none; }
   .reveal { animation: none; opacity: 1; transform: none; }
+  .scroll-reveal { transition: none; opacity: 1; transform: none; }
   .skeleton { animation: none; }
   .img-fade { transition: none; }
 }

@@ -19,6 +19,24 @@ function FadeImg({ className = '', ...rest }) {
   )
 }
 
+// Flips true once (and stays true) when the element scrolls into view. Drives
+// .scroll-reveal entrances for below-the-fold content — unlike .reveal, which
+// plays on mount and has long finished by the time the user scrolls down.
+function useInView(threshold = 0.3) {
+  const ref = useRef(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof IntersectionObserver === 'undefined') { setInView(true); return }
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setInView(true); io.disconnect() }
+    }, { threshold })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [threshold])
+  return [ref, inView]
+}
+
 // Loading-state placeholder matching the work-card layout exactly, so swapping it
 // for the real card causes zero layout shift.
 function SkeletonWorkCard({ revealDelay = 0 }) {
@@ -45,10 +63,15 @@ export function HomePage({ navigate, projects = [], loading = false, homepage = 
 
   useEffect(() => {
     setIdx(0)
+  }, [featured.length])
+
+  // Depends on idx so any manual arrow navigation restarts the full 5.5s
+  // dwell instead of the pending auto-advance firing right after a click.
+  useEffect(() => {
     if (featured.length <= 1) return
     const tm = setInterval(() => setIdx((i) => (i + 1) % featured.length), 5500)
     return () => clearInterval(tm)
-  }, [featured.length])
+  }, [featured.length, idx])
 
   // Only download hero images as they're needed: the visible slide, the next one
   // (so the crossfade is ready), and any already shown. Avoids pulling all four
@@ -61,7 +84,9 @@ export function HomePage({ navigate, projects = [], loading = false, homepage = 
   const shouldLoad = (i) => i === idx || i === nextIdx || seen.has(i)
 
   const current = featured[idx] ?? {}
-  const isDark = current.darkHero === true
+  const goPrev = () => setIdx((i) => (i - 1 + featured.length) % featured.length)
+  const goNext = () => setIdx((i) => (i + 1) % featured.length)
+  const [manifestoRef, manifestoInView] = useInView()
 
   return (
     <main className="page">
@@ -83,31 +108,37 @@ export function HomePage({ navigate, projects = [], loading = false, homepage = 
                 ? (shouldLoad(i) && <FadeImg src={p.heroImage} alt={p.name} fetchPriority={i === idx ? 'high' : 'auto'} />)
                 : <span className="ph-label">{t('home.hero.placeholder', { name: p.name.toUpperCase() })}</span>
               }
-              <h2>{p.name}</h2>
-              <p>{p.desc}</p>
             </div>
           ))}
-          <div className={`hero-dots${isDark ? '' : ' dark'}`}>
-            {featured.map((_, i) => (
-              <button
-                key={i}
-                className={i === idx ? 'active' : ''}
-                onClick={() => setIdx(i)}
-                aria-label={t('home.hero.dotLabel', { n: i + 1 })}
-              />
-            ))}
-          </div>
+          {featured.length > 0 && (
+            <div className={`hero-foot${current.darkHero ? ' on-dark' : ''}`}>
+              <a
+                className="name"
+                href="#"
+                onClick={(e) => { e.preventDefault(); navigate('project', current.id) }}
+              >
+                {current.name}
+              </a>
+              <div className="np-nav" role="group" aria-label="Browse featured projects">
+                <button type="button" className="np-arrow" onClick={goPrev} aria-label="Previous slide">←</button>
+                <span className="np-nav-rule" aria-hidden="true"></span>
+                <button type="button" className="np-arrow" onClick={goNext} aria-label="Next slide">→</button>
+              </div>
+            </div>
+          )}
         </div>
         )}
       </section>
 
-      <section className="manifesto">
-        <div className="reveal" style={{ '--reveal-delay': '100ms' }}>
+      <section className="manifesto" ref={manifestoRef}>
+        <div className={manifestoInView ? 'is-inview' : ''}>
           {(homepage?.manifesto?.length > 0
             ? homepage.manifesto
             : [t('home.manifesto.1'), t('home.manifesto.2'), t('home.manifesto.3')]
           ).map((para, i) => (
-            <p key={i}><NL text={para} /></p>
+            <p key={i} className="scroll-reveal" style={{ '--sr-delay': `${i * 150}ms` }}>
+              <NL text={para} />
+            </p>
           ))}
         </div>
       </section>
@@ -558,9 +589,9 @@ export function ProjectPage({ id, navigate, projects = [], loading = false }) {
             {project.client} <span className="sep" aria-hidden="true">/</span> {project.year}
           </div>
         </div>
-        {project.thumbnail && (
+        {project.heroImage && (
           <div className={`project-image ${project.cls} reveal`} style={{ '--reveal-delay': '80ms' }}>
-            <FadeImg src={project.thumbnail} alt={project.name} fetchPriority="high" />
+            <FadeImg src={project.heroImage} alt={project.name} fetchPriority="high" />
           </div>
         )}
       </section>
