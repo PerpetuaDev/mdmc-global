@@ -1,3 +1,5 @@
+import SNAPSHOT from './content-snapshot.json'
+
 const BASE = import.meta.env.DEV
   ? '/strapi/api'
   : (import.meta.env.VITE_STRAPI_URL ?? 'https://upbeat-approval-82a9e54c20.strapiapp.com/api')
@@ -46,6 +48,47 @@ function originalUrl(media) {
   return media.url ?? null
 }
 
+// Strapi Cloud can hang or cold-start; without a timeout the UI sits on
+// skeletons indefinitely because the static-fallback paths only trigger on
+// rejection, never on a hung request. Abort slow requests and retry once
+// (cold starts usually answer on the second attempt), then reject so callers
+// fall back. 4xx responses don't retry — they won't get better.
+// Live fetch with last-known-good fallback: if Strapi is unreachable, serve
+// the content snapshot baked in at build time (scripts/snapshot-content.mjs —
+// real case studies from the last deploy, not placeholders). Only if the
+// snapshot also has nothing does the error propagate to the caller.
+async function withSnapshot(liveFn, snapshotKey, mapFn) {
+  try {
+    return await liveFn()
+  } catch (err) {
+    const data = SNAPSHOT[snapshotKey]
+    if (data == null || (Array.isArray(data) && data.length === 0)) throw err
+    return mapFn(data)
+  }
+}
+
+async function fetchJSON(url, { timeout = 8000, retries = 1 } = {}) {
+  const headers = { 'Content-Type': 'application/json' }
+  if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
+  for (let attempt = 0; ; attempt++) {
+    const ctl = new AbortController()
+    const tm = setTimeout(() => ctl.abort(), timeout)
+    try {
+      const res = await fetch(url, { headers, signal: ctl.signal })
+      if (!res.ok) {
+        const err = new Error(`Strapi ${res.status}`)
+        err.noRetry = res.status < 500
+        throw err
+      }
+      return await res.json()
+    } catch (err) {
+      if (err.noRetry || attempt >= retries) throw err
+    } finally {
+      clearTimeout(tm)
+    }
+  }
+}
+
 function mapProject(item, index) {
   const year = item.date
     ? String(new Date(item.date).getFullYear())
@@ -85,39 +128,18 @@ function mapMember(item) {
   }
 }
 
-export async function fetchMembers() {
-  const headers = { 'Content-Type': 'application/json' }
-  if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
-
-  const url = `${BASE}/members?populate=*&sort=order:asc`
-  const res = await fetch(url, { headers })
-  if (!res.ok) throw new Error(`Strapi ${res.status}`)
-  const { data } = await res.json()
+function mapMembers(data) {
   return Array.isArray(data) ? data.map(mapMember) : []
 }
 
-export async function fetchHomepage(locale = 'en') {
-  const headers = { 'Content-Type': 'application/json' }
-  if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
-
-  const url = `${BASE}/homepage?locale=${locale}`
-  const res = await fetch(url, { headers })
-  if (!res.ok) throw new Error(`Strapi ${res.status}`)
-  const { data } = await res.json()
+function mapHomepage(data) {
   if (!data) return null
   return {
     manifesto: (data.manifesto ?? '').split(/\n\n+/).map((s) => s.trim()).filter(Boolean),
   }
 }
 
-export async function fetchAbout() {
-  const headers = { 'Content-Type': 'application/json' }
-  if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
-
-  const url = `${BASE}/about?populate=*`
-  const res = await fetch(url, { headers })
-  if (!res.ok) throw new Error(`Strapi ${res.status}`)
-  const { data } = await res.json()
+function mapAbout(data) {
   if (!data) return null
   const kv_items = [
     { title: data.kv_1_title, body: data.kv_1_body, image: bestUrl(data.kv_1_image) },
@@ -133,14 +155,7 @@ export async function fetchAbout() {
   }
 }
 
-export async function fetchAboutJa() {
-  const headers = { 'Content-Type': 'application/json' }
-  if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
-
-  const url = `${BASE}/about-japan?populate=*`
-  const res = await fetch(url, { headers })
-  if (!res.ok) throw new Error(`Strapi ${res.status}`)
-  const { data } = await res.json()
+function mapAboutJa(data) {
   if (!data) return null
   return {
     hero_image: originalUrl(data.hero_image),
@@ -151,6 +166,34 @@ export async function fetchAboutJa() {
     signature_name: data.signature_name ?? null,
     signature_romaji: data.signature_romaji ?? null,
   }
+}
+
+export function fetchMembers() {
+  return withSnapshot(
+    async () => mapMembers((await fetchJSON(`${BASE}/members?populate=*&sort=order:asc`)).data),
+    'members', mapMembers,
+  )
+}
+
+export function fetchHomepage(locale = 'en') {
+  return withSnapshot(
+    async () => mapHomepage((await fetchJSON(`${BASE}/homepage?locale=${locale}`)).data),
+    `homepage_${locale}`, mapHomepage,
+  )
+}
+
+export function fetchAbout() {
+  return withSnapshot(
+    async () => mapAbout((await fetchJSON(`${BASE}/about?populate=*`)).data),
+    'about', mapAbout,
+  )
+}
+
+export function fetchAboutJa() {
+  return withSnapshot(
+    async () => mapAboutJa((await fetchJSON(`${BASE}/about-japan?populate=*`)).data),
+    'about_japan', mapAboutJa,
+  )
 }
 
 export async function submitContact({ name, email, company, budget, message }) {
@@ -164,13 +207,13 @@ export async function submitContact({ name, email, company, budget, message }) {
   return res.json()
 }
 
-export async function fetchProjects(locale = 'en') {
-  const headers = { 'Content-Type': 'application/json' }
-  if (TOKEN) headers.Authorization = `Bearer ${TOKEN}`
-
-  const url = `${BASE}/projects?populate=*&sort=date:desc&locale=${locale}`
-  const res = await fetch(url, { headers })
-  if (!res.ok) throw new Error(`Strapi ${res.status}`)
-  const { data } = await res.json()
+function mapProjects(data) {
   return Array.isArray(data) ? data.map(mapProject) : []
+}
+
+export function fetchProjects(locale = 'en') {
+  return withSnapshot(
+    async () => mapProjects((await fetchJSON(`${BASE}/projects?populate=*&sort=date:desc&locale=${locale}`)).data),
+    `projects_${locale}`, mapProjects,
+  )
 }

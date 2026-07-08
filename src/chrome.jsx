@@ -5,13 +5,47 @@ import mdmcLogo from './assets/mdmc-logo.png'
 export function Header({ route, navigate, crumbs }) {
   const t = useT()
   const site = useSite()
-  const [scrolled, setScrolled] = useState(false)
+  // Pentagram-style header choreography, three modes:
+  //   top    — in normal flow at the top of the page; scrolls away naturally
+  //   hidden — fixed but translated above the viewport (page reads chrome-free)
+  //   pinned — fixed compact header slid in, on upward scroll intent
+  const TOP_ZONE = 24      // within this of the top, hand back to the in-flow header
+  const HEADER_CLEAR = 170 // scroll depth at which the in-flow header is fully off-screen
+  const [header, setHeader] = useState(() =>
+    typeof window === 'undefined' || window.scrollY <= HEADER_CLEAR
+      ? { mode: 'top', snap: false }
+      : { mode: 'hidden', snap: true })
   const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24)
+    let lastY = window.scrollY
+    const onScroll = () => {
+      const y = Math.max(0, window.scrollY)
+      const dy = y - lastY
+      if (Math.abs(dy) < 4) return // ignore momentum jitter
+      lastY = y
+      setHeader((prev) => {
+        const { mode } = prev
+        let next
+        if (y <= TOP_ZONE) next = 'top'
+        else if (dy < 0) {
+          // Reversing while the in-flow header is still partially on screen
+          // continues the natural reveal; from deeper, slide the pinned one in.
+          next = mode === 'top' && y <= HEADER_CLEAR ? 'top' : 'pinned'
+        } else {
+          // Scrolling down: let the in-flow header roll off naturally first,
+          // then go (or stay) hidden; a pinned header slides back out.
+          next = mode === 'top' && y <= HEADER_CLEAR ? 'top' : 'hidden'
+        }
+        if (next === mode) return prev
+        // snap: entering hidden straight from the in-flow header must park the
+        // floating header above the viewport with NO transition — otherwise it
+        // visibly slides away as a phantom "second header". It animates only
+        // once the first upward scroll pins it in.
+        return { mode: next, snap: mode === 'top' && next === 'hidden' }
+      })
+    }
     window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
@@ -32,9 +66,13 @@ export function Header({ route, navigate, crumbs }) {
 
   const handleNav = (id) => { setMenuOpen(false); navigate(id) }
 
+  // The mobile menu's close button lives in the header — never hide it while open.
+  const mode = menuOpen && header.mode === 'hidden' ? 'pinned' : header.mode
+
   return (
     <>
-      <header className={`site-header${scrolled ? ' compact' : ''}${isHome ? ' home' : ' sub'}`}>
+      {mode !== 'top' && <div className="header-spacer" aria-hidden="true" />}
+      <header className={`site-header${mode !== 'top' ? ' floating' : ''}${mode === 'pinned' ? ' pinned' : ''}${mode === 'hidden' && header.snap ? ' no-anim' : ''}${isHome ? ' home' : ' sub'}`}>
         {isHome ? (
           <a className="brand" onClick={(e) => { e.preventDefault(); handleNav('home') }} href="#" aria-label="MDMC home">
             <img src={mdmcLogo} alt="MDMC" />

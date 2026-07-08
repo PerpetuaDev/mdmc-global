@@ -1,15 +1,13 @@
 import { useState, useEffect, cloneElement } from 'react'
 import { useT, useSite } from './i18n.jsx'
-import STATIC_PROJECTS from './data.js'
 import { fetchProjects, fetchMembers, fetchHomepage, fetchAbout, fetchAboutJa } from './strapi.js'
 import { Header, Footer, JpSuggestionPrompt } from './chrome.jsx'
 import { HomePage, WorkPage, AboutPage, ContactPage, ProjectPage } from './pages.jsx'
 
 export default function App() {
   const [route, setRoute] = useState({ page: 'home', id: null })
-  // null = still loading (show skeletons). We never render STATIC_PROJECTS as the
-  // initial state — it's placeholder content and was flashing before Strapi answered.
-  // It now serves only as a last-resort fallback if the fetch actually fails.
+  // null = still loading (show skeletons). Resilience lives in strapi.js:
+  // live CMS → build-time content snapshot → only then the empty state here.
   const [projects, setProjects] = useState(null)
   const [members, setMembers] = useState([])
   const [homepage, setHomepage] = useState(null)
@@ -24,9 +22,8 @@ export default function App() {
     setProjects(null) // re-enter loading state on mount and on locale change
     fetchProjects(locale)
       .then((data) => { if (!cancelled) setProjects(data) })
-      // Strapi unreachable: English falls back to static portfolio so the grid
-      // isn't empty; Japan has no static equivalent, so show an empty state.
-      .catch(() => { if (!cancelled) setProjects(locale === 'ja' ? [] : STATIC_PROJECTS) })
+      // Both live Strapi AND the baked snapshot failed — show the empty state.
+      .catch(() => { if (!cancelled) setProjects([]) })
     fetchMembers()
       .then((data) => { if (!cancelled && data.length > 0) setMembers(data) })
       .catch(() => {})

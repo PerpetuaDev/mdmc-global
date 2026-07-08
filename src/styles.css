@@ -180,8 +180,9 @@ img { display: block; max-width: 100%; }
 
 /* ---------------- Header ---------------- */
 .site-header {
-  position: sticky;
-  top: 0;
+  /* In flow at the top of the page (mode "top"): scrolls away with the
+     content. The .floating variant detaches it for the scrolled states. */
+  position: relative;
   z-index: 100;
   background: var(--bg);
   display: grid;
@@ -191,15 +192,34 @@ img { display: block; max-width: 100%; }
   padding: 64px var(--pad-x-right) 36px var(--pad-x);
   font-size: 20px;
   column-gap: 0;
-  /* The compact (detached) state changes padding — animate it so restoring
-     the full crown at scroll-top glides instead of jumping. */
-  transition: padding .35s cubic-bezier(.2, .7, .2, 1), box-shadow .35s ease;
+  transition:
+    padding .35s cubic-bezier(.2, .7, .2, 1),
+    transform .35s cubic-bezier(.2, .7, .2, 1),
+    box-shadow .35s ease;
 }
 .site-header.sub {
   /* subpages: brand centered, crumbs left, lang right */
   grid-template-columns: 1fr auto 1fr;
 }
-.site-header.compact { padding-top: 28px; padding-bottom: 20px; box-shadow: 0 1px 0 var(--rule); }
+/* Detached (modes "hidden"/"pinned"): fixed and compact, parked above the
+   viewport until pinned slides it in on upward scroll. */
+.site-header.floating {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  transform: translateY(-100%);
+  padding-top: 28px;
+  padding-bottom: 20px;
+}
+.site-header.floating.pinned {
+  transform: translateY(0);
+  box-shadow: 0 1px 0 var(--rule);
+}
+/* Parked above the viewport without animating there (set while entering the
+   hidden state from the in-flow header; dropped on the first upward pin). */
+.site-header.no-anim { transition: none; }
+/* Occupies the detached header's flow space so swapping modes never shifts
+   the document. */
+.header-spacer { height: var(--header-h); }
 
 .brand {
   display: flex; align-items: center; gap: 14px;
@@ -1482,7 +1502,10 @@ img { display: block; max-width: 100%; }
 .img-fade.is-loaded { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .site-header { transition: none; }
+  /* Deliberately NOT suppressed: .site-header's slide/padding transition — a
+     small functional bar, not vestibular-scale motion; without it the pinned
+     header pops in jarringly (and e.g. pentagram.com animates theirs
+     regardless of this preference). Content reveals below stay suppressed. */
   .reveal { animation: none; opacity: 1; transform: none; }
   .scroll-reveal { transition: none; opacity: 1; transform: none; }
   .fade-block { transition: none; opacity: 1; transform: none; }

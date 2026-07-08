@@ -1,0 +1,58 @@
+// Build-time content snapshot: fetches all Strapi content and writes it to
+// src/content-snapshot.json, which the frontend uses as a last-known-good
+// fallback when the live CMS is unreachable at runtime (see strapi.js).
+//
+// Runs in CI before `vite build` (refreshing the snapshot on every deploy)
+// and can be run locally any time:
+//
+//   node scripts/snapshot-content.mjs
+//
+// If Strapi is unreachable, the existing snapshot is left untouched and the
+// script exits 0 so a CMS outage never blocks a deploy — the last good
+// snapshot ships instead. Token from $VITE_STRAPI_TOKEN or .env.
+
+import { readFile, writeFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const API = 'https://upbeat-approval-82a9e54c20.strapiapp.com/api'
+const OUT = resolve(ROOT, 'src/content-snapshot.json')
+
+async function token() {
+  if (process.env.VITE_STRAPI_TOKEN) return process.env.VITE_STRAPI_TOKEN
+  try {
+    const env = await readFile(resolve(ROOT, '.env'), 'utf8')
+    const m = env.match(/^VITE_STRAPI_TOKEN=(.*)$/m)
+    return m ? m[1].trim() : ''
+  } catch { return '' }
+}
+
+const ENDPOINTS = {
+  projects_en: '/projects?populate=*&sort=date:desc&locale=en',
+  projects_ja: '/projects?populate=*&sort=date:desc&locale=ja',
+  members: '/members?populate=*&sort=order:asc',
+  homepage_en: '/homepage?locale=en',
+  homepage_ja: '/homepage?locale=ja',
+  about: '/about?populate=*',
+  about_japan: '/about-japan?populate=*',
+}
+
+const tok = await token()
+const headers = tok ? { Authorization: `Bearer ${tok}` } : {}
+const snapshot = { generatedAt: new Date().toISOString() }
+
+try {
+  for (const [key, path] of Object.entries(ENDPOINTS)) {
+    const res = await fetch(`${API}${path}`, { headers })
+    if (!res.ok) throw new Error(`${path} → ${res.status}`)
+    snapshot[key] = (await res.json()).data ?? null
+  }
+} catch (err) {
+  console.warn(`snapshot-content: Strapi unreachable (${err.message}) — keeping existing snapshot`)
+  process.exit(0)
+}
+
+await writeFile(OUT, JSON.stringify(snapshot))
+const projects = snapshot.projects_en?.length ?? 0
+console.log(`snapshot-content: wrote ${OUT.replace(ROOT + '/', '')} (${projects} projects, generated ${snapshot.generatedAt})`)

@@ -27,6 +27,11 @@ jobs:
 
       - run: npm ci
 
+      - name: Refresh content snapshot
+        run: node scripts/snapshot-content.mjs
+        env:
+          VITE_STRAPI_TOKEN: ${{ secrets.VITE_STRAPI_TOKEN }}
+
       - name: Build
         run: npm run build
         env:
