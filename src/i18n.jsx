@@ -4,7 +4,9 @@ const STRINGS = {
   en: {
     "nav.work": "Work",
     "nav.about": "About",
+    "nav.news": "News",
     "nav.contact": "Contact",
+    "nav.careers": "Careers",
     "lang.label": "English",
     "lang.en": "English",
     "lang.ja": "日本語",
@@ -21,6 +23,10 @@ const STRINGS = {
     "home.work.view": "View project",
 
     "work.title": "Work",
+    "work.filter.all": "All work",
+    "work.region.Japan": "Japan",
+    "work.region.New Zealand": "New Zealand",
+    "work.region.Australia": "Australia",
 
     "about.headline": "A small studio for the long, useful work.",
     "about.lede.1": "MDMC is a small team split across Christchurch, Sydney, and Yokohama. We work with founders, operators, and in-house teams on the design problems that don't fit neatly into a brief — the ones that touch product, brand, and operations at the same time.",
@@ -60,6 +66,46 @@ const STRINGS = {
     "crumb.work": "Work",
     "crumb.about": "About",
     "crumb.contact": "Contact",
+    "crumb.news": "News",
+    "crumb.careers": "Careers",
+
+    "news.title": "News",
+    "news.read": "Read article",
+    "news.empty": "Nothing published yet — the first piece is on its way.",
+
+    "menu.allWork": "All projects",
+    "menu.allNews": "All news",
+    "menu.studio": "Studio",
+    "menu.language": "Language",
+    "menu.newsSoon": "Coming soon",
+
+    "careers.title": "Careers",
+    "careers.headline": "Do the best work of your career, quietly.",
+    "careers.intro": "We hire rarely and deliberately. When we do, we look for people who care about the craft more than the credit, who can hold a whole problem in their head, and who write clearly.",
+    "careers.openRoles": "Open roles",
+    "careers.noRoles": "No open roles right now — but good people make their own timing.",
+    "careers.speculative": "Think you belong here anyway? Write to",
+
+    "careers.job.about": "About the role",
+    "careers.job.offer": "What we offer",
+    "careers.job.apply": "Apply for this position",
+    "careers.job.applyNote": "Upload your CV and a short cover letter below — .pdf, .doc, or .docx. A team member reads every application personally.",
+    "careers.form.portfolio": "Portfolio or LinkedIn link",
+    "careers.form.message": "A few lines about you",
+    "careers.form.upload": "CV & cover letter",
+    "careers.form.uploadBtn": "Choose files",
+    "careers.form.uploadHint": ".pdf, .doc, .docx — up to 4 files, 15MB total",
+    "careers.form.tooBig": "Those files exceed the 15MB limit — remove one or send them by email instead.",
+    "careers.form.send": "Submit application",
+    "careers.form.sending": "Sending…",
+    "careers.form.received": "Received.",
+    "careers.form.thanks": "Thanks, {name}. We read every application personally and will reply within a few working days.",
+    "careers.offer.1.title": "Work that ships",
+    "careers.offer.1.body": "One project per team at a time, two-week loops, and no account managers between you and the work. What you make goes live, and you stay in the room for it.",
+    "careers.offer.2.title": "Flexible by default",
+    "careers.offer.2.body": "Studio desks in Christchurch, Sydney, and Yokohama if you want them; fixed hours if you prefer them. Most of the team shapes their week around the work, not the other way around.",
+    "careers.offer.3.title": "Growth without theatre",
+    "careers.offer.3.body": "A budget for books, courses, and conferences, and honest reviews twice a year. No ranking ceremonies — just senior people who read your work closely.",
 
     "project.section.overview": "Overview",
     "project.detail.full": "DETAIL — FULL BLEED",
@@ -93,7 +139,9 @@ const STRINGS = {
   ja: {
     "nav.work": "ワーク",
     "nav.about": "私たちについて",
+    "nav.news": "ニュース",
     "nav.contact": "お問い合わせ",
+    "nav.careers": "採用情報",
     "lang.label": "日本語",
     "lang.en": "English",
     "lang.ja": "日本語",
@@ -110,6 +158,10 @@ const STRINGS = {
     "home.work.view": "プロジェクトを見る",
 
     "work.title": "ワーク",
+    "work.filter.all": "すべて",
+    "work.region.Japan": "日本",
+    "work.region.New Zealand": "ニュージーランド",
+    "work.region.Australia": "オーストラリア",
 
     "about.headline": "長く、実りある仕事のための小さなスタジオ。",
     "about.lede.1": "MDMCはクライストチャーチ、シドニー、横浜にまたがる小さなチームです。創業者、現場の運営者、社内チームと共に、ひとつのブリーフに収まらないデザイン課題——プロダクト、ブランド、オペレーションが同時に絡む問題——に取り組んでいます。",
@@ -184,6 +236,46 @@ const STRINGS = {
     "crumb.work": "ワーク",
     "crumb.about": "私たちについて",
     "crumb.contact": "お問い合わせ",
+    "crumb.news": "ニュース",
+    "crumb.careers": "採用情報",
+
+    "news.title": "ニュース",
+    "news.read": "記事を読む",
+    "news.empty": "まだ記事はありません。最初の記事を準備中です。",
+
+    "menu.allWork": "すべてのプロジェクト",
+    "menu.allNews": "ニュース一覧",
+    "menu.studio": "スタジオ",
+    "menu.language": "言語",
+    "menu.newsSoon": "準備中",
+
+    "careers.title": "採用情報",
+    "careers.headline": "キャリアで最良の仕事を、静かに。",
+    "careers.intro": "採用はまれで、慎重です。求めるのは、名声より仕事そのものを大切にし、問題の全体を頭の中に描け、明晰な文章を書ける人です。",
+    "careers.openRoles": "募集中のポジション",
+    "careers.noRoles": "現在募集中のポジションはありません。ただ、良い人材は自らタイミングをつくるものです。",
+    "careers.speculative": "それでもここが自分の場所だと思う方は、こちらまで:",
+
+    "careers.job.about": "仕事内容",
+    "careers.job.offer": "私たちが提供するもの",
+    "careers.job.apply": "このポジションに応募する",
+    "careers.job.applyNote": "履歴書・職務経歴書と簡単なカバーレターを下記からアップロードしてください(.pdf、.doc、.docx)。すべての応募にチームメンバーが直接目を通します。",
+    "careers.form.portfolio": "ポートフォリオまたはLinkedInのリンク",
+    "careers.form.message": "自己紹介を数行で",
+    "careers.form.upload": "履歴書・カバーレター",
+    "careers.form.uploadBtn": "ファイルを選択",
+    "careers.form.uploadHint": ".pdf、.doc、.docx — 最大4ファイル、合計15MBまで",
+    "careers.form.tooBig": "合計15MBの上限を超えています。ファイルを減らすか、メールでお送りください。",
+    "careers.form.send": "応募を送信",
+    "careers.form.sending": "送信中…",
+    "careers.form.received": "受け取りました。",
+    "careers.form.thanks": "{name}様、ありがとうございます。すべての応募に直接目を通し、数営業日以内にご返信いたします。",
+    "careers.offer.1.title": "世に出る仕事",
+    "careers.offer.1.body": "1チーム1プロジェクト、2週間のループ、間にアカウントマネージャーを挟みません。つくったものは実際に公開され、その場にあなたも立ち会います。",
+    "careers.offer.2.title": "柔軟な働き方",
+    "careers.offer.2.body": "クライストチャーチ、シドニー、横浜のスタジオデスクも、固定の勤務時間も、必要なら使えます。多くのメンバーは仕事に合わせて週の形を自分で決めています。",
+    "careers.offer.3.title": "誇張のない成長",
+    "careers.offer.3.body": "書籍・講座・カンファレンスの予算と、年2回の率直なレビュー。順位付けの儀式はなく、あなたの仕事を丁寧に読むシニアメンバーがいるだけです。",
 
     "project.section.overview": "概要",
     "project.detail.full": "ディテール — フルブリード",
@@ -269,31 +361,13 @@ export function NL({ text }) {
   ))
 }
 
-const SITE_KEY = 'mdmc.site'
-const SITE_EVENT = 'mdmc:site-change'
-
-export function getSite() {
-  try {
-    const v = localStorage.getItem(SITE_KEY)
-    if (v === 'global' || v === 'japan') return v
-  } catch (e) {}
-  return 'global'
-}
-
-export function setSite(site) {
-  try { localStorage.setItem(SITE_KEY, site) } catch (e) {}
-  document.documentElement.setAttribute('data-site', site)
-  window.dispatchEvent(new CustomEvent(SITE_EVENT, { detail: site }))
-  setLocale(site === 'japan' ? 'ja' : 'en')
-}
-
-export function useSite() {
-  const [site, set] = useState(getSite)
-  useEffect(() => {
-    const handler = (e) => set(e.detail)
-    window.addEventListener(SITE_EVENT, handler)
-    document.documentElement.setAttribute('data-site', site)
-    return () => window.removeEventListener(SITE_EVENT, handler)
-  }, [])
-  return site
-}
+// One-time migration: the old Global/Japan "site" model is dissolved into the
+// single language axis. Returning visitors who had chosen the Japan site
+// carry their choice over as the Japanese language preference.
+try {
+  const oldSite = localStorage.getItem('mdmc.site')
+  if (oldSite === 'japan' && !localStorage.getItem(LOCALE_KEY)) {
+    localStorage.setItem(LOCALE_KEY, 'ja')
+  }
+  localStorage.removeItem('mdmc.site')
+} catch (e) {}

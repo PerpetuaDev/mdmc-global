@@ -31,25 +31,45 @@ async function token() {
 const ENDPOINTS = {
   projects_en: '/projects?populate=*&sort=date:desc&locale=en',
   projects_ja: '/projects?populate=*&sort=date:desc&locale=ja',
+  articles_en: '/articles?populate=*&sort=date:desc&locale=en',
+  articles_ja: '/articles?populate=*&sort=date:desc&locale=ja',
   members: '/members?populate=*&sort=order:asc',
   homepage_en: '/homepage?locale=en',
   homepage_ja: '/homepage?locale=ja',
   about: '/about?populate=*',
   about_japan: '/about-japan?populate=*',
+  career_en: '/career?populate=*&locale=en',
+  career_ja: '/career?populate=*&locale=ja',
+  jobs_en: '/jobs?populate=*&locale=en',
+  jobs_ja: '/jobs?populate=*&locale=ja',
 }
 
 const tok = await token()
 const headers = tok ? { Authorization: `Bearer ${tok}` } : {}
-const snapshot = { generatedAt: new Date().toISOString() }
 
-try {
-  for (const [key, path] of Object.entries(ENDPOINTS)) {
+let existing = {}
+try { existing = JSON.parse(await readFile(OUT, 'utf8')) } catch {}
+
+const snapshot = { generatedAt: new Date().toISOString() }
+let fetched = 0
+
+// Per-endpoint tolerance: a 404 (content type not deployed yet) or a single
+// flaky endpoint keeps that key's previous value instead of aborting the
+// whole snapshot. If NOTHING could be fetched, keep the old file untouched.
+for (const [key, path] of Object.entries(ENDPOINTS)) {
+  try {
     const res = await fetch(`${API}${path}`, { headers })
-    if (!res.ok) throw new Error(`${path} → ${res.status}`)
+    if (!res.ok) throw new Error(`${res.status}`)
     snapshot[key] = (await res.json()).data ?? null
+    fetched++
+  } catch (err) {
+    console.warn(`snapshot-content: ${path} failed (${err.message}) — keeping previous value`)
+    snapshot[key] = existing[key] ?? null
   }
-} catch (err) {
-  console.warn(`snapshot-content: Strapi unreachable (${err.message}) — keeping existing snapshot`)
+}
+
+if (fetched === 0) {
+  console.warn('snapshot-content: nothing fetched — keeping existing snapshot')
   process.exit(0)
 }
 

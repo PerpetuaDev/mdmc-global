@@ -1,10 +1,130 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useT, useSite, setSite } from './i18n.jsx'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { useT, useLocale, setLocale } from './i18n.jsx'
 import mdmcLogo from './assets/mdmc-logo.png'
 
-export function Header({ route, navigate, crumbs }) {
+// Language is the single locale axis (the old Global/Japan site split is
+// gone): switching stays on the current page and re-renders in place.
+export function LangSwitch({ className = 'site-switch' }) {
   const t = useT()
-  const site = useSite()
+  const locale = useLocale()
+  return (
+    <div className={className} role="group" aria-label="Language">
+      <button
+        type="button"
+        className={`site-chip${locale === 'en' ? ' selected' : ''}`}
+        aria-pressed={locale === 'en'}
+        onClick={() => setLocale('en')}
+      >
+        {t('lang.en')}
+      </button>
+      <span className="lang-slash" aria-hidden="true">/</span>
+      <button
+        type="button"
+        className={`site-chip${locale === 'ja' ? ' selected' : ''}`}
+        aria-pressed={locale === 'ja'}
+        onClick={() => setLocale('ja')}
+      >
+        {t('lang.ja')}
+      </button>
+    </div>
+  )
+}
+
+// The dropdown mega panel: unfolds beneath the header (both the in-flow and
+// pinned states — it anchors to the header's bottom edge in either). Contents
+// follow the HOVERED nav item — Work lists recent projects, News the latest
+// articles, About nests the studio pages (incl. Careers). Desktop-only; the
+// mobile overlay menu covers small screens.
+function MegaPanel({ section, navigate, navigateItem, projects, articles, onEnter, onLeave }) {
+  const t = useT()
+  const open = !!section
+  // Keep rendering the last section while closed so the fade-out doesn't
+  // empty the box mid-animation (and the measured height stays meaningful).
+  const lastSectionRef = useRef(null)
+  if (section) lastSectionRef.current = section
+  const active = section ?? lastSectionRef.current
+
+  // The panel's height follows its content: an inner wrapper is measured via
+  // ResizeObserver and the outer box animates to it, so switching between a
+  // long section (Work) and a short one (About) morphs instead of snapping —
+  // and short menus don't inherit the tallest section's whitespace.
+  const innerRef = useRef(null)
+  const [panelH, setPanelH] = useState(null)
+  useEffect(() => {
+    const el = innerRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => setPanelH(el.offsetHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  let label = ''
+  let items = []
+  let allLink = null
+  if (active === 'work') {
+    label = t('nav.work')
+    items = projects.slice(0, 4).map((p) => ({ key: p.id, label: p.name, page: 'project', id: p.id }))
+    allLink = { label: t('menu.allWork'), page: 'work' }
+  } else if (active === 'news') {
+    label = t('nav.news')
+    items = articles.slice(0, 3).map((a) => ({ key: a.id, label: a.title, page: 'article', id: a.id }))
+    allLink = { label: t('menu.allNews'), page: 'news' }
+  } else if (active === 'about') {
+    label = t('nav.about')
+    items = [
+      { key: 'about', label: t('nav.about'), page: 'about' },
+      { key: 'careers', label: t('nav.careers'), page: 'careers' },
+    ]
+  }
+
+  return (
+    <div
+      className={`mega-panel${open ? ' open' : ''}`}
+      style={panelH != null ? { height: panelH } : undefined}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      aria-hidden={!open}
+    >
+      <div className="mp-inner" ref={innerRef}>
+      <div className="mp-col">
+        <div className="mp-head">
+          <div className="mp-label">{label}</div>
+          {allLink && (
+            <a
+              className="mp-all"
+              href="#"
+              tabIndex={open ? 0 : -1}
+              onClick={(e) => { e.preventDefault(); navigate(allLink.page) }}
+            >
+              {allLink.label} <span className="arrow">→</span>
+            </a>
+          )}
+        </div>
+        <ul>
+          {items.map((item) => (
+            <li key={item.key}>
+              <a
+                href="#"
+                tabIndex={open ? 0 : -1}
+                onClick={(e) => { e.preventDefault(); navigateItem(item.page, item.id ?? null) }}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+          {active === 'news' && items.length === 0 && (
+            <li className="mp-muted">{t('menu.newsSoon')}</li>
+          )}
+        </ul>
+      </div>
+
+      </div>
+    </div>
+  )
+}
+
+export function Header({ route, navigate, projects = [], articles = [] }) {
+  const t = useT()
   // Pentagram-style header choreography, three modes:
   //   top    — in normal flow at the top of the page; scrolls away naturally
   //   hidden — fixed but translated above the viewport (page reads chrome-free)
@@ -51,16 +171,43 @@ export function Header({ route, navigate, crumbs }) {
 
   useEffect(() => { setMenuOpen(false) }, [route])
 
+  // Mega panel: unfolds under the header on nav hover with per-item contents
+  // (work/about/news; contact has no panel); closes on route change, Escape,
+  // or mouse-out.
+  const PANEL_SECTIONS = ['work', 'about', 'news']
+  const [panelSection, setPanelSection] = useState(null)
+
+  // Scroll is locked while either overlay is open — for the mega panel this
+  // also means the header can never scroll-hide out from under it.
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : ''
+    document.body.style.overflow = (menuOpen || panelSection) ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
-  }, [menuOpen])
+  }, [menuOpen, panelSection])
+  const panelTimer = useRef(null)
+  const openPanel = (id) => {
+    clearTimeout(panelTimer.current)
+    setPanelSection(PANEL_SECTIONS.includes(id) ? id : null)
+  }
+  const holdPanel = () => clearTimeout(panelTimer.current)
+  const scheduleClosePanel = () => {
+    clearTimeout(panelTimer.current)
+    panelTimer.current = setTimeout(() => setPanelSection(null), 220)
+  }
+  useEffect(() => { setPanelSection(null) }, [route])
+  useEffect(() => { if (header.mode === 'hidden') setPanelSection(null) }, [header.mode])
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setPanelSection(null) }
+    window.addEventListener('keydown', onKey)
+    return () => { window.removeEventListener('keydown', onKey); clearTimeout(panelTimer.current) }
+  }, [])
 
   const isHome = route === 'home'
 
   const NAV_ITEMS = [
     { id: 'work',    label: t('nav.work') },
     { id: 'about',   label: t('nav.about') },
+    // News appears in the nav automatically once the first article publishes.
+    ...(articles.length > 0 ? [{ id: 'news', label: t('nav.news') }] : []),
     { id: 'contact', label: t('nav.contact') },
   ]
 
@@ -72,67 +219,30 @@ export function Header({ route, navigate, crumbs }) {
   return (
     <>
       {mode !== 'top' && <div className="header-spacer" aria-hidden="true" />}
-      <header className={`site-header${mode !== 'top' ? ' floating' : ''}${mode === 'pinned' ? ' pinned' : ''}${mode === 'hidden' && header.snap ? ' no-anim' : ''}${isHome ? ' home' : ' sub'}`}>
-        {isHome ? (
-          <a className="brand" onClick={(e) => { e.preventDefault(); handleNav('home') }} href="#" aria-label="MDMC home">
-            <img src={mdmcLogo} alt="MDMC" />
-          </a>
-        ) : (
-          <>
-            <div className="crumbs">
-              {(crumbs || []).flatMap((c, i) => [
-                c.href
-                  ? <a key={`a-${i}`} className="crumb-faint" onClick={(e) => { e.preventDefault(); handleNav(c.href) }} href="#">{c.label}</a>
-                  : <span key={`s-${i}`}>{c.label}</span>,
-                i < crumbs.length - 1 && <span key={`sep-${i}`} className="crumb-sep">/</span>,
-              ]).filter(Boolean)}
-            </div>
-            <a className="brand brand-sub-mobile" onClick={(e) => { e.preventDefault(); handleNav('home') }} href="#" aria-label="MDMC home">
-              <img src={mdmcLogo} alt="MDMC" />
-            </a>
-          </>
-        )}
+      <header
+        className={`site-header${mode !== 'top' ? ' floating' : ''}${mode === 'pinned' ? ' pinned' : ''}${mode === 'hidden' && header.snap ? ' no-anim' : ''}`}
+        onMouseLeave={scheduleClosePanel}
+      >
+        <a className="brand" onClick={(e) => { e.preventDefault(); handleNav('home') }} href="#" aria-label="MDMC home">
+          <img src={mdmcLogo} alt="MDMC" />
+        </a>
 
-        {isHome ? (
-          <nav className="nav" aria-label="Primary">
-            {NAV_ITEMS.map((n) => (
-              <a
-                key={n.id}
-                href="#"
-                className={route === n.id ? 'active' : ''}
-                onClick={(e) => { e.preventDefault(); handleNav(n.id) }}
-              >
-                {n.label}
-              </a>
-            ))}
-          </nav>
-        ) : (
-          <a className="brand brand-center" onClick={(e) => { e.preventDefault(); handleNav('home') }} href="#" aria-label="MDMC home">
-            <img src={mdmcLogo} alt="MDMC" />
-          </a>
-        )}
+        <nav className="nav" aria-label="Primary">
+          {NAV_ITEMS.map((n) => (
+            <a
+              key={n.id}
+              href="#"
+              className={route === n.id ? 'active' : ''}
+              onMouseEnter={() => openPanel(n.id)}
+              onClick={(e) => { e.preventDefault(); handleNav(n.id) }}
+            >
+              {n.label}
+            </a>
+          ))}
+        </nav>
 
         <div className="header-controls">
-          <div className="site-switch" role="group" aria-label="Site">
-            <button
-              type="button"
-              className={`site-chip${site === 'global' ? ' selected' : ''}`}
-              aria-pressed={site === 'global'}
-              onClick={() => { if (site !== 'global') { setSite('global'); handleNav('home') } }}
-            >
-              <span className="site-code">INT</span>
-              {t('footer.site.global')}
-            </button>
-            <button
-              type="button"
-              className={`site-chip${site === 'japan' ? ' selected' : ''}`}
-              aria-pressed={site === 'japan'}
-              onClick={() => { if (site !== 'japan') { setSite('japan'); handleNav('home') } }}
-            >
-              <span className="site-code">JP</span>
-              {t('footer.site.japan')}
-            </button>
-          </div>
+          <LangSwitch />
           <button
             className={`hamburger-btn${menuOpen ? ' is-open' : ''}`}
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
@@ -142,38 +252,29 @@ export function Header({ route, navigate, crumbs }) {
             <span /><span /><span />
           </button>
         </div>
+
+        <MegaPanel
+          section={panelSection}
+          navigate={handleNav}
+          navigateItem={(page, id) => { setPanelSection(null); navigate(page, id) }}
+          projects={projects}
+          articles={articles}
+          onEnter={holdPanel}
+          onLeave={scheduleClosePanel}
+        />
       </header>
 
       {menuOpen && (
         <div className="mobile-menu" role="dialog" aria-label="Site navigation">
           <nav className="mobile-nav">
-            {NAV_ITEMS.map((n) => (
+            {[...NAV_ITEMS, { id: 'careers', label: t('nav.careers') }].map((n) => (
               <a key={n.id} href="#" onClick={(e) => { e.preventDefault(); handleNav(n.id) }}>
                 {n.label}
               </a>
             ))}
           </nav>
           <div className="mobile-menu-footer">
-            <div className="site-switch" role="group" aria-label="Site">
-              <button
-                type="button"
-                className={`site-chip${site === 'global' ? ' selected' : ''}`}
-                aria-pressed={site === 'global'}
-                onClick={() => { if (site !== 'global') { setSite('global'); handleNav('home') } else { setMenuOpen(false) } }}
-              >
-                <span className="site-code">INT</span>
-                {t('footer.site.global')}
-              </button>
-              <button
-                type="button"
-                className={`site-chip${site === 'japan' ? ' selected' : ''}`}
-                aria-pressed={site === 'japan'}
-                onClick={() => { if (site !== 'japan') { setSite('japan'); handleNav('home') } else { setMenuOpen(false) } }}
-              >
-                <span className="site-code">JP</span>
-                {t('footer.site.japan')}
-              </button>
-            </div>
+            <LangSwitch />
           </div>
         </div>
       )}
@@ -208,8 +309,8 @@ function StudioClock({ tz }) {
 
 export function Footer({ navigate }) {
   const t = useT()
-  const site = useSite()
-  const isJapan = site === 'japan'
+  const locale = useLocale()
+  const isJapan = locale === 'ja'
   const studios = [
     {
       city: t('footer.studio.nz'),
@@ -270,39 +371,20 @@ export function Footer({ navigate }) {
 
       <div className="fv2-bottom">
         <span>© {year} {isJapan ? 'Finlayson Holdings Japan Inc.' : 'MDMC Group Inc.'}</span>
-        <div className="fv2-site-switch" role="group" aria-label="Site">
-          <button
-            type="button"
-            className={`site-chip${site === 'global' ? ' selected' : ''}`}
-            aria-pressed={site === 'global'}
-            onClick={() => { if (site !== 'global') { setSite('global'); navigate('home'); window.scrollTo(0, 0) } }}
-          >
-            <span className="site-code">INT</span>
-            {t('footer.site.global')}
-          </button>
-          <button
-            type="button"
-            className={`site-chip${site === 'japan' ? ' selected' : ''}`}
-            aria-pressed={site === 'japan'}
-            onClick={() => { if (site !== 'japan') { setSite('japan'); navigate('home'); window.scrollTo(0, 0) } }}
-          >
-            <span className="site-code">JP</span>
-            {t('footer.site.japan')}
-          </button>
-        </div>
+        <LangSwitch className="fv2-site-switch" />
       </div>
     </footer>
   )
 }
 
 export function JpSuggestionPrompt() {
-  const site = useSite()
+  const locale = useLocale()
   const [show, setShow] = useState(false)
   useEffect(() => {
     let dismissed = false
     try { dismissed = localStorage.getItem('mdmc.jp-prompt-seen') === '1' } catch (e) {}
     if (dismissed) return
-    if (site === 'japan') return
+    if (locale === 'ja') return
     const lang = (navigator.language || '').toLowerCase()
     const langs = (navigator.languages || []).map((l) => l.toLowerCase())
     const isJa = lang.startsWith('ja') || langs.some((l) => l.startsWith('ja'))
@@ -318,19 +400,19 @@ export function JpSuggestionPrompt() {
       <div className="jp-prompt-inner">
         <div className="jp-prompt-eyebrow">JP · Japan</div>
         <div className="jp-prompt-body">
-          日本語サイトをご覧になりますか?<br />
-          <span className="jp-prompt-en">Looks like you're in Japan — switch to the MDMC Japan site?</span>
+          日本語で表示しますか?<br />
+          <span className="jp-prompt-en">Looks like you read Japanese — view this site in Japanese?</span>
         </div>
         <div className="jp-prompt-actions">
           <button
             type="button"
             className="jp-prompt-go"
-            onClick={() => { setSite('japan'); dismiss() }}
+            onClick={() => { setLocale('ja'); dismiss() }}
           >
-            Go to MDMC Japan
+            日本語で表示
           </button>
           <button type="button" className="jp-prompt-dismiss" onClick={dismiss}>
-            Stay on Global
+            Continue in English
           </button>
         </div>
       </div>

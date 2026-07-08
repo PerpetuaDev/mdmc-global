@@ -197,9 +197,63 @@ img { display: block; max-width: 100%; }
     transform .35s cubic-bezier(.2, .7, .2, 1),
     box-shadow .35s ease;
 }
-.site-header.sub {
-  /* subpages: brand centered, crumbs left, lang right */
-  grid-template-columns: 1fr auto 1fr;
+/* ---------- Mega panel: unfolds beneath the header on nav hover ---------- */
+.mega-panel {
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  background: var(--bg);
+  border-top: 1px solid var(--rule);
+  box-shadow: 0 1px 0 var(--rule), 0 32px 56px -40px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  visibility: hidden;
+  pointer-events: none;
+  /* height is set inline from the measured .mp-inner, so switching between a
+     tall section and a short one morphs the box instead of snapping. */
+  transition:
+    opacity .3s ease,
+    transform .3s cubic-bezier(.2, .7, .2, 1),
+    height .35s cubic-bezier(.2, .7, .2, 1),
+    visibility 0s linear .3s;
+}
+.mega-panel.open {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+.mp-inner {
+  padding: 40px var(--pad-x-right) 48px var(--pad-x);
+}
+/* Section header row: label left, "all X →" stepped out on the same line —
+   landing roughly under the header's nav items (brand ≈110 + 225 nav offset)
+   so it stays visually tied to the list rather than floating far right. */
+.mp-head {
+  display: flex; align-items: baseline;
+  margin-bottom: 18px;
+}
+.mp-label {
+  flex: 0 0 335px;
+  font-family: var(--type-mono); font-size: 12px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted);
+}
+.mp-col ul { list-style: none; }
+.mp-col li + li { margin-top: 10px; }
+.mp-col ul a { font-size: 20px; transition: opacity .2s ease; }
+.mp-col ul a:hover { opacity: .55; }
+.mp-all {
+  font-family: var(--type-mono); font-size: 12px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted);
+  transition: color .2s ease;
+}
+.mp-all:hover { color: var(--fg); }
+.mp-muted { color: var(--faint); font-size: 20px; }
+@media (max-width: 720px) {
+  .mega-panel { display: none; }
 }
 /* Detached (modes "hidden"/"pinned"): fixed and compact, parked above the
    viewport until pinned slides it in on upward scroll. */
@@ -267,12 +321,16 @@ img { display: block; max-width: 100%; }
   gap: 28px;
 }
 
-/* Site switch — typographic, matches the site nav */
+/* Language switch — one typographic unit, "English / 日本語": the slash pair
+   is the standard mark of a genuinely bilingual Japanese operation; the
+   operating-in-Japan story itself lives in content (studios/clocks, region
+   filter, JP About sections), not in this control. */
 .site-switch {
   display: inline-flex;
   align-items: baseline;
-  gap: 22px;
+  gap: 10px;
 }
+.lang-slash { color: var(--faint); font-size: 16px; }
 .site-chip {
   background: none;
   border: 0;
@@ -298,7 +356,8 @@ img { display: block; max-width: 100%; }
 }
 .site-chip:hover { color: var(--fg); }
 .site-chip:hover::after { transform: scaleX(1); }
-.site-chip.selected { color: var(--fg); font-weight: 500; }
+/* Colour-only selection: a weight change would shift the slash on toggle. */
+.site-chip.selected { color: var(--fg); }
 .site-chip .site-code {
   font-family: var(--type-mono);
   font-size: 10px;
@@ -505,6 +564,33 @@ img { display: block; max-width: 100%; }
   margin-bottom: 48px;
 }
 
+/* Work index head: title left, region filter on the right rail, sharing the
+   title's baseline. */
+.work-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  flex-wrap: wrap; gap: 16px 32px;
+  margin-bottom: 48px;
+}
+.work-head .section-title { margin-bottom: 0; }
+.work-filter {
+  display: flex; flex-wrap: wrap; gap: 8px 56px;
+}
+.filter-chip {
+  font-family: var(--type-mono);
+  font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted);
+  background: transparent; border: 0; padding: 6px 0;
+  cursor: pointer;
+  position: relative;
+  transition: color .2s ease;
+}
+.filter-chip:hover { color: var(--fg); }
+.filter-chip.selected { color: var(--fg); }
+.filter-chip.selected::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0;
+  height: 1px; background: currentColor;
+}
+
 .work-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -528,6 +614,97 @@ img { display: block; max-width: 100%; }
   font-family: var(--type-mono); font-size: 11px; letter-spacing: .14em;
   color: rgba(0,0,0,.35); text-transform: uppercase;
 }
+/* News cards ride the work-card system with a mono meta line above the title. */
+.news-card-meta {
+  display: flex; gap: 16px; align-items: baseline;
+  margin-top: 20px;
+  font-family: var(--type-mono); font-size: 12px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted);
+}
+.news-card-meta + h3 { margin-top: 12px; }
+.news-empty { font-size: 18px; color: var(--muted); margin-top: 8px; }
+
+/* Careers roles — quiet ruled rows in the site's list language. */
+.careers-roles { list-style: none; margin-top: 8px; }
+.careers-role {
+  display: flex; justify-content: space-between; gap: 48px;
+  align-items: baseline;
+  padding: 28px 0;
+  border-top: 1px solid var(--rule);
+}
+/* Bottom rule on the true last row only — covers both markups: link rows
+   wrapped in <li> (careers index) and plain <li> rows (job page offers). */
+.careers-roles > :last-child > .careers-role,
+.careers-roles > .careers-role:last-child { border-bottom: 1px solid var(--rule); }
+.careers-role .cr-main h3 {
+  font-family: var(--type-display);
+  font-size: 24px; font-weight: 500; letter-spacing: -0.005em;
+}
+/* Matches .work-card .desc — black body text, same measure. */
+.careers-role .cr-main p { margin-top: 8px; max-width: 460px; }
+.careers-role .cr-meta {
+  display: flex; gap: 24px; flex-shrink: 0;
+  font-family: var(--type-mono); font-size: 12px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted);
+}
+/* Whisper lines use the established 18px muted meta voice (.project-hero-meta),
+   not a one-off grey at body size. */
+.careers-empty { font-size: 18px; color: var(--muted); }
+.careers-contact { margin-top: 48px; font-size: 18px; color: var(--muted); }
+.careers-contact a { border-bottom: 1px solid currentColor; }
+
+/* Job rows are links on the careers index; the arrow slides on hover. */
+a.careers-role { display: flex; }
+.cr-arrow { transition: transform .35s cubic-bezier(.2, .7, .2, 1); }
+a.careers-role:hover .cr-arrow { transform: translateX(6px); }
+a.careers-role:hover .cr-main h3 { opacity: .6; }
+.cr-main h3 { transition: opacity .2s ease; }
+
+/* Individual job page */
+.job-offers-section .section-title,
+.job-apply-section .section-title { margin-bottom: 32px; }
+/* Real prose — black body text like the rest of the site, not grey. */
+.job-apply-note { max-width: 640px; }
+
+/* Application form — rides the contact-form field system, without its
+   separator (the section title already provides the break). */
+.apply-form { margin-top: 48px; border-top: 0; padding-top: 0; max-width: 880px; }
+.file-btn {
+  display: flex; align-items: baseline; justify-content: space-between;
+  width: 100%;
+  border: 0; border-bottom: 1px solid var(--fg);
+  background: transparent; padding: 8px 0 12px;
+  font: inherit; color: var(--fg);
+  cursor: pointer;
+  text-align: left;
+}
+.file-btn .arrow { transition: transform .35s cubic-bezier(.2, .7, .2, 1); }
+.file-btn:hover .arrow { transform: translateX(6px); }
+.file-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.file-chip {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--type-mono); font-size: 12px; letter-spacing: .06em;
+  border: 1px solid var(--rule);
+  padding: 6px 12px;
+}
+.file-chip button {
+  background: none; border: 0; cursor: pointer;
+  font-size: 14px; line-height: 1; color: var(--muted);
+  padding: 0;
+}
+.file-chip button:hover { color: var(--fg); }
+.file-hint {
+  margin-top: 10px;
+  font-family: var(--type-mono); font-size: 11px; letter-spacing: .1em;
+  color: var(--faint);
+}
+.file-hint.is-error { color: #b00020; }
+.apply-form.is-done { margin-top: 48px; }
+.af-error { margin-top: 16px; font-size: 18px; color: var(--muted); }
+.af-error a { border-bottom: 1px solid currentColor; }
+
 .work-card h3 {
   font-family: var(--type-display);
   font-size: 24px; font-weight: 500; letter-spacing: -0.005em;
@@ -748,6 +925,9 @@ img { display: block; max-width: 100%; }
   display: grid; grid-template-columns: 1fr 1fr; gap: 32px 48px;
 }
 .contact-form .full { grid-column: 1 / -1; }
+/* Turnstile anti-spam widget cell: reserve the widget's height up front so
+   the async iframe doesn't shift the submit button when it appears. */
+.turnstile-box { min-height: 65px; max-width: 480px; }
 .field label {
   display: block;
   font-family: var(--type-sans); font-size: 14px;
@@ -775,6 +955,10 @@ img { display: block; max-width: 100%; }
 .submit-btn:hover { transform: translateX(4px); }
 .submit-btn .arrow { transition: transform .3s; }
 .submit-btn:hover .arrow { transform: translateX(4px); }
+/* Muted while the Turnstile check is pending or a submit is in flight. */
+.submit-btn:disabled { opacity: .35; cursor: not-allowed; }
+.submit-btn:disabled:hover { transform: none; }
+.submit-btn:disabled:hover .arrow { transform: none; }
 
 /* ---------------- Project detail ---------------- */
 .project-hero {
@@ -1101,9 +1285,9 @@ img { display: block; max-width: 100%; }
   .footer-v2.editorial .fv2e-studios { grid-template-columns: 1fr; gap: 32px; }
   .work-section { padding-bottom: 48px; }
   .footer-v2.editorial .fv2e-top { padding-bottom: 32px; margin-bottom: 32px; }
-  [data-site='japan'] .fv2e-bigcta { font-size: 36px; white-space: nowrap; }
-  [data-site='japan'] .fv2e-bigcta .arrow { margin-left: calc(-0.4em - 24px); }
-  [data-site='global'] .fv2e-bigcta .arrow { margin-left: -0.3em; }
+  [data-locale='ja'] .fv2e-bigcta { font-size: 36px; white-space: nowrap; }
+  [data-locale='ja'] .fv2e-bigcta .arrow { margin-left: calc(-0.4em - 24px); }
+  [data-locale='en'] .fv2e-bigcta .arrow { margin-left: -0.3em; }
 }
 .page {
   animation: pageIn .6s cubic-bezier(.2,.7,.2,1);

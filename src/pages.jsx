@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { useT, useSite, NL } from './i18n.jsx'
-import { submitContact } from './strapi.js'
+import { useT, useLocale, NL } from './i18n.jsx'
+import { submitContact, submitApplication } from './strapi.js'
+import { Turnstile } from './turnstile.jsx'
 
 // Image that fades in once decoded, so the colored gradient backdrop transitions
 // smoothly into the photo instead of popping. Handles cached images (which may
@@ -189,16 +190,47 @@ export function WorkCard({ project, navigate, revealDelay = 0 }) {
   )
 }
 
+// Split multi-region values ("New Zealand, Australia") into individual tags.
+const projectRegions = (p) =>
+  String(p.region || '').split(',').map((s) => s.trim()).filter(Boolean)
+
 export function WorkPage({ navigate, projects = [], loading = false }) {
   const t = useT()
+  const [region, setRegion] = useState(null)
+  const regions = [...new Set(projects.flatMap(projectRegions))]
+  const shown = region ? projects.filter((p) => projectRegions(p).includes(region)) : projects
+
   return (
     <main className="page">
       <section className="work-section with-top">
-        <h2 className="section-title reveal">{t('work.title')}</h2>
+        <div className="work-head">
+          <h2 className="section-title reveal">{t('work.title')}</h2>
+          {regions.length > 1 && (
+            <div className="work-filter reveal" role="group" aria-label="Filter by region" style={{ '--reveal-delay': '60ms' }}>
+              <button
+                type="button"
+                className={`filter-chip${region === null ? ' selected' : ''}`}
+                onClick={() => setRegion(null)}
+              >
+                {t('work.filter.all')}
+              </button>
+              {regions.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  className={`filter-chip${region === r ? ' selected' : ''}`}
+                  onClick={() => setRegion(r)}
+                >
+                  {t(`work.region.${r}`)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="work-grid">
           {loading
             ? <SkeletonWorkGrid count={6} />
-            : projects.map((p, i) => (
+            : shown.map((p, i) => (
                 <WorkCard key={p.id} project={p} navigate={navigate} revealDelay={80 + i * 70} />
               ))}
         </div>
@@ -207,10 +239,33 @@ export function WorkPage({ navigate, projects = [], loading = false }) {
   )
 }
 
-export function AboutPage({ members = [], about = null }) {
-  const site = useSite()
-  if (site === 'japan') return <AboutPageJa about={about} />
-  return <AboutPageEn members={members} about={about} />
+// Two distinct About compositions, selected by language (not by the old
+// Global/Japan site split): Japanese readers get the corporate format they
+// expect — representative's greeting, 会社概要 company profile, office access —
+// while English readers get the studio essay and team. Neither mixes into
+// the other.
+export function AboutPage({ members = [], about = null, aboutJa = null }) {
+  const locale = useLocale()
+  if (locale === 'ja') return <AboutBodyJa about={aboutJa} />
+  return <AboutBody members={members} about={about} />
+}
+
+function AboutBodyJa({ about = null }) {
+  const t = useT()
+  return (
+    <main className="page jp-about">
+      <section className="about-hero-image">
+        <div className="ah-image reveal" aria-hidden={!about?.hero_image}>
+          {about?.hero_image
+            ? <img src={about.hero_image} alt="" />
+            : <span className="ph-label">{t('project.detail.full')}</span>
+          }
+        </div>
+      </section>
+      <JpGreetingSection about={about} />
+      <JpCompanySections />
+    </main>
+  )
 }
 
 const STATIC_TEAM = [
@@ -226,28 +281,33 @@ const FALLBACK_KV = [
   { key: 'dont', title: null, body: null, image: null },
 ]
 
-function AboutPageEn({ members = [], about = null }) {
+function AboutBody({ members = [], about = null }) {
   const t = useT()
   const team = members.length > 0 ? members : STATIC_TEAM
+  const heroImage = about?.hero_image ?? null
 
   const ledeParagraphs = about?.lede?.length > 0
     ? about.lede
-    : [t('about.lede.1')]
+    : [t('about.lede.1'), t('about.lede.2')]
 
-  const kvItems = about?.kv_items?.length > 0
-    ? about.kv_items
-    : FALLBACK_KV.map(({ key }) => ({
-        title: t(`about.kv.${key}.dt`),
-        body: t(`about.kv.${key}.dd`),
-        image: null,
-      }))
+  // Per-field fallback: Strapi values win where present, the built-in strings
+  // cover the rest. This lets a language without authored CMS copy still use
+  // the CMS images (fetchAbout serves image-only entries for that case).
+  const kvItems = FALLBACK_KV.map(({ key }, i) => {
+    const s = about?.kv_items?.[i]
+    return {
+      title: s?.title ?? t(`about.kv.${key}.dt`),
+      body: s?.body ?? t(`about.kv.${key}.dd`),
+      image: s?.image ?? null,
+    }
+  })
 
   return (
     <main className="page">
       <section className="about-hero-image">
-        <div className="ah-image reveal" aria-hidden={!about?.hero_image}>
-          {about?.hero_image
-            ? <img src={about.hero_image} alt="" />
+        <div className="ah-image reveal" aria-hidden={!heroImage}>
+          {heroImage
+            ? <img src={heroImage} alt="" />
             : <span className="ph-label">{t('project.detail.full')}</span>
           }
         </div>
@@ -339,27 +399,11 @@ function GoogleMap() {
   return <div ref={ref} style={{ position: 'absolute', inset: 0 }} />
 }
 
-function AboutPageJa({ about = null }) {
+// Japan-accent sections shown on the About page when reading in Japanese:
+// representative's greeting + signature, and the 会社概要 / access blocks.
+function JpGreetingSection({ about = null }) {
   const t = useT()
-  const facts = [
-    ['jp.about.fact.shogo',    'jp.about.fact.shogo.v'],
-    ['jp.about.fact.jigyobu',  'jp.about.fact.jigyobu.v'],
-    ['jp.about.fact.setsuritsu', 'jp.about.fact.setsuritsu.v'],
-    ['jp.about.fact.daihyo',   'jp.about.fact.daihyo.v'],
-    ['jp.about.fact.shihon',   'jp.about.fact.shihon.v'],
-    ['jp.about.fact.jusho',    'jp.about.fact.jusho.v'],
-    ['jp.about.fact.gyomu',    'jp.about.fact.gyomu.v'],
-  ]
   return (
-    <main className="page jp-about">
-      <section className="about-hero-image">
-        <div className="ah-image reveal" aria-hidden={!about?.hero_image}>
-          {about?.hero_image
-            ? <img src={about.hero_image} alt="" />
-            : <span className="ph-label">{t('project.detail.full')}</span>
-          }
-        </div>
-      </section>
       <section className="jp-greeting">
         <div className="jp-greeting-inner reveal" style={{ '--reveal-delay': '100ms' }}>
           <h1 className="jp-greeting-title">{about?.greeting_title ?? t('jp.about.greeting.title')}</h1>
@@ -384,7 +428,22 @@ function AboutPageJa({ about = null }) {
           </div>
         </div>
       </section>
+  )
+}
 
+function JpCompanySections() {
+  const t = useT()
+  const facts = [
+    ['jp.about.fact.shogo',    'jp.about.fact.shogo.v'],
+    ['jp.about.fact.jigyobu',  'jp.about.fact.jigyobu.v'],
+    ['jp.about.fact.setsuritsu', 'jp.about.fact.setsuritsu.v'],
+    ['jp.about.fact.daihyo',   'jp.about.fact.daihyo.v'],
+    ['jp.about.fact.shihon',   'jp.about.fact.shihon.v'],
+    ['jp.about.fact.jusho',    'jp.about.fact.jusho.v'],
+    ['jp.about.fact.gyomu',    'jp.about.fact.gyomu.v'],
+  ]
+  return (
+    <>
       <section className="jp-overview">
         <div className="jp-overview-head">
           <h2 className="jp-overview-title">{t('jp.about.overview.title')}</h2>
@@ -433,30 +492,33 @@ function AboutPageJa({ about = null }) {
           </div>
         </div>
       </section>
-    </main>
+    </>
   )
 }
 
 export function ContactPage() {
   const t = useT()
-  const site = useSite()
-  const isJapan = site === 'japan'
+  const locale = useLocale()
+  const isJapan = locale === 'ja'
   const [submitted, setSubmitted] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState(null)
   const [form, setForm] = useState({ name: '', email: '', company: '', budget: '', message: '' })
+  const [captcha, setCaptcha] = useState(null)
+  const captchaRef = useRef(null)
 
   const handle = (k) => (e) => setForm({ ...form, [k]: e.target.value })
   const submit = async (e) => {
     e.preventDefault()
-    if (!form.name || !form.email || !form.message) return
+    if (!form.name || !form.email || !form.message || !captcha) return
     setSending(true)
     setError(null)
     try {
-      await submitContact(form)
+      await submitContact({ ...form, turnstileToken: captcha })
       setSubmitted(true)
     } catch {
       setError(true)
+      captchaRef.current?.reset() // tokens are single-use — re-run before retrying
     } finally {
       setSending(false)
     }
@@ -539,13 +601,16 @@ export function ContactPage() {
               <label htmlFor="f-msg">{t('contact.form.message')}</label>
               <textarea id="f-msg" rows="5" required value={form.message} onChange={handle('message')} />
             </div>
+            <div className="field full">
+              <Turnstile ref={captchaRef} onToken={setCaptcha} locale={locale} />
+            </div>
             {error && (
               <div className="full" style={{ color: 'red', fontSize: 15 }}>
                 {t('contact.form.error')}
               </div>
             )}
             <div className="full">
-              <button type="submit" className="submit-btn" disabled={sending}>
+              <button type="submit" className="submit-btn" disabled={sending || !captcha}>
                 {sending ? '…' : <>{t('contact.form.send')} <span className="arrow">→</span></>}
               </button>
             </div>
@@ -650,5 +715,359 @@ export function ProjectPage({ id, navigate, projects = [], loading = false }) {
         </div>
       </a>
     </main>
+  )
+}
+
+// ---------------- News / Journal ----------------
+
+function articleDateLabel(date, locale) {
+  if (!date) return ''
+  try {
+    return new Date(date).toLocaleDateString(
+      locale === 'ja' ? 'ja-JP' : 'en-NZ',
+      { year: 'numeric', month: 'long', day: 'numeric' },
+    )
+  } catch { return date }
+}
+
+// Mirrors the Work grid's large two-up presentation — monthly, substantial
+// pieces presented like case studies rather than a dense blog index.
+export function NewsPage({ navigate, articles = [], loading = false }) {
+  const t = useT()
+  const locale = useLocale()
+  return (
+    <main className="page">
+      <section className="work-section with-top">
+        <h2 className="section-title reveal">{t('news.title')}</h2>
+        <div className="work-grid">
+          {loading
+            ? <SkeletonWorkGrid count={4} />
+            : articles.map((a, i) => (
+                <a
+                  key={a.id}
+                  href="#"
+                  className="work-card reveal"
+                  style={{ '--reveal-delay': `${80 + i * 70}ms` }}
+                  onClick={(e) => { e.preventDefault(); navigate('article', a.id) }}
+                >
+                  <div className="work-thumb">
+                    {a.cover
+                      ? <FadeImg src={a.cover} alt={a.title} loading="lazy" />
+                      : <span className="ph-label">{a.title.toUpperCase()}</span>
+                    }
+                  </div>
+                  <div className="news-card-meta">
+                    {a.tag && <span className="news-tag">{a.tag}</span>}
+                    <span className="news-date">{articleDateLabel(a.date, locale)}</span>
+                  </div>
+                  <h3>{a.title}</h3>
+                  {a.excerpt && <p className="desc">{a.excerpt}</p>}
+                  <span className="view">
+                    {t('news.read')} <span className="arrow">→</span>
+                  </span>
+                </a>
+              ))}
+        </div>
+        {!loading && articles.length === 0 && (
+          <p className="news-empty">{t('news.empty')}</p>
+        )}
+      </section>
+    </main>
+  )
+}
+
+// Reuses the project-page structure wholesale — title row, first-screenful
+// hero via the shared .project-hero flex fill, scroll-fading body.
+export function ArticlePage({ id, navigate, articles = [], loading = false }) {
+  const t = useT()
+  const locale = useLocale()
+  const article = articles.find((a) => a.id === id) || articles[0] || {}
+  const [bodyRef, bodyInView] = useInView(0, { once: false, rootMargin: '0px 0px -12% 0px' })
+  if (loading) return <ProjectSkeleton />
+  return (
+    <main className="page">
+      <section className="project-hero">
+        <div className="project-hero-head reveal">
+          <h1 className="project-title">{article.title}</h1>
+          <div className="project-hero-meta">
+            {article.tag && <>{article.tag} <span className="sep" aria-hidden="true">/</span> </>}
+            {articleDateLabel(article.date, locale)}
+          </div>
+        </div>
+        {article.heroImage && (
+          <div className="project-image reveal" style={{ '--reveal-delay': '80ms' }}>
+            <FadeImg src={article.heroImage} alt={article.title} fetchPriority="high" />
+          </div>
+        )}
+      </section>
+
+      <section ref={bodyRef} className={`project-body fade-block${bodyInView ? ' is-inview' : ''}`}>
+        <h3>{t('news.title')}</h3>
+        <div className="body-text">
+          {(article.body ?? []).map((p, i) => <p key={i}>{p}</p>)}
+        </div>
+      </section>
+    </main>
+  )
+}
+
+// ---------------- Careers ----------------
+
+export function CareersPage({ careers = null, jobs = [], loading = false, navigate }) {
+  const t = useT()
+  const email = careers?.contact_email ?? 'careers@mdmc.co'
+  const intro = careers?.intro?.length > 0 ? careers.intro : [t('careers.intro')]
+  return (
+    <main className="page">
+      <section className="about-hero-image">
+        <div className="ah-image reveal" aria-hidden={!careers?.hero_image}>
+          {careers?.hero_image
+            ? <img src={careers.hero_image} alt="" />
+            : <span className="ph-label">{t('careers.title').toUpperCase()}</span>
+          }
+        </div>
+      </section>
+
+      <section className="page-section about-essay-section">
+        <div className="about-essay-body reveal" style={{ '--reveal-delay': '100ms' }}>
+          <h1 className="ae-headline">{careers?.headline ?? t('careers.headline')}</h1>
+          <div className="ae-lede">
+            {intro.map((p, i) => <p key={i}>{p}</p>)}
+          </div>
+        </div>
+
+        <h2 className="section-title ae-team-title">{t('careers.openRoles')}</h2>
+        {loading ? (
+          <div className="careers-roles">
+            <div className="sk-line skeleton" style={{ width: '40%' }} />
+            <div className="sk-line skeleton" style={{ width: '32%' }} />
+          </div>
+        ) : jobs.length > 0 ? (
+          <ul className="careers-roles">
+            {jobs.map((job, i) => (
+              <li key={job.id}>
+                <a
+                  href="#"
+                  className="careers-role reveal"
+                  style={{ '--reveal-delay': `${i * 60}ms` }}
+                  onClick={(e) => { e.preventDefault(); navigate('job', job.id) }}
+                >
+                  <div className="cr-main">
+                    <h3>{job.title}</h3>
+                    {job.excerpt && <p>{job.excerpt}</p>}
+                  </div>
+                  <div className="cr-meta">
+                    {job.location && <span>{job.location}</span>}
+                    {job.type && <span>{job.type}</span>}
+                    <span className="cr-arrow" aria-hidden="true">→</span>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="careers-empty">{t('careers.noRoles')}</p>
+        )}
+
+        <p className="careers-contact">
+          {t('careers.speculative')}{' '}
+          <a href={`mailto:${email}`}>{email}</a>
+        </p>
+      </section>
+    </main>
+  )
+}
+
+// Individual job page — modeled on Perpetua's careers/:id (title + meta,
+// full-bleed image, "What we offer", apply block) recomposed in this site's
+// language: the project-page first-screenful fold, ruled offer rows instead
+// of accordions, and a mailto CTA instead of an upload form.
+export function JobPage({ id, careers = null, jobs = [], loading = false }) {
+  const t = useT()
+  const job = jobs.find((j) => j.id === id) || {}
+  const [bodyRef, bodyInView] = useInView(0, { once: false, rootMargin: '0px 0px -12% 0px' })
+  if (loading) return <ProjectSkeleton />
+
+  const offers = careers?.offers?.length > 0
+    ? careers.offers
+    : [1, 2, 3].map((n) => ({ title: t(`careers.offer.${n}.title`), body: t(`careers.offer.${n}.body`) }))
+  const email = job.applyEmail ?? careers?.contact_email ?? 'careers@mdmc.co'
+  const meta = [job.location, job.type, job.locationType].filter(Boolean)
+
+  return (
+    <main className="page">
+      <section className="project-hero">
+        <div className="project-hero-head reveal">
+          <h1 className="project-title">{job.title}</h1>
+          <div className="project-hero-meta">
+            {meta.map((m, i) => (
+              <span key={i}>
+                {m}{i < meta.length - 1 && <span className="sep" aria-hidden="true">/</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+        {/* Frame always renders — the section is sized to the first screenful,
+            so an absent image must show as a placeholder, not dead whitespace. */}
+        <div className="project-image reveal" style={{ '--reveal-delay': '80ms' }}>
+          {job.heroImage
+            ? <FadeImg src={job.heroImage} alt={job.title} fetchPriority="high" />
+            : <span className="ph-label">{(job.title ?? '').toUpperCase()} — IMAGE</span>
+          }
+        </div>
+      </section>
+
+      <section ref={bodyRef} className={`project-body fade-block${bodyInView ? ' is-inview' : ''}`}>
+        <h3>{t('careers.job.about')}</h3>
+        <div className="body-text">
+          {(job.body ?? []).map((p, i) => <p key={i}>{p}</p>)}
+        </div>
+      </section>
+
+      <section className="page-section job-offers-section">
+        <h2 className="section-title">{t('careers.job.offer')}</h2>
+        <ul className="careers-roles">
+          {offers.map((o, i) => (
+            <li key={i} className="careers-role">
+              <div className="cr-main">
+                <h3>{o.title}</h3>
+                {o.body && <p>{o.body}</p>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="page-section job-apply-section">
+        <h2 className="section-title">{t('careers.job.apply')}</h2>
+        <p className="job-apply-note">{t('careers.job.applyNote')}</p>
+        <ApplyForm job={job} fallbackEmail={email} />
+      </section>
+    </main>
+  )
+}
+
+const MAX_APPLY_FILES = 4
+const MAX_APPLY_BYTES = 15 * 1024 * 1024
+
+// Application form (after perpetua's careers form, in this site's voice):
+// name/email, portfolio link, a short note, and CV/cover-letter uploads that
+// arrive at the hiring inbox as email attachments via the /apply endpoint.
+function ApplyForm({ job, fallbackEmail }) {
+  const t = useT()
+  const locale = useLocale()
+  const [form, setForm] = useState({ name: '', email: '', portfolio: '', message: '' })
+  const [files, setFiles] = useState([])
+  const [state, setState] = useState('idle') // idle | sending | done | error
+  const [fileError, setFileError] = useState(null)
+  const [captcha, setCaptcha] = useState(null)
+  const fileInput = useRef(null)
+  const captchaRef = useRef(null)
+
+  const handle = (k) => (e) => setForm({ ...form, [k]: e.target.value })
+
+  const addFiles = (e) => {
+    const chosen = Array.from(e.target.files ?? [])
+      .filter((f) => /\.(pdf|docx?)$/i.test(f.name))
+    const next = [...files, ...chosen].slice(0, MAX_APPLY_FILES)
+    const total = next.reduce((sum, f) => sum + f.size, 0)
+    if (total > MAX_APPLY_BYTES) {
+      setFileError(t('careers.form.tooBig'))
+    } else {
+      setFileError(null)
+      setFiles(next)
+    }
+    e.target.value = ''
+  }
+
+  const removeFile = (i) => { setFiles(files.filter((_, idx) => idx !== i)); setFileError(null) }
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if (!form.name || !form.email || !captcha || state === 'sending') return
+    setState('sending')
+    try {
+      await submitApplication({ ...form, jobId: job.id, files, turnstileToken: captcha })
+      setState('done')
+    } catch {
+      setState('error')
+      captchaRef.current?.reset() // tokens are single-use — re-run before retrying
+    }
+  }
+
+  // Success state mirrors the contact form's exactly (same type sizes).
+  if (state === 'done') {
+    return (
+      <div className="apply-form is-done">
+        <h2 className="section-title" style={{ marginBottom: 16 }}>{t('careers.form.received')}</h2>
+        <p style={{ fontSize: 22, maxWidth: 640 }}>
+          {t('careers.form.thanks', { name: form.name.split(' ')[0] })}
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <form className="contact-form apply-form" onSubmit={submit}>
+      <div className="field">
+        <label htmlFor="af-name">{t('contact.form.name')}</label>
+        <input id="af-name" type="text" required value={form.name} onChange={handle('name')} />
+      </div>
+      <div className="field">
+        <label htmlFor="af-email">{t('contact.form.email')}</label>
+        <input id="af-email" type="email" required value={form.email} onChange={handle('email')} />
+      </div>
+      <div className="field full">
+        <label htmlFor="af-portfolio">{t('careers.form.portfolio')}</label>
+        <input id="af-portfolio" type="url" placeholder="https://" value={form.portfolio} onChange={handle('portfolio')} />
+      </div>
+      <div className="field full">
+        <label htmlFor="af-message">{t('careers.form.message')}</label>
+        <textarea id="af-message" rows="4" value={form.message} onChange={handle('message')} />
+      </div>
+      <div className="field full">
+        <label htmlFor="af-files">{t('careers.form.upload')}</label>
+        <button type="button" className="file-btn" onClick={() => fileInput.current?.click()}>
+          {t('careers.form.uploadBtn')} <span className="arrow" aria-hidden="true">→</span>
+        </button>
+        <input
+          ref={fileInput}
+          id="af-files"
+          type="file"
+          accept=".pdf,.doc,.docx"
+          multiple
+          hidden
+          onChange={addFiles}
+        />
+        {files.length > 0 && (
+          <div className="file-chips">
+            {files.map((f, i) => (
+              <span className="file-chip" key={`${f.name}-${i}`}>
+                {f.name}
+                <button type="button" aria-label={`Remove ${f.name}`} onClick={() => removeFile(i)}>×</button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className={`file-hint${fileError ? ' is-error' : ''}`}>
+          {fileError ?? t('careers.form.uploadHint')}
+        </div>
+      </div>
+      <div className="field full">
+        <Turnstile ref={captchaRef} onToken={setCaptcha} locale={locale} />
+      </div>
+      <div className="full">
+        <button className="submit-btn" type="submit" disabled={state === 'sending' || !captcha}>
+          {state === 'sending' ? t('careers.form.sending') : t('careers.form.send')}
+          {' '}<span className="arrow">→</span>
+        </button>
+        {state === 'error' && (
+          <p className="af-error">
+            {t('contact.form.error')}{' '}
+            <a href={`mailto:${fallbackEmail}?subject=${encodeURIComponent(`Application — ${job.title ?? ''}`)}`}>{fallbackEmail}</a>
+          </p>
+        )}
+      </div>
+    </form>
   )
 }

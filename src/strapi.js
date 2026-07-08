@@ -182,6 +182,8 @@ export function fetchHomepage(locale = 'en') {
   )
 }
 
+// The About essay is inherently the English composition (Japanese readers get
+// the 会社概要 page from the about-japan type instead), so no locale handling.
 export function fetchAbout() {
   return withSnapshot(
     async () => mapAbout((await fetchJSON(`${BASE}/about?populate=*`)).data),
@@ -196,12 +198,30 @@ export function fetchAboutJa() {
   )
 }
 
-export async function submitContact({ name, email, company, budget, message }) {
+// Job application: multipart (fields + documents) to the custom /apply
+// endpoint, which forwards to the hiring inbox with files attached. No JSON
+// content-type — the browser sets the multipart boundary itself.
+export async function submitApplication({ name, email, portfolio, message, jobId, turnstileToken, files = [] }) {
+  const url = `${BASE.replace(/\/api$/, '')}/api/apply`
+  const fd = new FormData()
+  fd.append('name', name)
+  fd.append('email', email)
+  if (portfolio) fd.append('portfolio', portfolio)
+  if (message) fd.append('message', message)
+  if (jobId) fd.append('jobId', jobId)
+  if (turnstileToken) fd.append('turnstileToken', turnstileToken)
+  files.forEach((f) => fd.append('files', f, f.name))
+  const res = await fetch(url, { method: 'POST', body: fd })
+  if (!res.ok) throw new Error(`Apply ${res.status}`)
+  return res.json()
+}
+
+export async function submitContact({ name, email, company, budget, message, turnstileToken }) {
   const url = `${BASE.replace(/\/api$/, '')}/api/contact`
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, company, budget, message }),
+    body: JSON.stringify({ name, email, company, budget, message, turnstileToken }),
   })
   if (!res.ok) throw new Error(`Contact ${res.status}`)
   return res.json()
@@ -211,9 +231,153 @@ function mapProjects(data) {
   return Array.isArray(data) ? data.map(mapProject) : []
 }
 
-export function fetchProjects(locale = 'en') {
-  return withSnapshot(
-    async () => mapProjects((await fetchJSON(`${BASE}/projects?populate=*&sort=date:desc&locale=${locale}`)).data),
-    `projects_${locale}`, mapProjects,
-  )
+function mapArticle(item) {
+  return {
+    id: item.documentId ?? String(item.id),
+    title: item.title ?? '',
+    date: item.date ?? '',
+    excerpt: item.excerpt ?? '',
+    body: blocksToParagraphs(item.body),
+    cover: originalUrl(item.cover),
+    heroImage: originalUrl(item.hero_image) ?? originalUrl(item.cover),
+    tag: item.tag ?? '',
+  }
+}
+
+function mapArticles(data) {
+  return Array.isArray(data) ? data.map(mapArticle) : []
+}
+
+function mapCareers(data) {
+  if (!data) return null
+  return {
+    headline: data.headline ?? null,
+    intro: blocksToParagraphs(data.intro),
+    hero_image: originalUrl(data.hero_image),
+    offers: Array.isArray(data.offers) ? data.offers.map((o) => ({
+      title: o.title ?? '',
+      body: o.body ?? '',
+    })) : [],
+    contact_email: data.contact_email ?? null,
+  }
+}
+
+function mapJob(item) {
+  return {
+    id: item.documentId ?? String(item.id),
+    title: item.title ?? '',
+    location: item.location ?? '',
+    type: item.type ?? '',
+    locationType: item.location_type ?? '',
+    excerpt: item.excerpt ?? '',
+    body: blocksToParagraphs(item.body),
+    heroImage: originalUrl(item.hero_image),
+    applyEmail: item.apply_email ?? null,
+  }
+}
+
+function mapJobs(data) {
+  return Array.isArray(data) ? data.map(mapJob) : []
+}
+
+async function rawProjects(locale) {
+  try {
+    const { data } = await fetchJSON(`${BASE}/projects?populate=*&sort=date:desc&locale=${locale}`)
+    return Array.isArray(data) ? data : []
+  } catch (err) {
+    const snap = SNAPSHOT[`projects_${locale}`]
+    if (Array.isArray(snap) && snap.length > 0) return snap
+    throw err
+  }
+}
+
+// Text fields with i18n enabled in the Strapi project schema; everything else
+// (media, dates, client, region…) is shared across locales.
+const LOCALIZED_PROJECT_FIELDS = ['title', 'description', 'intro', 'body', 'services']
+
+// Full-catalogue localization: the requested language sees EVERY entry — with
+// localized text overlaid where a ja localization exists in Strapi (matched
+// by documentId) and English otherwise — rather than only the ja-localized
+// subset the old Global/Japan site split showed.
+function mergeLocales(en, ja, localizedFields) {
+  const jaById = new Map(ja.map((p) => [p.documentId, p]))
+  const enIds = new Set(en.map((p) => p.documentId))
+  const merged = en.map((p) => {
+    const j = jaById.get(p.documentId)
+    if (!j) return p
+    const out = { ...p }
+    for (const f of localizedFields) {
+      if (j[f] != null && j[f] !== '') out[f] = j[f]
+    }
+    return out
+  })
+  const jaOnly = ja.filter((p) => !enIds.has(p.documentId))
+  return [...merged, ...jaOnly]
+    .sort((a, b) => String(b.date ?? '').localeCompare(String(a.date ?? '')))
+}
+
+export async function fetchProjects(locale = 'en') {
+  const en = await rawProjects('en')
+  if (locale === 'en') return mapProjects(en)
+  let ja = []
+  try { ja = await rawProjects('ja') } catch (e) {} // ja unavailable → English text everywhere
+  return mapProjects(mergeLocales(en, ja, LOCALIZED_PROJECT_FIELDS))
+}
+
+const LOCALIZED_ARTICLE_FIELDS = ['title', 'excerpt', 'body', 'tag']
+
+async function rawArticles(locale) {
+  try {
+    const { data } = await fetchJSON(`${BASE}/articles?populate=*&sort=date:desc&locale=${locale}`)
+    return Array.isArray(data) ? data : []
+  } catch (err) {
+    const snap = SNAPSHOT[`articles_${locale}`]
+    if (Array.isArray(snap) && snap.length > 0) return snap
+    throw err
+  }
+}
+
+export async function fetchArticles(locale = 'en') {
+  const en = await rawArticles('en')
+  if (locale === 'en') return mapArticles(en)
+  let ja = []
+  try { ja = await rawArticles('ja') } catch (e) {}
+  return mapArticles(mergeLocales(en, ja, LOCALIZED_ARTICLE_FIELDS))
+}
+
+const LOCALIZED_JOB_FIELDS = ['title', 'excerpt', 'body']
+
+async function rawJobs(locale) {
+  try {
+    const { data } = await fetchJSON(`${BASE}/jobs?populate=*&locale=${locale}`)
+    return Array.isArray(data) ? data : []
+  } catch (err) {
+    const snap = SNAPSHOT[`jobs_${locale}`]
+    if (Array.isArray(snap) && snap.length > 0) return snap
+    throw err
+  }
+}
+
+export async function fetchJobs(locale = 'en') {
+  const en = await rawJobs('en')
+  if (locale === 'en') return mapJobs(en)
+  let ja = []
+  try { ja = await rawJobs('ja') } catch (e) {}
+  return mapJobs(mergeLocales(en, ja, LOCALIZED_JOB_FIELDS))
+}
+
+export async function fetchCareers(locale = 'en') {
+  const load = async (loc) => {
+    try {
+      return (await fetchJSON(`${BASE}/career?populate=*&locale=${loc}`)).data ?? null
+    } catch (err) {
+      const snap = SNAPSHOT[`career_${loc}`]
+      if (snap) return snap
+      throw err
+    }
+  }
+  let data = null
+  try { data = await load(locale) } catch (e) {}
+  if (!data && locale !== 'en') data = await load('en') // ja not written yet → English
+  return mapCareers(data)
 }
