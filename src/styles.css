@@ -311,7 +311,6 @@ img { display: block; max-width: 100%; }
   transition: transform .35s cubic-bezier(.2,.7,.2,1);
 }
 .nav a:hover::after, .nav a.active::after { transform: scaleX(1); }
-.nav a.active { font-weight: 500; }
 
 /* Header controls — site (Global/Japan) + language (EN/JA), single row */
 .header-controls {
@@ -627,6 +626,11 @@ img { display: block; max-width: 100%; }
 
 /* Careers roles — quiet ruled rows in the site's list language. */
 .careers-roles { list-style: none; margin-top: 8px; }
+/* Careers index: the roles list follows the intro copy directly (no "Open
+   roles" title), so it carries the copy→listing gap itself — the essay
+   body's About-sized 160px bottom margin is dropped here. */
+.careers-section .about-essay-body { margin-bottom: 0; }
+.careers-section .careers-roles { margin-top: 56px; }
 .careers-role {
   display: flex; justify-content: space-between; gap: 48px;
   align-items: baseline;
@@ -1480,6 +1484,7 @@ a.careers-role:hover .cr-main h3 { opacity: .6; }
   .ae-img { aspect-ratio: 16 / 10; margin-top: 32px; }
   .ae-list li { padding-top: 20px; padding-bottom: 24px; }
   .ae-team-title { margin-top: 40px; }
+  .careers-section .careers-roles { margin-top: 32px; }
   .about-hero-image { padding-bottom: 48px; }
   .jp-greeting { padding-top: 48px; }
   .jp-sig-name { font-size: 18px; }

@@ -828,7 +828,7 @@ export function CareersPage({ careers = null, jobs = [], loading = false, naviga
         </div>
       </section>
 
-      <section className="page-section about-essay-section">
+      <section className="page-section about-essay-section careers-section">
         <div className="about-essay-body reveal" style={{ '--reveal-delay': '100ms' }}>
           <h1 className="ae-headline">{careers?.headline ?? t('careers.headline')}</h1>
           <div className="ae-lede">
@@ -836,7 +836,6 @@ export function CareersPage({ careers = null, jobs = [], loading = false, naviga
           </div>
         </div>
 
-        <h2 className="section-title ae-team-title">{t('careers.openRoles')}</h2>
         {loading ? (
           <div className="careers-roles">
             <div className="sk-line skeleton" style={{ width: '40%' }} />
@@ -857,8 +856,8 @@ export function CareersPage({ careers = null, jobs = [], loading = false, naviga
                     {job.excerpt && <p>{job.excerpt}</p>}
                   </div>
                   <div className="cr-meta">
-                    {job.location && <span>{job.location}</span>}
-                    {job.type && <span>{job.type}</span>}
+                    {job.location && <span>{t(`job.enum.${job.location}`)}</span>}
+                    {job.type && <span>{t(`job.enum.${job.type}`)}</span>}
                     <span className="cr-arrow" aria-hidden="true">→</span>
                   </div>
                 </a>
@@ -888,11 +887,10 @@ export function JobPage({ id, careers = null, jobs = [], loading = false }) {
   const [bodyRef, bodyInView] = useInView(0, { once: false, rootMargin: '0px 0px -12% 0px' })
   if (loading) return <ProjectSkeleton />
 
-  const offers = careers?.offers?.length > 0
-    ? careers.offers
-    : [1, 2, 3].map((n) => ({ title: t(`careers.offer.${n}.title`), body: t(`careers.offer.${n}.body`) }))
+  // "What we offer" (careers.offers + the careers.offer.N fallbacks) is
+  // parked until its design/copy pass — schema and strings stay for its return.
   const email = job.applyEmail ?? careers?.contact_email ?? 'careers@mdmc.co'
-  const meta = [job.location, job.type, job.locationType].filter(Boolean)
+  const meta = [job.location, job.type].filter(Boolean).map((v) => t(`job.enum.${v}`))
 
   return (
     <main className="page">
@@ -922,20 +920,6 @@ export function JobPage({ id, careers = null, jobs = [], loading = false }) {
         <div className="body-text">
           {(job.body ?? []).map((p, i) => <p key={i}>{p}</p>)}
         </div>
-      </section>
-
-      <section className="page-section job-offers-section">
-        <h2 className="section-title">{t('careers.job.offer')}</h2>
-        <ul className="careers-roles">
-          {offers.map((o, i) => (
-            <li key={i} className="careers-role">
-              <div className="cr-main">
-                <h3>{o.title}</h3>
-                {o.body && <p>{o.body}</p>}
-              </div>
-            </li>
-          ))}
-        </ul>
       </section>
 
       <section className="page-section job-apply-section">

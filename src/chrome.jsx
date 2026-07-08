@@ -213,6 +213,14 @@ export function Header({ route, navigate, projects = [], articles = [] }) {
 
   const handleNav = (id) => { setMenuOpen(false); navigate(id) }
 
+  // Subpages keep their parent section underlined (project → Work, etc.).
+  const NAV_SECTION = {
+    work: 'work', project: 'work',
+    news: 'news', article: 'news',
+    careers: 'careers', job: 'careers',
+    about: 'about', contact: 'contact',
+  }
+
   // The mobile menu's close button lives in the header — never hide it while open.
   const mode = menuOpen && header.mode === 'hidden' ? 'pinned' : header.mode
 
@@ -232,7 +240,7 @@ export function Header({ route, navigate, projects = [], articles = [] }) {
             <a
               key={n.id}
               href="#"
-              className={route === n.id ? 'active' : ''}
+              className={NAV_SECTION[route] === n.id ? 'active' : ''}
               onMouseEnter={() => openPanel(n.id)}
               onClick={(e) => { e.preventDefault(); handleNav(n.id) }}
             >
