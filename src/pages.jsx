@@ -658,6 +658,9 @@ export function ProjectPage({ id, navigate, projects = [], loading = false }) {
   const next = projects[previewIdx] || project
   const goPrev = (e) => { e.preventDefault(); e.stopPropagation(); setPreviewIdx((previewIdx - 1 + projects.length) % projects.length) }
   const goNext = (e) => { e.preventDefault(); e.stopPropagation(); setPreviewIdx((previewIdx + 1) % projects.length) }
+  // Parked while the case studies are short — the card reads strangely when
+  // it arrives this soon. Flip back on once the studies have more depth.
+  const showNextProject = false
 
   return (
     <main className="page">
@@ -693,6 +696,7 @@ export function ProjectPage({ id, navigate, projects = [], loading = false }) {
         </section>
       )}
 
+      {showNextProject && (
       <a
         className="next-project next-project--card"
         href="#"
@@ -714,6 +718,7 @@ export function ProjectPage({ id, navigate, projects = [], loading = false }) {
           </div>
         </div>
       </a>
+      )}
     </main>
   )
 }
