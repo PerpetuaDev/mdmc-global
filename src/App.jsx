@@ -7,7 +7,10 @@ import { HomePage, WorkPage, AboutPage, ContactPage, ProjectPage } from './pages
 
 export default function App() {
   const [route, setRoute] = useState({ page: 'home', id: null })
-  const [projects, setProjects] = useState(STATIC_PROJECTS)
+  // null = still loading (show skeletons). We never render STATIC_PROJECTS as the
+  // initial state — it's placeholder content and was flashing before Strapi answered.
+  // It now serves only as a last-resort fallback if the fetch actually fails.
+  const [projects, setProjects] = useState(null)
   const [members, setMembers] = useState([])
   const [homepage, setHomepage] = useState(null)
   const [about, setAbout] = useState(null)
@@ -17,22 +20,26 @@ export default function App() {
   const locale = site === 'japan' ? 'ja' : 'en'
 
   useEffect(() => {
-    if (locale === 'ja') setProjects([])
+    let cancelled = false
+    setProjects(null) // re-enter loading state on mount and on locale change
     fetchProjects(locale)
-      .then((data) => { if (data.length > 0) setProjects(data) })
-      .catch(() => {})
+      .then((data) => { if (!cancelled) setProjects(data) })
+      // Strapi unreachable: English falls back to static portfolio so the grid
+      // isn't empty; Japan has no static equivalent, so show an empty state.
+      .catch(() => { if (!cancelled) setProjects(locale === 'ja' ? [] : STATIC_PROJECTS) })
     fetchMembers()
-      .then((data) => { if (data.length > 0) setMembers(data) })
+      .then((data) => { if (!cancelled && data.length > 0) setMembers(data) })
       .catch(() => {})
     fetchHomepage(locale)
-      .then((data) => { if (data) setHomepage(data) })
+      .then((data) => { if (!cancelled && data) setHomepage(data) })
       .catch(() => {})
     fetchAbout()
-      .then((data) => { if (data) setAbout(data) })
+      .then((data) => { if (!cancelled && data) setAbout(data) })
       .catch(() => {})
     fetchAboutJa()
-      .then((data) => { if (data) setAboutJa(data) })
+      .then((data) => { if (!cancelled && data) setAboutJa(data) })
       .catch(() => {})
+    return () => { cancelled = true }
   }, [locale])
 
   const navigate = (page, id = null) => {
@@ -57,9 +64,12 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
+  const loading = projects === null
+  const projectList = projects ?? []
+
   let crumbs = null
   if (route.page === 'project') {
-    const proj = projects.find((p) => p.id === route.id)
+    const proj = projectList.find((p) => p.id === route.id)
     crumbs = [
       { label: t('crumb.work'), href: 'work' },
       { label: proj ? proj.name : 'Project' },
@@ -73,12 +83,12 @@ export default function App() {
   }
 
   let view
-  if (route.page === 'home')         view = <HomePage navigate={navigate} projects={projects} homepage={homepage} />
-  else if (route.page === 'work')    view = <WorkPage navigate={navigate} projects={projects} />
+  if (route.page === 'home')         view = <HomePage navigate={navigate} projects={projectList} loading={loading} homepage={homepage} />
+  else if (route.page === 'work')    view = <WorkPage navigate={navigate} projects={projectList} loading={loading} />
   else if (route.page === 'about')   view = <AboutPage members={members} about={site === 'japan' ? aboutJa : about} />
   else if (route.page === 'contact') view = <ContactPage />
-  else if (route.page === 'project') view = <ProjectPage id={route.id} navigate={navigate} projects={projects} />
-  else                               view = <HomePage navigate={navigate} projects={projects} />
+  else if (route.page === 'project') view = <ProjectPage id={route.id} navigate={navigate} projects={projectList} loading={loading} />
+  else                               view = <HomePage navigate={navigate} projects={projectList} loading={loading} />
 
   return (
     <>

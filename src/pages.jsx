@@ -2,15 +2,63 @@ import { useState, useEffect, useRef } from 'react'
 import { useT, useSite, NL } from './i18n.jsx'
 import { submitContact } from './strapi.js'
 
-export function HomePage({ navigate, projects = [], homepage = null }) {
+// Image that fades in once decoded, so the colored gradient backdrop transitions
+// smoothly into the photo instead of popping. Handles cached images (which may
+// not fire onLoad) by checking .complete on mount.
+function FadeImg({ className = '', ...rest }) {
+  const ref = useRef(null)
+  const [loaded, setLoaded] = useState(false)
+  useEffect(() => { if (ref.current?.complete) setLoaded(true) }, [])
+  return (
+    <img
+      ref={ref}
+      className={`img-fade${loaded ? ' is-loaded' : ''}${className ? ' ' + className : ''}`}
+      onLoad={() => setLoaded(true)}
+      {...rest}
+    />
+  )
+}
+
+// Loading-state placeholder matching the work-card layout exactly, so swapping it
+// for the real card causes zero layout shift.
+function SkeletonWorkCard({ revealDelay = 0 }) {
+  return (
+    <div className="work-card is-skeleton reveal" aria-hidden="true" style={{ '--reveal-delay': `${revealDelay}ms` }}>
+      <div className="work-thumb skeleton" />
+      <div className="sk-line sk-line--title skeleton" />
+      <div className="sk-line skeleton" />
+      <div className="sk-line sk-line--short skeleton" />
+    </div>
+  )
+}
+
+function SkeletonWorkGrid({ count = 6 }) {
+  return Array.from({ length: count }, (_, i) => (
+    <SkeletonWorkCard key={i} revealDelay={i * 70} />
+  ))
+}
+
+export function HomePage({ navigate, projects = [], loading = false, homepage = null }) {
   const t = useT()
   const featured = projects.slice(0, 4)
   const [idx, setIdx] = useState(0)
 
   useEffect(() => {
+    setIdx(0)
+    if (featured.length <= 1) return
     const tm = setInterval(() => setIdx((i) => (i + 1) % featured.length), 5500)
     return () => clearInterval(tm)
   }, [featured.length])
+
+  // Only download hero images as they're needed: the visible slide, the next one
+  // (so the crossfade is ready), and any already shown. Avoids pulling all four
+  // full-res originals on first paint.
+  const [seen, setSeen] = useState(() => new Set([0]))
+  useEffect(() => {
+    setSeen((prev) => (prev.has(idx) ? prev : new Set(prev).add(idx)))
+  }, [idx])
+  const nextIdx = featured.length ? (idx + 1) % featured.length : 0
+  const shouldLoad = (i) => i === idx || i === nextIdx || seen.has(i)
 
   const current = featured[idx] ?? {}
   const isDark = current.darkHero === true
@@ -18,7 +66,10 @@ export function HomePage({ navigate, projects = [], homepage = null }) {
   return (
     <main className="page">
       <section className="hero">
-        <div className="hero-frame">
+        {loading ? (
+          <div key="hero-skel" className="hero-frame skeleton reveal" aria-hidden="true" />
+        ) : (
+        <div key="hero-real" className="hero-frame reveal">
           {featured.map((p, i) => (
             <div
               key={p.id}
@@ -28,8 +79,8 @@ export function HomePage({ navigate, projects = [], homepage = null }) {
               tabIndex={i === idx ? 0 : -1}
               aria-label={`Open ${p.name}`}
             >
-              {p.thumbnail
-                ? <img src={p.thumbnail} alt={p.name} />
+              {p.heroImage
+                ? (shouldLoad(i) && <FadeImg src={p.heroImage} alt={p.name} fetchPriority={i === idx ? 'high' : 'auto'} />)
                 : <span className="ph-label">{t('home.hero.placeholder', { name: p.name.toUpperCase() })}</span>
               }
               <h2>{p.name}</h2>
@@ -47,10 +98,11 @@ export function HomePage({ navigate, projects = [], homepage = null }) {
             ))}
           </div>
         </div>
+        )}
       </section>
 
       <section className="manifesto">
-        <div>
+        <div className="reveal" style={{ '--reveal-delay': '100ms' }}>
           {(homepage?.manifesto?.length > 0
             ? homepage.manifesto
             : [t('home.manifesto.1'), t('home.manifesto.2'), t('home.manifesto.3')]
@@ -62,26 +114,29 @@ export function HomePage({ navigate, projects = [], homepage = null }) {
 
       <section className="work-section">
         <div className="work-grid">
-          {projects.slice(0, 6).map((p) => (
-            <WorkCard key={p.id} project={p} navigate={navigate} />
-          ))}
+          {loading
+            ? <SkeletonWorkGrid count={6} />
+            : projects.slice(0, 6).map((p, i) => (
+                <WorkCard key={p.id} project={p} navigate={navigate} revealDelay={200 + i * 70} />
+              ))}
         </div>
       </section>
     </main>
   )
 }
 
-export function WorkCard({ project, navigate }) {
+export function WorkCard({ project, navigate, revealDelay = 0 }) {
   const t = useT()
   return (
     <a
       href="#"
-      className="work-card"
+      className="work-card reveal"
+      style={{ '--reveal-delay': `${revealDelay}ms` }}
       onClick={(e) => { e.preventDefault(); navigate('project', project.id) }}
     >
       <div className={`work-thumb ${project.cls}`}>
         {project.thumbnail
-          ? <img src={project.thumbnail} alt={project.name} />
+          ? <FadeImg src={project.thumbnail} alt={project.name} loading="lazy" />
           : <span className="ph-label">{t('home.work.placeholder', { name: project.name.toUpperCase() })}</span>
         }
       </div>
@@ -94,16 +149,18 @@ export function WorkCard({ project, navigate }) {
   )
 }
 
-export function WorkPage({ navigate, projects = [] }) {
+export function WorkPage({ navigate, projects = [], loading = false }) {
   const t = useT()
   return (
     <main className="page">
       <section className="work-section with-top">
-        <h2 className="section-title">{t('work.title')}</h2>
+        <h2 className="section-title reveal">{t('work.title')}</h2>
         <div className="work-grid">
-          {projects.map((p) => (
-            <WorkCard key={p.id} project={p} navigate={navigate} />
-          ))}
+          {loading
+            ? <SkeletonWorkGrid count={6} />
+            : projects.map((p, i) => (
+                <WorkCard key={p.id} project={p} navigate={navigate} revealDelay={80 + i * 70} />
+              ))}
         </div>
       </section>
     </main>
@@ -148,7 +205,7 @@ function AboutPageEn({ members = [], about = null }) {
   return (
     <main className="page">
       <section className="about-hero-image">
-        <div className="ah-image" aria-hidden={!about?.hero_image}>
+        <div className="ah-image reveal" aria-hidden={!about?.hero_image}>
           {about?.hero_image
             ? <img src={about.hero_image} alt="" />
             : <span className="ph-label">{t('project.detail.full')}</span>
@@ -157,7 +214,7 @@ function AboutPageEn({ members = [], about = null }) {
       </section>
 
       <section className="page-section about-essay-section">
-        <div className="about-essay-body">
+        <div className="about-essay-body reveal" style={{ '--reveal-delay': '100ms' }}>
           <h1 className="ae-headline">{about?.headline ?? t('about.headline')}</h1>
           <div className="ae-lede">
             {ledeParagraphs.map((p, i) => <p key={i}>{p}</p>)}
@@ -256,7 +313,7 @@ function AboutPageJa({ about = null }) {
   return (
     <main className="page jp-about">
       <section className="about-hero-image">
-        <div className="ah-image" aria-hidden={!about?.hero_image}>
+        <div className="ah-image reveal" aria-hidden={!about?.hero_image}>
           {about?.hero_image
             ? <img src={about.hero_image} alt="" />
             : <span className="ph-label">{t('project.detail.full')}</span>
@@ -264,7 +321,7 @@ function AboutPageJa({ about = null }) {
         </div>
       </section>
       <section className="jp-greeting">
-        <div className="jp-greeting-inner">
+        <div className="jp-greeting-inner reveal" style={{ '--reveal-delay': '100ms' }}>
           <h1 className="jp-greeting-title">{about?.greeting_title ?? t('jp.about.greeting.title')}</h1>
           <div className="jp-greeting-body">
             {(about?.greeting_body?.length > 0
@@ -368,7 +425,7 @@ export function ContactPage() {
   return (
     <main className="page">
       <section className="page-section">
-        <div className="contact-grid">
+        <div className="contact-grid reveal">
           <h1>{t('contact.headline')}</h1>
           <div className="right">
             <div className="contact-block">
@@ -459,8 +516,31 @@ export function ContactPage() {
   )
 }
 
-export function ProjectPage({ id, navigate, projects = [] }) {
+function ProjectSkeleton() {
+  return (
+    <main className="page">
+      <section className="project-hero">
+        <div className="project-hero-head reveal">
+          <div className="sk-line sk-line--title skeleton" style={{ height: 'clamp(40px, 6vw, 88px)', width: '55%', marginTop: 0 }} />
+          <div className="sk-line skeleton" style={{ width: '220px', marginTop: 24 }} />
+        </div>
+        <div className="project-image skeleton reveal" style={{ '--reveal-delay': '80ms' }} aria-hidden="true" />
+      </section>
+      <section className="project-body reveal" style={{ '--reveal-delay': '160ms' }}>
+        <h3>&nbsp;</h3>
+        <div className="body-text">
+          <div className="sk-line skeleton" />
+          <div className="sk-line skeleton" />
+          <div className="sk-line sk-line--short skeleton" />
+        </div>
+      </section>
+    </main>
+  )
+}
+
+export function ProjectPage({ id, navigate, projects = [], loading = false }) {
   const t = useT()
+  if (loading) return <ProjectSkeleton />
   const project = projects.find((p) => p.id === id) || projects[0] || {}
   const curIdx = projects.indexOf(project)
   const [previewIdx, setPreviewIdx] = useState(projects.length > 1 ? (curIdx + 1) % projects.length : 0)
@@ -472,24 +552,24 @@ export function ProjectPage({ id, navigate, projects = [] }) {
   return (
     <main className="page">
       <section className="project-hero">
-        <div className="project-hero-head">
+        <div className="project-hero-head reveal">
           <h1 className="project-title">{project.name}</h1>
           <div className="project-hero-meta">
             {project.client} <span className="sep" aria-hidden="true">/</span> {project.year}
           </div>
         </div>
         {project.thumbnail && (
-          <div className={`project-image ${project.cls}`}>
-            <img src={project.thumbnail} alt={project.name} />
+          <div className={`project-image ${project.cls} reveal`} style={{ '--reveal-delay': '80ms' }}>
+            <FadeImg src={project.thumbnail} alt={project.name} fetchPriority="high" />
           </div>
         )}
       </section>
 
-      <section className="project-body">
+      <section className="project-body reveal" style={{ '--reveal-delay': '160ms' }}>
         <h3>{t('project.section.overview')}</h3>
         <div className="body-text">
           {(project.intro ?? '').split('\n').filter(Boolean).map((p, i) => <p key={i}>{p}</p>)}
-          {project.body.map((para, i) => <p key={i}>{para}</p>)}
+          {(project.body ?? []).map((para, i) => <p key={i}>{para}</p>)}
         </div>
       </section>
 
@@ -497,7 +577,7 @@ export function ProjectPage({ id, navigate, projects = [] }) {
         <section className="project-images">
           {project.images.map((src, i) => (
             <div key={i} className={`img ${i === 0 || i === project.images.length - 1 ? 'wide' : ''} ${project.cls}`}>
-              <img src={src} alt={`${project.name} ${i + 1}`} />
+              <FadeImg src={src} alt={`${project.name} ${i + 1}`} loading="lazy" />
             </div>
           ))}
         </section>

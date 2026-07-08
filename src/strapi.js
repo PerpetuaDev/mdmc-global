@@ -38,6 +38,9 @@ function bestUrl(media) {
   return media.formats?.large?.url ?? media.url ?? null
 }
 
+// Full-resolution original. Used for full-width contexts (hero, project images,
+// gallery) where Strapi's 'large' derivative (≤1000px) would visibly upscale.
+// Load weight is managed at the component level via lazy-loading + fetchPriority.
 function originalUrl(media) {
   if (!media) return null
   return media.url ?? null
@@ -63,6 +66,9 @@ function mapProject(item, index) {
     intro: blocksToText(item.intro),
     body: blocksToParagraphs(item.body),
     thumbnail: originalUrl(item.thumbnail),
+    // Art-directed 2.16:1 asset for the homepage hero carousel. Falls back to
+    // the work-card thumbnail until a dedicated hero image is uploaded.
+    heroImage: originalUrl(item.hero_image) ?? originalUrl(item.thumbnail),
     images,
     cls: CLASSES[index % CLASSES.length],
     darkHero: item.dark_hero ?? false,
