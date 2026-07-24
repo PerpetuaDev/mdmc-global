@@ -283,6 +283,8 @@ const FALLBACK_KV = [
 
 function AboutBody({ members = [], about = null }) {
   const t = useT()
+  // Parked — the team section is hidden on the English about page for now.
+  const showTeam = false
   const team = members.length > 0 ? members : STATIC_TEAM
   const heroImage = about?.hero_image ?? null
 
@@ -339,6 +341,8 @@ function AboutBody({ members = [], about = null }) {
           </ol>
         </div>
 
+        {showTeam && (
+        <>
         <h2 className="section-title ae-team-title">{t('about.team.title')}</h2>
         <div className="team-grid">
           {team.map((member) => (
@@ -354,6 +358,8 @@ function AboutBody({ members = [], about = null }) {
             </div>
           ))}
         </div>
+        </>
+        )}
       </section>
     </main>
   )
