@@ -74,8 +74,8 @@
    design's own px language. */
 :root {
   --media-bottom-gap: 80px; /* real screen px between media bottom and viewport bottom */
-  --header-h: 152px;         /* sticky header height at page top (64+52 content+36) */
-  --media-chrome: 192px;     /* sticky header + hero lead-in (design px) */
+  --header-h: 152px;         /* static header height at page top (64+52 content+36) */
+  --media-chrome: 192px;     /* header + hero lead-in (design px) */
   --post-media-gap: 120px;   /* space between a viewport-filling image and the
                                 text that follows below the fold (design px) */
   /* Height budget: what remains of the viewport after chrome + bottom gap,
@@ -180,8 +180,8 @@ img { display: block; max-width: 100%; }
 
 /* ---------------- Header ---------------- */
 .site-header {
-  /* In flow at the top of the page (mode "top"): scrolls away with the
-     content. The .floating variant detaches it for the scrolled states. */
+  /* Static, in normal flow at the top of the page: scrolls away with the
+     content. No fixed/pop-down variant. */
   position: relative;
   z-index: 100;
   background: var(--bg);
@@ -192,10 +192,6 @@ img { display: block; max-width: 100%; }
   padding: 64px var(--pad-x-right) 36px var(--pad-x);
   font-size: 20px;
   column-gap: 0;
-  transition:
-    padding .35s cubic-bezier(.2, .7, .2, 1),
-    transform .35s cubic-bezier(.2, .7, .2, 1),
-    box-shadow .35s ease;
 }
 /* ---------- Mega panel: unfolds beneath the header on nav hover ---------- */
 .mega-panel {
@@ -255,25 +251,6 @@ img { display: block; max-width: 100%; }
 @media (max-width: 720px) {
   .mega-panel { display: none; }
 }
-/* Detached (modes "hidden"/"pinned"): fixed and compact, parked above the
-   viewport until pinned slides it in on upward scroll. */
-.site-header.floating {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  transform: translateY(-100%);
-  padding-top: 28px;
-  padding-bottom: 20px;
-}
-.site-header.floating.pinned {
-  transform: translateY(0);
-  box-shadow: 0 1px 0 var(--rule);
-}
-/* Parked above the viewport without animating there (set while entering the
-   hidden state from the in-flow header; dropped on the first upward pin). */
-.site-header.no-anim { transition: none; }
-/* Occupies the detached header's flow space so swapping modes never shifts
-   the document. */
-.header-spacer { height: var(--header-h); }
 
 .brand {
   display: flex; align-items: center; gap: 14px;
@@ -723,7 +700,8 @@ a.careers-role:hover .cr-main h3 { opacity: .6; }
 .work-card .view .arrow { transition: transform .35s cubic-bezier(.2,.7,.2,1); }
 .work-card:hover .view .arrow { transform: translateX(6px); }
 .work-card .view::after {
-  content: ""; position: absolute; left: 0; right: 28px; bottom: -2px;
+  /* 6px below the text — same clearance as the header nav underline. */
+  content: ""; position: absolute; left: 0; right: 28px; bottom: -6px;
   height: 1px; background: currentColor; transform: scaleX(0); transform-origin: 0 50%;
   transition: transform .35s cubic-bezier(.2,.7,.2,1);
 }
@@ -1199,7 +1177,7 @@ a.careers-role:hover .cr-main h3 { opacity: .6; }
   color: var(--fg);
 }
 .footer-v2 .fv2-label {
-  font-family: var(--type-sans); font-size: 14px;
+  font-family: var(--type-sans); font-size: 16px;
   color: var(--muted); font-weight: 400;
   margin-bottom: 14px;
 }
@@ -1216,7 +1194,7 @@ a.careers-role:hover .cr-main h3 { opacity: .6; }
   margin-top: 40px; padding-top: 24px;
   border-top: 1px solid var(--rule);
   display: flex; justify-content: space-between; gap: 32px;
-  font-family: var(--type-sans); font-size: 13px;
+  font-family: var(--type-sans); font-size: 14px;
   color: var(--muted);
   flex-wrap: wrap;
 }
@@ -1549,7 +1527,7 @@ a.careers-role:hover .cr-main h3 { opacity: .6; }
   gap: 22px;
 }
 .fv2-site-switch .site-chip {
-  font-size: 13px;
+  font-size: 15px;
   padding: 4px 0;
 }
 
@@ -1691,10 +1669,6 @@ a.careers-role:hover .cr-main h3 { opacity: .6; }
 .img-fade.is-loaded { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Deliberately NOT suppressed: .site-header's slide/padding transition — a
-     small functional bar, not vestibular-scale motion; without it the pinned
-     header pops in jarringly (and e.g. pentagram.com animates theirs
-     regardless of this preference). Content reveals below stay suppressed. */
   .reveal { animation: none; opacity: 1; transform: none; }
   .scroll-reveal { transition: none; opacity: 1; transform: none; }
   .fade-block { transition: none; opacity: 1; transform: none; }

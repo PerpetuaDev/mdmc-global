@@ -30,8 +30,8 @@ export function LangSwitch({ className = 'site-switch' }) {
   )
 }
 
-// The dropdown mega panel: unfolds beneath the header (both the in-flow and
-// pinned states — it anchors to the header's bottom edge in either). Contents
+// The dropdown mega panel: unfolds beneath the fixed header (it anchors to
+// the header's bottom edge). Contents
 // follow the HOVERED nav item — Work lists recent projects, News the latest
 // articles, About nests the studio pages (incl. Careers). Desktop-only; the
 // mobile overlay menu covers small screens.
@@ -125,49 +125,9 @@ function MegaPanel({ section, navigate, navigateItem, projects, articles, onEnte
 
 export function Header({ route, navigate, projects = [], articles = [] }) {
   const t = useT()
-  // Pentagram-style header choreography, three modes:
-  //   top    — in normal flow at the top of the page; scrolls away naturally
-  //   hidden — fixed but translated above the viewport (page reads chrome-free)
-  //   pinned — fixed compact header slid in, on upward scroll intent
-  const TOP_ZONE = 24      // within this of the top, hand back to the in-flow header
-  const HEADER_CLEAR = 170 // scroll depth at which the in-flow header is fully off-screen
-  const [header, setHeader] = useState(() =>
-    typeof window === 'undefined' || window.scrollY <= HEADER_CLEAR
-      ? { mode: 'top', snap: false }
-      : { mode: 'hidden', snap: true })
+  // Static header: in normal flow at the top of the page, scrolls away with
+  // the content. No fixed/pop-down variant.
   const [menuOpen, setMenuOpen] = useState(false)
-
-  useEffect(() => {
-    let lastY = window.scrollY
-    const onScroll = () => {
-      const y = Math.max(0, window.scrollY)
-      const dy = y - lastY
-      if (Math.abs(dy) < 4) return // ignore momentum jitter
-      lastY = y
-      setHeader((prev) => {
-        const { mode } = prev
-        let next
-        if (y <= TOP_ZONE) next = 'top'
-        else if (dy < 0) {
-          // Reversing while the in-flow header is still partially on screen
-          // continues the natural reveal; from deeper, slide the pinned one in.
-          next = mode === 'top' && y <= HEADER_CLEAR ? 'top' : 'pinned'
-        } else {
-          // Scrolling down: let the in-flow header roll off naturally first,
-          // then go (or stay) hidden; a pinned header slides back out.
-          next = mode === 'top' && y <= HEADER_CLEAR ? 'top' : 'hidden'
-        }
-        if (next === mode) return prev
-        // snap: entering hidden straight from the in-flow header must park the
-        // floating header above the viewport with NO transition — otherwise it
-        // visibly slides away as a phantom "second header". It animates only
-        // once the first upward scroll pins it in.
-        return { mode: next, snap: mode === 'top' && next === 'hidden' }
-      })
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   useEffect(() => { setMenuOpen(false) }, [route])
 
@@ -194,7 +154,6 @@ export function Header({ route, navigate, projects = [], articles = [] }) {
     panelTimer.current = setTimeout(() => setPanelSection(null), 220)
   }
   useEffect(() => { setPanelSection(null) }, [route])
-  useEffect(() => { if (header.mode === 'hidden') setPanelSection(null) }, [header.mode])
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') setPanelSection(null) }
     window.addEventListener('keydown', onKey)
@@ -221,16 +180,9 @@ export function Header({ route, navigate, projects = [], articles = [] }) {
     about: 'about', contact: 'contact',
   }
 
-  // The mobile menu's close button lives in the header — never hide it while open.
-  const mode = menuOpen && header.mode === 'hidden' ? 'pinned' : header.mode
-
   return (
     <>
-      {mode !== 'top' && <div className="header-spacer" aria-hidden="true" />}
-      <header
-        className={`site-header${mode !== 'top' ? ' floating' : ''}${mode === 'pinned' ? ' pinned' : ''}${mode === 'hidden' && header.snap ? ' no-anim' : ''}`}
-        onMouseLeave={scheduleClosePanel}
-      >
+      <header className="site-header" onMouseLeave={scheduleClosePanel}>
         <a className="brand" onClick={(e) => { e.preventDefault(); handleNav('home') }} href="#" aria-label="MDMC home">
           <img src={mdmcLogo} alt="MDMC" />
         </a>
