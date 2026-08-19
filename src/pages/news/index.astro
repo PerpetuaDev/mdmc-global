@@ -1,0 +1,206 @@
+---
+// News index — transcribed from design/handoff/design/MDMC Site.dc.html
+// lines 334-362 (the `isNews` main). Same page skeleton, filter-group, and
+// hidden-toggling pattern as src/pages/work/index.astro (Task 3): trigger
+// word + rotating `+`, 9px-circle multi-select items, filtering toggles
+// `hidden` on server-rendered cards (never re-renders). Differences from
+// Work: a single filter group ("Filters +") whose open list lays the three
+// fixed `kind` values out horizontally (prototype: `display: flex; gap: 16px
+// 64px` — row-gap/column-gap, not Work's grid-template-columns), so there's
+// no AND logic — just one `kinds` Set matched against `card.dataset.kind`.
+//
+// The three kinds are a fixed enum (news/article/case_study), not derived
+// from live data like Work's regions/specialties — deriving from `articles`
+// would collapse the filter list to empty today (zero live articles), but
+// the prototype always renders all three (`hint-placeholder-count="3"`).
+import Base from "../../layouts/Base.astro";
+import NewsCard from "../../components/NewsCard.astro";
+import { loadContent } from "../../lib/content.js";
+
+const { articles } = await loadContent();
+
+const KINDS = [
+  { value: "news", label: "News" },
+  { value: "article", label: "Article" },
+  { value: "case_study", label: "Case Study" },
+];
+---
+
+<Base title="News — MDMC" active="news">
+  <main style="animation: pageIn .6s var(--ease)">
+    <section class="gutter" style="padding-top: 80px; padding-bottom: 160px;">
+      <div style="margin-bottom: 36px">
+        <h2 class="news-h2">News</h2>
+
+        <div class="filter-triggers">
+          <button
+            type="button"
+            class="filter-trigger"
+            data-filter-trigger="kind"
+            aria-expanded="false"
+          >
+            Filters
+            <span aria-hidden="true" class="filter-plus" data-plus="kind">+</span>
+          </button>
+        </div>
+
+        <div
+          class="filter-list filter-list-kind"
+          role="group"
+          aria-label="Filter by type"
+          data-filter-list="kind"
+          hidden
+        >
+          {KINDS.map((k) => (
+            <button type="button" class="filter-item" data-filter-item="kind" data-value={k.value} aria-pressed="false">
+              <span class="filter-circle" aria-hidden="true"></span>{k.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div class="news-grid">
+        {articles.map((a) => (
+          <div data-news-card data-kind={a.kind}>
+            <NewsCard article={a} />
+          </div>
+        ))}
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .news-h2 {
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 64px;
+  }
+
+  .filter-triggers {
+    display: flex;
+    gap: 40px;
+    align-items: baseline;
+  }
+
+  .filter-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    letter-spacing: -0.005em;
+    transition: opacity 0.2s ease;
+  }
+  .filter-trigger:hover {
+    opacity: 0.6;
+  }
+
+  .filter-plus {
+    font-family: "Söhne", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1;
+    transform: rotate(0deg);
+    transition: transform 0.3s var(--ease);
+  }
+  .filter-plus[data-open="true"] {
+    transform: rotate(45deg);
+  }
+
+  /* [hidden] and .filter-list-kind have equal specificity (one class, one
+     attribute selector) — author rules beat the UA `[hidden]{display:none}`
+     on a tie, so `display: flex` below would silently defeat the `hidden`
+     attribute the toggle script relies on. This rule adds a class to the
+     selector to win the tie explicitly. (Same guard as Work's filter-list.) */
+  .filter-list[hidden] {
+    display: none;
+  }
+
+  .filter-list {
+    margin-top: 40px;
+    padding-bottom: 32px;
+    animation: pageIn 0.3s var(--ease);
+  }
+  .filter-list-kind {
+    display: flex;
+    gap: 16px 64px;
+  }
+
+  .filter-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 18px;
+    letter-spacing: -0.005em;
+    text-align: left;
+    color: var(--muted);
+    transition: color 0.2s ease;
+  }
+  .filter-item:hover,
+  .filter-item[data-active="true"] {
+    color: #000;
+  }
+
+  .filter-circle {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    position: relative;
+    top: 1px;
+    background: transparent;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .filter-item[data-active="true"] .filter-circle {
+    background: #000;
+  }
+
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 26px;
+    row-gap: 64px;
+  }
+</style>
+
+<script>
+  const kinds = new Set<string>()
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-news-card]')]
+
+  const trigger = document.querySelector('[data-filter-trigger="kind"]')
+  const plusEl = document.querySelector('[data-plus="kind"]')
+  const list = document.querySelector<HTMLElement>('[data-filter-list="kind"]')
+
+  function applyFilters() {
+    cards.forEach((card) => {
+      const k = card.dataset.kind ?? ''
+      card.hidden = kinds.size > 0 && !kinds.has(k)
+    })
+  }
+
+  let open = false
+  function setOpen(next: boolean) {
+    open = next
+    trigger?.setAttribute('aria-expanded', String(open))
+    plusEl?.setAttribute('data-open', String(open))
+    if (list) list.hidden = !open
+  }
+
+  trigger?.addEventListener('click', () => setOpen(!open))
+
+  document.querySelectorAll('[data-filter-item]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const value = (btn as HTMLElement).dataset.value ?? ''
+      const wasActive = kinds.has(value)
+      if (wasActive) kinds.delete(value)
+      else kinds.add(value)
+      btn.setAttribute('aria-pressed', String(!wasActive))
+      btn.setAttribute('data-active', String(!wasActive))
+      applyFilters()
+    })
+  })
+
+  applyFilters()
+</script>

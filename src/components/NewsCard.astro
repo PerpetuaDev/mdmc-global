@@ -1,0 +1,72 @@
+---
+// News grid card — transcribed from design/handoff/design/MDMC Site.dc.html
+// lines ~348-358 (the `visibleNews` sc-for inside the `isNews` main). Unlike
+// WorkCard, there is no description/CTA row in the prototype — just image,
+// meta line, title. Missing `heroImage` renders the same grey `var(--ph)`
+// placeholder box WorkCard uses (today's live articles are zero, so this
+// path is what actually builds).
+
+interface Props {
+  article: {
+    slug: string;
+    title: string;
+    kind: "news" | "article" | "case_study";
+    kindLabel: string;
+    dateLabel: string;
+    heroImage: { url: string; alt: string } | null;
+  };
+}
+
+const { article } = Astro.props as Props;
+---
+
+<a href={`/news/${article.slug}/`} class="news-card">
+  <div class="news-card-image">
+    {article.heroImage ? (
+      <img src={article.heroImage.url} alt={article.heroImage.alt || article.title} />
+    ) : (
+      <div class="news-card-placeholder" aria-hidden="true"></div>
+    )}
+  </div>
+  <div class="label news-card-meta">{article.kindLabel} ・ {article.dateLabel}</div>
+  <h3 class="news-card-title">{article.title}</h3>
+</a>
+
+<style>
+  .news-card {
+    display: block;
+    cursor: pointer;
+  }
+
+  .news-card-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--ph);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.5s var(--ease);
+  }
+  .news-card:hover .news-card-image {
+    transform: translateY(-4px);
+  }
+
+  .news-card-image img,
+  .news-card-placeholder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .news-card-meta {
+    margin-top: 20px;
+  }
+
+  .news-card-title {
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    margin-top: 12px;
+  }
+</style>
