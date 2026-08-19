@@ -1,0 +1,278 @@
+---
+// Header + supermenu (Work/News/About) + locale panel.
+// Transcribed from design/handoff/design/MDMC Site.dc.html lines 30-107.
+// Content is fetched once by Base.astro via loadContent() and passed down as
+// props — this component never fetches on its own.
+
+interface ContentItem {
+  slug: string;
+  title: string;
+}
+
+interface Props {
+  active?: "home" | "work" | "news" | "about" | "contact";
+  projects: ContentItem[];
+  articles: ContentItem[];
+}
+
+const { active, projects = [], articles = [] } = Astro.props as Props;
+
+const workItems = projects.slice(0, 4);
+const newsItems = articles.slice(0, 4);
+
+const regions = [
+  { code: "nz", label: "New Zealand" },
+  { code: "au", label: "Australia" },
+  { code: "jp", label: "Japan" },
+];
+const languages = [
+  { code: "en", label: "EN" },
+  { code: "ja", label: "日本語" },
+];
+
+// Server-rendered defaults — localStorage (region/locale persistence) only
+// exists client-side, so first paint always shows nz/en per spec.
+const defaultRegion = "nz";
+const defaultLocale = "en";
+---
+
+<header
+  data-header
+  style="position: relative; z-index: 100; background: #fff; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; padding: 64px var(--gutter-r) 36px var(--gutter-l); font-size: 20px"
+>
+  <a href="/" aria-label="MDMC home" style="display: flex; align-items: center; gap: 14px; justify-self: start">
+    <img src="/mdmc.png" alt="MDMC" style="height: 22px; width: auto">
+  </a>
+
+  <nav aria-label="Primary" style="justify-self: start; display: flex; gap: 72px; margin-left: 225px">
+    <a
+      href="/work/"
+      data-mega-trigger="work"
+      class:list={["nav-link", { "is-active": active === "work" }]}
+    >Work</a>
+    <a
+      href="/news/"
+      data-mega-trigger="news"
+      class:list={["nav-link", { "is-active": active === "news" }]}
+    >News</a>
+    <a
+      href="/about/"
+      data-mega-trigger="about"
+      class:list={["nav-link", { "is-active": active === "about" }]}
+    >About</a>
+    <a
+      href="/contact/"
+      data-mega-close
+      class:list={["nav-link", { "is-active": active === "contact" }]}
+    >Contact</a>
+  </nav>
+
+  <div></div>
+
+  <div style="justify-self: end; display: inline-flex; align-items: baseline; gap: 28px">
+    <button
+      type="button"
+      data-mega-trigger="locale"
+      aria-haspopup="true"
+      class="locale-trigger"
+      style="padding: 6px 0; font-size: 16px; color: #000; white-space: nowrap; display: inline-flex; align-items: baseline; gap: 10px"
+    >
+      <span data-locale-label>New Zealand</span>
+      <span data-locale-code style="font-size: 10px; letter-spacing: 0.14em; color: var(--muted); position: relative; top: -1px">EN</span>
+    </button>
+  </div>
+
+  <div
+    data-mega
+    aria-hidden="true"
+    style="position: absolute; top: 100%; left: 0; right: 0; background: #fff; border-top: 1px solid var(--hairline); box-shadow: 0 1px 0 rgba(0,0,0,0.12), 0 32px 56px -40px rgba(0,0,0,0.18); overflow: hidden; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-8px)"
+  >
+    <div style="padding: 40px var(--gutter-r) 48px var(--gutter-l)">
+      <div data-panel="work">
+        <div class="label" style="margin-bottom: 18px">Work</div>
+        <ul style="list-style: none">
+          {workItems.map((p) => (
+            <li style="margin-top: 10px">
+              <a href={`/work/${p.slug}/`} class="mega-link" style="font-size: 20px">{p.title}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div data-panel="news" hidden>
+        <div class="label" style="margin-bottom: 18px">News</div>
+        <ul style="list-style: none">
+          {newsItems.map((n) => (
+            <li style="margin-top: 10px">
+              <a href={`/news/${n.slug}/`} class="mega-link" style="font-size: 20px">{n.title}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div data-panel="about" hidden>
+        <div style="display: flex; align-items: baseline; margin-bottom: 18px">
+          <div style="flex: 0 0 335px" class="label">About</div>
+        </div>
+        <ul style="list-style: none">
+          <li style="margin-top: 10px"><a href="/about/" class="mega-link" style="font-size: 20px">About</a></li>
+          <li style="margin-top: 10px"><a href="/careers/" class="mega-link" style="font-size: 20px">Careers</a></li>
+        </ul>
+      </div>
+
+      <div data-panel="locale" hidden>
+        <div style="display: flex; justify-content: flex-end; gap: 64px">
+          <div style="width: 260px">
+            <div class="label" style="margin-bottom: 18px; text-align: right">Region</div>
+            <ul style="list-style: none">
+              {regions.map((r) => (
+                <li style="margin-top: 10px">
+                  <button
+                    type="button"
+                    data-region={r.code}
+                    class:list={["mega-link", "locale-btn", { "is-active": r.code === defaultRegion }]}
+                    style="display: block; width: 100%; text-align: right; font-size: 20px"
+                  >{r.label}</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div style="width: 180px">
+            <div class="label" style="margin-bottom: 18px; text-align: right">Language</div>
+            <ul style="list-style: none">
+              {languages.map((l) => (
+                <li style="margin-top: 10px">
+                  <button
+                    type="button"
+                    data-locale={l.code}
+                    class:list={["mega-link", "locale-btn", { "is-active": l.code === defaultLocale }]}
+                    style="display: block; width: 100%; text-align: right; font-size: 20px"
+                  >{l.label}</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .nav-link {
+    position: relative;
+    padding: 6px 0;
+    white-space: nowrap;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+  }
+  .nav-link:hover,
+  .nav-link.is-active {
+    border-bottom-color: currentColor;
+  }
+
+  .locale-trigger {
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease;
+  }
+  .locale-trigger:hover {
+    border-bottom-color: currentColor;
+  }
+
+  .mega-link {
+    transition: opacity 0.2s ease;
+  }
+  .mega-link:hover {
+    opacity: 0.55;
+  }
+
+  .locale-btn {
+    color: var(--muted);
+  }
+  .locale-btn.is-active {
+    color: #000;
+  }
+</style>
+
+<script>
+  const header = document.querySelector('[data-header]');
+  const panel = header.querySelector('[data-mega]');
+  const views = panel.querySelectorAll('[data-panel]');
+  let open = null;
+
+  function show(name) {
+    views.forEach((v) => {
+      v.hidden = v.dataset.panel !== name;
+    });
+    panel.style.opacity = '1';
+    panel.style.visibility = 'visible';
+    panel.style.pointerEvents = 'auto';
+    panel.style.transform = 'translateY(0)';
+    panel.setAttribute('aria-hidden', 'false');
+    open = name;
+  }
+  function hide() {
+    panel.style.opacity = '0';
+    panel.style.visibility = 'hidden';
+    panel.style.pointerEvents = 'none';
+    panel.style.transform = 'translateY(-8px)';
+    panel.setAttribute('aria-hidden', 'true');
+    open = null;
+  }
+  header.querySelectorAll('[data-mega-trigger]').forEach((el) =>
+    el.addEventListener('mouseenter', () => show(el.dataset.megaTrigger)));
+  header.querySelectorAll('[data-mega-close]').forEach((el) =>
+    el.addEventListener('mouseenter', hide));
+  header.addEventListener('mouseleave', hide);
+  panel.style.transition = 'opacity .25s var(--ease), transform .25s var(--ease), visibility .25s';
+  hide();
+
+  // Locale/region persistence — clicks write localStorage and refresh the
+  // trigger label + active states. Full JA routing arrives in a later phase;
+  // for now this only persists the choice and updates this component's UI.
+  const REGION_KEY = 'mdmc.region';
+  const LOCALE_KEY = 'mdmc.locale';
+  const REGION_LABELS = { nz: 'New Zealand', au: 'Australia', jp: 'Japan' };
+
+  function normalizeRegion(v) {
+    return v === 'au' || v === 'jp' ? v : 'nz';
+  }
+  // Migrates whatever the old (pre-Astro) site left in mdmc.locale — any
+  // value that isn't recognizably Japanese collapses to 'en'.
+  function normalizeLocale(v) {
+    if (!v) return 'en';
+    return String(v).toLowerCase().startsWith('ja') ? 'ja' : 'en';
+  }
+
+  function renderLocaleUI() {
+    const region = normalizeRegion(localStorage.getItem(REGION_KEY));
+    const locale = normalizeLocale(localStorage.getItem(LOCALE_KEY));
+
+    const labelEl = header.querySelector('[data-locale-label]');
+    const codeEl = header.querySelector('[data-locale-code]');
+    if (labelEl) labelEl.textContent = REGION_LABELS[region];
+    if (codeEl) codeEl.textContent = locale.toUpperCase();
+
+    header.querySelectorAll('[data-region]').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.region === region);
+    });
+    header.querySelectorAll('[data-locale]').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.locale === locale);
+    });
+  }
+
+  header.querySelectorAll('[data-region]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      localStorage.setItem(REGION_KEY, btn.dataset.region);
+      renderLocaleUI();
+    });
+  });
+  header.querySelectorAll('[data-locale]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      localStorage.setItem(LOCALE_KEY, btn.dataset.locale);
+      renderLocaleUI();
+    });
+  });
+
+  renderLocaleUI();
+</script>
