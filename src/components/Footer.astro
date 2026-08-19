@@ -16,7 +16,7 @@ import { STUDIOS } from "../lib/studios.js";
 
 <footer
   data-footer
-  style="border-top: 1px solid #000; padding: 64px var(--gutter-r) 64px var(--gutter-l); font-size: 18px; color: #000"
+  style="border-top: 1px solid #000; padding: 64px var(--gutter-r) 0 var(--gutter-l); font-size: 18px; color: #000"
 >
   <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: 64px; align-items: start">
     <div>
@@ -86,6 +86,18 @@ import { STUDIOS } from "../lib/studios.js";
         </div>
       ))}
     </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span class="footer-bottom-left">
+      <span>© 2026 MDMC Group Inc.</span>
+      <a href="#" class="footer-link">Privacy &amp; Terms</a>
+    </span>
+    <span class="footer-bottom-right">
+      <button type="button" class="footer-link" data-footer-locale data-locale-part="region">New Zealand</button>
+      <span class="footer-dot" aria-hidden="true">·</span>
+      <button type="button" class="footer-link" data-footer-locale data-locale-part="lang">EN</button>
+    </span>
   </div>
 </footer>
 
@@ -174,6 +186,45 @@ import { STUDIOS } from "../lib/studios.js";
   .studio-link:hover {
     box-shadow: inset 0 -1px 0 currentColor;
   }
+
+  .footer-bottom {
+    margin-top: 80px;
+    border-top: 1px solid var(--hairline);
+    margin-left: calc(-1 * var(--gutter-l));
+    margin-right: calc(-1 * var(--gutter-r));
+    padding: 24px var(--gutter-r) 40px var(--gutter-l);
+    display: flex;
+    justify-content: space-between;
+    gap: 32px;
+    font-size: 14px;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+
+  .footer-bottom-left {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 32px;
+  }
+
+  .footer-bottom-right {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+
+  .footer-dot {
+    color: var(--faint);
+  }
+
+  .footer-link {
+    font-size: 14px;
+    color: inherit;
+    transition: color 0.2s ease;
+  }
+  .footer-link:hover {
+    color: #000;
+  }
 </style>
 
 <script>
@@ -206,4 +257,52 @@ import { STUDIOS } from "../lib/studios.js";
   }
   tick();
   setInterval(tick, 1000);
+
+  // Bottom bar region/language labels — reuse Header's stored choice
+  // (same localStorage keys, same normalize logic) so this stays in sync
+  // with the header on every fresh page load. This is an MPA (no client
+  // routing yet), so "page load" is also whenever the header's own click
+  // handlers would have taken effect on a *different* page; if the user
+  // switches locale via the header dropdown without navigating, this
+  // label won't update until the next navigation — acceptable for Phase 1
+  // per the same reasoning Header.astro's own comments give for deferring
+  // full locale routing.
+  const REGION_KEY = 'mdmc.region';
+  const LOCALE_KEY = 'mdmc.locale';
+  const REGION_LABELS = { nz: 'New Zealand', au: 'Australia', jp: 'Japan' };
+  function normalizeRegion(v) {
+    return v === 'au' || v === 'jp' ? v : 'nz';
+  }
+  function normalizeLocale(v) {
+    if (!v) return 'en';
+    return String(v).toLowerCase().startsWith('ja') ? 'ja' : 'en';
+  }
+  function readStore(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+  const regionBtn = document.querySelector('[data-locale-part="region"]');
+  const langBtn = document.querySelector('[data-locale-part="lang"]');
+  if (regionBtn) regionBtn.textContent = REGION_LABELS[normalizeRegion(readStore(REGION_KEY))];
+  if (langBtn) langBtn.textContent = normalizeLocale(readStore(LOCALE_KEY)).toUpperCase();
+
+  // Bottom bar locale buttons — prototype's footerLocale scrolls to top and
+  // opens the header's locale panel. Header's script wires
+  // `mouseenter` directly on `[data-mega-trigger]` elements, so the
+  // simplest reliable hook from here is to dispatch that same event on the
+  // header's locale trigger once the scroll has had time to land.
+  function openHeaderLocalePanel() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const trigger = document.querySelector('[data-mega-trigger="locale"]');
+    if (!trigger) return;
+    setTimeout(() => {
+      trigger.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    }, 400);
+  }
+  document.querySelectorAll('[data-footer-locale]').forEach((btn) => {
+    btn.addEventListener('click', openHeaderLocalePanel);
+  });
 </script>
