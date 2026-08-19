@@ -227,6 +227,16 @@ const defaultLocale = "en";
   panel.style.transition = 'opacity .25s var(--ease), transform .25s var(--ease), visibility .25s';
   hide();
 
+  // Explicit cross-component contract: other components (e.g. Footer's
+  // bottom-bar locale buttons) open a named mega panel by dispatching this
+  // event rather than simulating a mouseenter on a trigger element — keeps
+  // callers working even if this component's internals change.
+  document.addEventListener('mdmc:open-mega', (e) => {
+    const name = e.detail;
+    if (name) show(name);
+    else hide();
+  });
+
   // Locale/region persistence — clicks write localStorage and refresh the
   // trigger label + active states. Full JA routing arrives in a later phase;
   // for now this only persists the choice and updates this component's UI.

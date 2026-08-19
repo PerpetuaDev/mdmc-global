@@ -18,11 +18,20 @@
 // image: null for all three — studio photography doesn't exist yet. Footer
 // renders a var(--ph) placeholder box at the prototype's 220px/4:3 dimensions
 // until real photos arrive (content needed from user).
+//
+// closedLine: the footer's closed-accordion one-liner. The prototype
+// deliberately shortens these (drops the middle address line for NZ, drops
+// ", Kanagawa" and the building line for JP) rather than just joining
+// addressLines — transcribed literally from the toggleNz/toggleAu/toggleJp
+// closed-state buttons in design/handoff/design/MDMC Site.dc.html (lines
+// 715, 735, 755). addressLines remains the full, separate value used in the
+// open panel.
 export const STUDIOS = [
   {
     id: 'nz',
     region: 'New Zealand',
     tz: 'Pacific/Auckland',
+    closedLine: 'Level 2, 47 Salisbury St, Christchurch 8013',
     addressLines: ['Level 2, 47 Salisbury St', 'Christchurch Central', 'Christchurch 8013'],
     email: 'nz@mdmc.co',
     phone: '+64 3 660 0336',
@@ -32,6 +41,7 @@ export const STUDIOS = [
     id: 'au',
     region: 'Australia',
     tz: 'Australia/Sydney',
+    closedLine: '100 Arthur Street, Level 10, North Sydney NSW 2060',
     addressLines: ['100 Arthur Street, Level 10', 'North Sydney NSW 2060'],
     email: 'au@mdmc.co',
     phone: null,
@@ -41,6 +51,7 @@ export const STUDIOS = [
     id: 'jp',
     region: 'Japan',
     tz: 'Asia/Tokyo',
+    closedLine: '5-57-2 Kitanakadori, Naka Ward, Yokohama 231-0003',
     addressLines: [
       '5-57-2 Kitanakadori, Naka Ward',
       'Yokohama, Kanagawa 231-0003',

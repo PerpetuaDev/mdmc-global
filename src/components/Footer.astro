@@ -45,7 +45,7 @@ import { STUDIOS } from "../lib/studios.js";
             <div class="label" style="padding-top: 5px">{s.region}</div>
 
             <div>
-              <div class="studio-closed" style="font-size: 18px">{s.addressLines.join(", ")}</div>
+              <div class="studio-closed" style="font-size: 18px">{s.closedLine}</div>
 
               <div class="studio-panel-wrap">
                 <div class="studio-panel">
@@ -75,7 +75,7 @@ import { STUDIOS } from "../lib/studios.js";
                         </>
                       )}
                     </div>
-                    <a class="cta studio-link" href="/contact/" data-cta="message" style="align-self: flex-start">
+                    <a class="studio-message studio-link" href="/contact/" data-cta="message">
                       Send us a message <span class="arrow">→</span>
                     </a>
                   </div>
@@ -187,6 +187,19 @@ import { STUDIOS } from "../lib/studios.js";
     box-shadow: inset 0 -1px 0 currentColor;
   }
 
+  /* "Send us a message →" — deliberately not `.cta` (global.css's .cta is
+     20px/padding:6px 0/border-bottom-hover, which stacked a second,
+     larger, doubled hover indicator on top of .studio-link's inset
+     box-shadow and bumped the size past the 18px the prototype's
+     studio-col context uses). This inherits font-size from .studio-col
+     and gets only the shared .studio-link hover treatment. */
+  .studio-message {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    align-self: flex-start;
+  }
+
   .footer-bottom {
     margin-top: 80px;
     border-top: 1px solid var(--hairline);
@@ -290,16 +303,15 @@ import { STUDIOS } from "../lib/studios.js";
   if (langBtn) langBtn.textContent = normalizeLocale(readStore(LOCALE_KEY)).toUpperCase();
 
   // Bottom bar locale buttons — prototype's footerLocale scrolls to top and
-  // opens the header's locale panel. Header's script wires
-  // `mouseenter` directly on `[data-mega-trigger]` elements, so the
-  // simplest reliable hook from here is to dispatch that same event on the
-  // header's locale trigger once the scroll has had time to land.
+  // opens the header's locale panel. Header.astro listens for a named
+  // `mdmc:open-mega` CustomEvent (detail: panel name, or falsy to hide) —
+  // an explicit contract between the two components that survives Header
+  // internals changing, rather than synthesizing a `mouseenter` on its
+  // trigger element.
   function openHeaderLocalePanel() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    const trigger = document.querySelector('[data-mega-trigger="locale"]');
-    if (!trigger) return;
     setTimeout(() => {
-      trigger.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+      document.dispatchEvent(new CustomEvent('mdmc:open-mega', { detail: 'locale' }));
     }, 400);
   }
   document.querySelectorAll('[data-footer-locale]').forEach((btn) => {
