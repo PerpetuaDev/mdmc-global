@@ -23,9 +23,10 @@ export async function getStaticPaths() {
 
 const { project, next } = Astro.props;
 const hasStory = Boolean(project.story);
+const projectDescription = project.description || "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
 ---
 
-<Base title={project.title} active="work">
+<Base title={project.title} active="work" description={projectDescription}>
   <main style="animation: pageIn .6s var(--ease)">
     <ProjectHeader project={project} hasStory={hasStory} />
     <div data-view-pane="gallery">

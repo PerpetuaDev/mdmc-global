@@ -6,10 +6,12 @@ import { loadContent } from "../lib/content.js";
 
 interface Props {
   title: string;
+  description?: string;
   active?: "home" | "work" | "news" | "about" | "contact";
 }
 
-const { title, active } = Astro.props;
+const defaultDescription = "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
+const { title, description = defaultDescription, active } = Astro.props;
 const { projects, articles } = await loadContent();
 ---
 
@@ -18,6 +20,10 @@ const { projects, articles } = await loadContent();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content={description}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <title>{title}</title>
 </head>
 <body>

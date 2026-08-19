@@ -15,9 +15,10 @@ export async function getStaticPaths() {
 }
 
 const { article } = Astro.props;
+const articleDescription = article.excerpt || "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
 ---
 
-<Base title={article.title} active="news">
+<Base title={article.title} active="news" description={articleDescription}>
   <main style="animation: pageIn .6s var(--ease)">
     <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l)">
       <div class="label" style="margin-bottom: 24px">{article.kindLabel} ・ {article.dateLabel}</div>
