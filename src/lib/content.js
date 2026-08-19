@@ -54,21 +54,18 @@ function splitList(value) {
 // Case-study story: overview/challenge/approach/outcome each become a
 // paragraph array; `story` itself is null unless at least one section has
 // content — on live data today all four are empty (fields exist, unauthored)
-// so this correctly collapses to null.
+// so this correctly collapses to null. The pull quote is intentionally NOT
+// part of this object — it closes the gallery view too per the design spec,
+// so it must not depend on story existing (a quote-only entry, with all four
+// sections empty, should still surface the quote). It's a top-level Project
+// field instead (see normalizeProject/normalizeProjectJa).
 function storyOf(item) {
   const overview = blocksToParagraphs(item.overview)
   const challenge = blocksToParagraphs(item.challenge)
   const approach = blocksToParagraphs(item.approach)
   const outcome = blocksToParagraphs(item.outcome)
   if (!overview.length && !challenge.length && !approach.length && !outcome.length) return null
-  return {
-    overview,
-    challenge,
-    approach,
-    outcome,
-    pullQuote: item.pull_quote ?? null,
-    pullQuoteAttribution: item.pull_quote_attribution ?? null,
-  }
+  return { overview, challenge, approach, outcome }
 }
 
 // Repeatable `project.gallery-slot` component -> flat slot list. Slots
@@ -98,6 +95,8 @@ function normalizeProjectJa(overlay) {
     services,
     specialties: services,
     story: storyOf(overlay),
+    pullQuote: overlay.pull_quote ?? null,
+    pullQuoteAttribution: overlay.pull_quote_attribution ?? null,
   }
 }
 
@@ -118,6 +117,8 @@ function normalizeProject(item) {
     heroImage: mediaOf(item.hero_image),
     gallery: galleryOf(item.gallery),
     story: storyOf(item),
+    pullQuote: item.pull_quote ?? null,
+    pullQuoteAttribution: item.pull_quote_attribution ?? null,
     ja: normalizeProjectJa(item.ja),
   }
 }

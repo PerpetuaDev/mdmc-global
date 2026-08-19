@@ -54,22 +54,43 @@ describe('normalizeProject', () => {
       challenge: ['Challenge para.'],
       approach: ['Approach para.'],
       outcome: ['Outcome para.'],
-      pullQuote: 'Great quote',
-      pullQuoteAttribution: 'CEO',
     })
+    expect(out.pullQuote).toBe('Great quote')
+    expect(out.pullQuoteAttribution).toBe('CEO')
   })
 
-  it('yields gallery: [] and story: null when those fields are absent', () => {
+  it('yields gallery: [], story: null, and pullQuote: null when those fields are absent', () => {
     const out = normalizeProject(bare)
     expect(out.regions).toEqual(['USA'])
     expect(out.gallery).toEqual([])
     expect(out.story).toBeNull()
+    expect(out.pullQuote).toBeNull()
+    expect(out.pullQuoteAttribution).toBeNull()
   })
 
-  it('normalizes the .ja overlay to the same shape (localized fields only)', () => {
+  it('yields story: null but a populated top-level pullQuote when only the quote is set (quote-only entry)', () => {
+    const quoteOnly = {
+      ...bare,
+      documentId: 'p3',
+      pull_quote: 'Quote with no story',
+      pull_quote_attribution: 'Founder',
+    }
+    const out = normalizeProject(quoteOnly)
+    expect(out.story).toBeNull()
+    expect(out.pullQuote).toBe('Quote with no story')
+    expect(out.pullQuoteAttribution).toBe('Founder')
+  })
+
+  it('normalizes the .ja overlay to the same shape (localized fields only), including pullQuote', () => {
     const withJa = {
       ...withStory,
-      ja: { title: 'テストプロジェクト', description: 'JA desc', services: 'ウェブデザイン' },
+      ja: {
+        title: 'テストプロジェクト',
+        description: 'JA desc',
+        services: 'ウェブデザイン',
+        pull_quote: 'JA quote',
+        pull_quote_attribution: 'JA CEO',
+      },
     }
     const out = normalizeProject(withJa)
     expect(out.ja).toEqual({
@@ -78,6 +99,8 @@ describe('normalizeProject', () => {
       services: ['ウェブデザイン'],
       specialties: ['ウェブデザイン'],
       story: null,
+      pullQuote: 'JA quote',
+      pullQuoteAttribution: 'JA CEO',
     })
   })
 
