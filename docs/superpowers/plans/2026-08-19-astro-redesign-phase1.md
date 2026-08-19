@@ -471,3 +471,16 @@ jobs:
 - Studio images (footer accordions + contact folds), AU studio address/phone if the old site lacks them.
 - JP About copy (prototype's is placeholder), native-JA pass on job enum labels (carried over).
 - Söhne license confirmation for production/web use.
+
+---
+
+## Phase 1 execution outcome (2026-08-19)
+
+Executed via subagent-driven development: 12 commits + 2 final-review fix commits (`9a02683..36e662a`), all task reviews + final whole-branch review clean, CI green (`redesign-check.yml`).
+
+**Deferred to Phase 2 (from reviews):**
+- content.js: 4xx short-circuit in fetchJson retry; add a fallback-branching test; `.ja` overlay shape must be normalized (raw Strapi fields, unsplit `services`) before JA routes consume it; memo cache is process-lifetime (astro dev staleness).
+- Header/Footer: SSR default-flash of region/locale labels for returning non-default visitors; Escape doesn't restore focus; three accordion toggles share one aria-label; footer open-row transition is grid-rows .3s (not prototype pageIn .35s slide) — confirm at visual review; footer scroll-then-open uses fixed 400ms + always-smooth scroll.
+- Base: no meta description/favicon yet (SEO pass in Phase 2); decide fate of unused `.cta` utility and `--ink`/`--paper` tokens.
+
+**Content needed from user (running list):** privacy/terms page (linked "#" in footer, absent from all 4 phases); studio photography (footer/contact); AU + JP phone numbers (absent from old site); JP email confirmation (footer contact@mdmc.co vs location page team@mdmc.co); project photography per new slots (3 heroes missing, all galleries); JP About copy; Söhne production licensing confirmation.
