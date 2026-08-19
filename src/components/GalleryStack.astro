@@ -12,10 +12,13 @@
 // Project field, never `story.*` — see content.js's storyOf comment); no
 // live project has one today.
 //
-// Slot captions: only the `square` kind renders a caption per the task
-// brief, even though the prototype's hard-coded demo also shows captions
-// under its `two_up` examples — those are asset-specific annotations in the
-// static mock, not a general two_up/full_bleed rendering rule.
+// Slot captions: every slot kind renders a caption when `slot.caption` is
+// set (controller ruling — the brief's per-kind wording describing captions
+// only under `square` was descriptive of that example's content, not
+// restrictive; the schema carries `caption` on every slot and the prototype
+// shows captions under `two_up` too). Styling is identical everywhere: 14px
+// muted, 16px below the image. In a `two_up` pair, each slot's caption sits
+// under its own image inside that pair cell.
 
 interface GallerySlot {
   url: string;
@@ -74,18 +77,27 @@ for (let i = 0; i < slots.length; i++) {
       row.type === 'pair' ? (
         <div class="gallery-pair">
           {row.slots.map((s) => (
-            <div class="gallery-frame gallery-frame-4-3">
-              <img src={s.url} alt={s.alt} />
+            <div>
+              <div class="gallery-frame gallery-frame-4-3">
+                <img src={s.url} alt={s.alt} />
+              </div>
+              {s.caption && <div class="gallery-caption">{s.caption}</div>}
             </div>
           ))}
         </div>
       ) : row.kind === 'hero' ? (
-        <div class="gallery-frame gallery-frame-16-9">
-          <img src={row.slot.url} alt={row.slot.alt} data-image-id={row.isHeroFirst ? 'hero' : undefined} />
+        <div>
+          <div class="gallery-frame gallery-frame-16-9">
+            <img src={row.slot.url} alt={row.slot.alt} data-image-id={row.isHeroFirst ? 'hero' : undefined} />
+          </div>
+          {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
         </div>
       ) : row.kind === 'two_up' ? (
-        <div class="gallery-frame gallery-frame-4-3">
-          <img src={row.slot.url} alt={row.slot.alt} />
+        <div>
+          <div class="gallery-frame gallery-frame-4-3">
+            <img src={row.slot.url} alt={row.slot.alt} />
+          </div>
+          {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
         </div>
       ) : row.kind === 'square' ? (
         <div>
@@ -95,8 +107,11 @@ for (let i = 0; i < slots.length; i++) {
           {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
         </div>
       ) : (
-        <div class="gallery-full-bleed">
-          <img src={row.slot.url} alt={row.slot.alt} />
+        <div>
+          <div class="gallery-full-bleed">
+            <img src={row.slot.url} alt={row.slot.alt} />
+          </div>
+          {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
         </div>
       )
     ))}
