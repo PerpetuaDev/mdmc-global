@@ -2,9 +2,47 @@
 // fetching and fallback logic live in content.js.
 
 // Text fields with i18n enabled in the Strapi project schema; everything else
-// (media, dates, client, region…) is shared across locales.
-export const LOCALIZED_PROJECT_FIELDS = ['title', 'description', 'intro', 'body', 'services']
+// (media, dates, client, region…) is shared across locales. `intro`/`body`
+// are legacy fields no longer surfaced by the content layer (superseded by
+// the case-study `story` fields below) and are intentionally left off this
+// list — the `.ja` overlay should only carry fields consumers actually read.
+export const LOCALIZED_PROJECT_FIELDS = [
+  'title',
+  'description',
+  'services',
+  'overview',
+  'challenge',
+  'approach',
+  'outcome',
+  'pull_quote',
+  'pull_quote_attribution',
+]
 export const LOCALIZED_ARTICLE_FIELDS = ['title', 'excerpt', 'body', 'tag']
+
+// Strapi 5 richtext blocks → array of paragraph strings. Ported as-is from
+// main:src/strapi.js (lines 27-36) so both the old and new content layers
+// agree on shape. Handles both markdown-string richtext (current schema) and
+// legacy blocks-array content that may still be lingering on old fields.
+export function blocksToParagraphs(value) {
+  if (!value) return []
+  if (typeof value === 'string') return value.split('\n').filter(Boolean)
+  if (Array.isArray(value)) {
+    return value
+      .map((block) => (block.children || []).map((c) => c.text ?? '').join(''))
+      .filter(Boolean)
+  }
+  return []
+}
+
+// Next project in the date-desc list, wrapping around at the end. Used by
+// the case-study "Next project" block. Returns null when the slug isn't
+// found or the list doesn't have another project to point to.
+export function nextProject(projects, slug) {
+  if (!projects || projects.length < 2) return null
+  const idx = projects.findIndex((p) => p.slug === slug)
+  if (idx === -1) return null
+  return projects[(idx + 1) % projects.length]
+}
 
 export function slugify(title, documentId) {
   const s = (title || '')

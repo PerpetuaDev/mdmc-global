@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { slugify, assignSlugs, mergeLocales } from '../src/lib/normalize.js'
+import { blocksToParagraphs, nextProject } from '../src/lib/normalize.js'
 
 describe('slugify', () => {
   it('kebab-cases a latin title', () => {
@@ -29,5 +30,30 @@ describe('mergeLocales', () => {
     const merged = mergeLocales(en, ja, ['title', 'description'])
     expect(merged[0].ja.title).toBe('ゼンライズ')
     expect(merged[0].title).toBe('Zenrise Website')
+  })
+})
+
+describe('blocksToParagraphs', () => {
+  it('flattens Strapi blocks to paragraph strings', () => {
+    const blocks = [
+      { type: 'paragraph', children: [{ text: 'First ' }, { text: 'para.' }] },
+      { type: 'paragraph', children: [{ text: '' }] },
+      { type: 'paragraph', children: [{ text: 'Second.' }] },
+    ]
+    expect(blocksToParagraphs(blocks)).toEqual(['First para.', 'Second.'])
+  })
+  it('splits plain strings on newlines and passes empties through as []', () => {
+    expect(blocksToParagraphs('a\nb')).toEqual(['a', 'b'])
+    expect(blocksToParagraphs(null)).toEqual([])
+  })
+})
+
+describe('nextProject', () => {
+  const ps = [{ slug: 'a' }, { slug: 'b' }, { slug: 'c' }]
+  it('returns the following project', () => { expect(nextProject(ps, 'a').slug).toBe('b') })
+  it('wraps at the end', () => { expect(nextProject(ps, 'c').slug).toBe('a') })
+  it('returns null when not found or list < 2', () => {
+    expect(nextProject(ps, 'zzz')).toBeNull()
+    expect(nextProject([{ slug: 'a' }], 'a')).toBeNull()
   })
 })

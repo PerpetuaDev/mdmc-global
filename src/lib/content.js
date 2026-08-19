@@ -4,6 +4,7 @@ import snapshot from '../content-snapshot.json'
 import {
   mergeLocales,
   assignSlugs,
+  blocksToParagraphs,
   LOCALIZED_PROJECT_FIELDS,
   LOCALIZED_ARTICLE_FIELDS,
 } from './normalize.js'
@@ -30,6 +31,9 @@ async function fetchJson(path, tries = 2) {
       })
       clearTimeout(t)
       if (res.ok) return (await res.json()).data
+      // 4xx (bad token, unpublished endpoint, permission gap) won't get
+      // better on a retry — stop immediately and fall back.
+      if (res.status >= 400 && res.status < 500) break
     } catch { /* retry */ }
   }
   return null
@@ -43,7 +47,62 @@ function mediaOf(media) {
   return { url: media.url, alt: media.alternativeText ?? '' }
 }
 
+function splitList(value) {
+  return value ? value.split(',').map((s) => s.trim()).filter(Boolean) : []
+}
+
+// Case-study story: overview/challenge/approach/outcome each become a
+// paragraph array; `story` itself is null unless at least one section has
+// content — on live data today all four are empty (fields exist, unauthored)
+// so this correctly collapses to null.
+function storyOf(item) {
+  const overview = blocksToParagraphs(item.overview)
+  const challenge = blocksToParagraphs(item.challenge)
+  const approach = blocksToParagraphs(item.approach)
+  const outcome = blocksToParagraphs(item.outcome)
+  if (!overview.length && !challenge.length && !approach.length && !outcome.length) return null
+  return {
+    overview,
+    challenge,
+    approach,
+    outcome,
+    pullQuote: item.pull_quote ?? null,
+    pullQuoteAttribution: item.pull_quote_attribution ?? null,
+  }
+}
+
+// Repeatable `project.gallery-slot` component -> flat slot list. Slots
+// without a resolved image (shouldn't happen given the required field, but
+// defensive against partially-populated responses) are dropped.
+function galleryOf(slots) {
+  if (!Array.isArray(slots)) return []
+  return slots
+    .map((slot) => {
+      const media = mediaOf(slot.image)
+      if (!media) return null
+      return { url: media.url, alt: media.alt, kind: slot.kind ?? 'two_up', caption: slot.caption ?? null }
+    })
+    .filter(Boolean)
+}
+
+// Normalizes the `.ja` overlay (built by mergeLocales from raw Strapi
+// fields) down to the same shape consumers get at the top level, restricted
+// to the fields that are actually localized. `null` when no ja override
+// exists for a given field, so callers can `project.ja?.title ?? project.title`.
+function normalizeProjectJa(overlay) {
+  if (!overlay) return null
+  const services = overlay.services != null ? splitList(overlay.services) : null
+  return {
+    title: overlay.title ?? null,
+    description: overlay.description ?? null,
+    services,
+    specialties: services,
+    story: storyOf(overlay),
+  }
+}
+
 function normalizeProject(item) {
+  const services = splitList(item.services)
   return {
     documentId: item.documentId,
     title: item.title ?? '',
@@ -51,22 +110,61 @@ function normalizeProject(item) {
     client: item.client ?? '',
     date: item.date ?? '',
     region: item.region ?? '',
-    services: item.services ? item.services.split(',').map((s) => s.trim()).filter(Boolean) : [],
+    regions: splitList(item.region),
+    services,
+    specialties: services,
     darkHero: item.dark_hero ?? false,
     thumbnail: mediaOf(item.thumbnail),
     heroImage: mediaOf(item.hero_image),
-    ja: item.ja ?? null,
+    gallery: galleryOf(item.gallery),
+    story: storyOf(item),
+    ja: normalizeProjectJa(item.ja),
   }
 }
 
-function normalizeArticle(item) {
+const ARTICLE_KIND_LABELS = { news: 'News', article: 'Article', case_study: 'Case Study' }
+
+function dateLabelOf(date) {
+  if (!date) return ''
+  const d = new Date(date)
+  if (Number.isNaN(d.getTime())) return ''
+  return d
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    .toUpperCase()
+}
+
+function normalizeArticleJa(overlay) {
+  if (!overlay) return null
+  return {
+    title: overlay.title ?? null,
+    excerpt: overlay.excerpt ?? null,
+    body: overlay.body != null ? blocksToParagraphs(overlay.body) : [],
+    tag: overlay.tag ?? null,
+  }
+}
+
+// `projects` is the already-normalized+slugged project list, so the
+// `project` relation (a documentId) resolves to a routable slug here rather
+// than callers having to cross-reference it themselves.
+function normalizeArticle(item, projects = []) {
+  const kind = item.kind ?? 'news'
+  const projectDocId = item.project?.documentId ?? null
+  const projectSlug = projectDocId
+    ? (projects.find((p) => p.documentId === projectDocId)?.slug ?? null)
+    : null
   return {
     documentId: item.documentId,
     title: item.title ?? '',
     date: item.date ?? '',
+    dateLabel: dateLabelOf(item.date),
     excerpt: item.excerpt ?? '',
+    kind,
+    kindLabel: ARTICLE_KIND_LABELS[kind] ?? 'News',
+    projectSlug,
     cover: mediaOf(item.cover),
-    ja: item.ja ?? null,
+    heroImage: mediaOf(item.hero_image) ?? mediaOf(item.cover),
+    body: blocksToParagraphs(item.body),
+    ja: normalizeArticleJa(item.ja),
   }
 }
 
@@ -77,12 +175,22 @@ function normalizeArticle(item) {
 // scripts/snapshot-content.mjs exactly so live and snapshot shapes agree.
 // mergeLocales already sorts newest-first by date, and normalizing/slugging
 // afterward preserves that order.
+// NOTE: `populate=*` combined with any `populate[x]=...` bracket key on the
+// SAME request 500s on this Strapi Cloud instance (qs can't merge a wildcard
+// string value with bracket-object keys under one `populate` param) —
+// confirmed live, reproducible on both endpoints. So these list every
+// relation/media field the normalizers actually read, explicitly, with no
+// wildcard. Scalar/richtext fields (title, date, kind, overview, etc.) come
+// back regardless of populate, so nothing else is lost by dropping `*`.
+const PROJECTS_POPULATE = 'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image'
+const ARTICLES_POPULATE = 'populate[cover]=true&populate[hero_image]=true&populate[project]=true'
+
 async function _load() {
   const [projectsEn, projectsJa, articlesEn, articlesJa] = await Promise.all([
-    fetchJson('/projects?populate=*&sort=date:desc&locale=en'),
-    fetchJson('/projects?populate=*&sort=date:desc&locale=ja'),
-    fetchJson('/articles?populate=*&sort=date:desc&locale=en'),
-    fetchJson('/articles?populate=*&sort=date:desc&locale=ja'),
+    fetchJson(`/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=en`),
+    fetchJson(`/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=ja`),
+    fetchJson(`/articles?${ARTICLES_POPULATE}&sort=date:desc&locale=en`),
+    fetchJson(`/articles?${ARTICLES_POPULATE}&sort=date:desc&locale=ja`),
   ])
 
   const rawProjectsEn = projectsEn ?? snapshot.projects_en ?? []
@@ -94,7 +202,7 @@ async function _load() {
   const mergedArticles = mergeLocales(rawArticlesEn, rawArticlesJa, LOCALIZED_ARTICLE_FIELDS)
 
   const projects = assignSlugs(mergedProjects.map(normalizeProject))
-  const articles = assignSlugs(mergedArticles.map(normalizeArticle))
+  const articles = assignSlugs(mergedArticles.map((item) => normalizeArticle(item, projects)))
 
   return { projects, articles }
 }
@@ -109,3 +217,7 @@ let _p
 export function loadContent() {
   return (_p ??= _load())
 }
+
+// Exported for unit testing the pure normalization logic in isolation from
+// fetch/fallback (test/content.test.js).
+export { normalizeProject, normalizeArticle }

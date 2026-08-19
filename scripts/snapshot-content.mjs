@@ -28,11 +28,19 @@ async function token() {
   } catch { return '' }
 }
 
+// Kept in lockstep with src/lib/content.js's PROJECTS_POPULATE/ARTICLES_POPULATE.
+// `populate=*` alone doesn't reach a component's nested media (gallery.image),
+// and combining `populate=*` with ANY `populate[x]=...` bracket key 500s on
+// this Strapi Cloud instance (confirmed live) — so these list every
+// relation/media field explicitly instead of using the wildcard at all.
+const PROJECTS_POPULATE = 'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image'
+const ARTICLES_POPULATE = 'populate[cover]=true&populate[hero_image]=true&populate[project]=true'
+
 const ENDPOINTS = {
-  projects_en: '/projects?populate=*&sort=date:desc&locale=en',
-  projects_ja: '/projects?populate=*&sort=date:desc&locale=ja',
-  articles_en: '/articles?populate=*&sort=date:desc&locale=en',
-  articles_ja: '/articles?populate=*&sort=date:desc&locale=ja',
+  projects_en: `/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=en`,
+  projects_ja: `/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=ja`,
+  articles_en: `/articles?${ARTICLES_POPULATE}&sort=date:desc&locale=en`,
+  articles_ja: `/articles?${ARTICLES_POPULATE}&sort=date:desc&locale=ja`,
   members: '/members?populate=*&sort=order:asc',
   homepage_en: '/homepage?locale=en',
   homepage_ja: '/homepage?locale=ja',
