@@ -9,7 +9,15 @@ import {
 } from './normalize.js'
 
 const API = 'https://upbeat-approval-82a9e54c20.strapiapp.com/api'
-const TOKEN = import.meta.env.STRAPI_TOKEN ?? process.env.STRAPI_TOKEN ?? ''
+// CI maps the deploy secret to STRAPI_TOKEN, so that name wins; local dev's
+// existing .env convention (shared with scripts/snapshot-content.mjs) is
+// VITE_STRAPI_TOKEN, kept as a fallback so both paths share one token.
+const TOKEN =
+  import.meta.env.STRAPI_TOKEN ??
+  process.env.STRAPI_TOKEN ??
+  import.meta.env.VITE_STRAPI_TOKEN ??
+  process.env.VITE_STRAPI_TOKEN ??
+  ''
 
 async function fetchJson(path, tries = 2) {
   for (let i = 0; i < tries; i++) {
