@@ -28,8 +28,10 @@ const first = heroSlides[0];
             data-title={p.title}
             data-href={`/work/${p.slug}/`}
             aria-label={`Open ${p.title}`}
+            aria-hidden={i === 0 ? "false" : "true"}
+            tabindex="-1"
             class="hero-slide"
-            style={`opacity: ${i === 0 ? "1" : "0"}`}
+            style={`opacity: ${i === 0 ? "1" : "0"}; pointer-events: ${i === 0 ? "auto" : "none"}`}
           >
             {p.heroImage ? (
               <img src={p.heroImage.url} alt={p.heroImage.alt || p.title} />
@@ -130,7 +132,12 @@ const first = heroSlides[0];
   let i = 0
   function show(n) {
     i = (n + slides.length) % slides.length
-    slides.forEach((s, j) => { s.style.opacity = j === i ? '1' : '0' })
+    slides.forEach((s, j) => {
+      const active = j === i
+      s.style.opacity = active ? '1' : '0'
+      s.style.pointerEvents = active ? 'auto' : 'none'
+      s.setAttribute('aria-hidden', active ? 'false' : 'true')
+    })
     if (name) {
       name.textContent = slides[i].dataset.title ?? ''
       name.href = slides[i].dataset.href ?? '#'
