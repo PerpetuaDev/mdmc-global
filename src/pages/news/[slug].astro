@@ -1,0 +1,161 @@
+---
+// Article detail page — transcribed from design/handoff/design/MDMC Site.dc.html
+// lines 365–390. Renders a single article with meta, title, hero image, body,
+// optional case study link, and share/back links. Zero live articles today,
+// so getStaticPaths emits an empty array (valid Astro).
+import Base from "../../layouts/Base.astro";
+import { loadContent } from "../../lib/content.js";
+
+export async function getStaticPaths() {
+  const { articles } = await loadContent();
+  return articles.map((article) => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
+}
+
+const { article } = Astro.props;
+---
+
+<Base title={article.title} active="news">
+  <main style="animation: pageIn .6s var(--ease)">
+    <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l)">
+      <div class="label" style="margin-bottom: 24px">{article.kindLabel} ・ {article.dateLabel}</div>
+      <h1 class="article-title">{article.title}</h1>
+      <div class="hero-container">
+        {article.heroImage ? (
+          <img src={article.heroImage.url} alt={article.heroImage.alt || article.title} />
+        ) : (
+          <div class="hero-placeholder" aria-hidden="true"></div>
+        )}
+      </div>
+    </section>
+    <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l)">
+      <div class="body-column">
+        {article.body.length > 0 ? (
+          <>
+            <p class="lead">{article.body[0]}</p>
+            {article.body.length > 1 && (
+              <div class="remaining-paragraphs">
+                {article.body.slice(1).map((para) => (
+                  <p>{para}</p>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <p class="lead">{article.excerpt}</p>
+        )}
+        {article.projectSlug && (
+          <a href={`/work/${article.projectSlug}/?view=story`} class="cta" style="margin-top: 56px">
+            See the full case study <span class="arrow">→</span>
+          </a>
+        )}
+      </div>
+      <div class="closing-footer">
+        <a href="/news/" class="cta">
+          <span class="arrow">←</span> Back to all news
+        </a>
+        <button class="share-button cta">
+          Share this article <span class="arrow">↗</span>
+        </button>
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .article-title {
+    font-size: clamp(40px, 4.4vw, 64px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    text-wrap: balance;
+    max-width: 900px;
+  }
+
+  .hero-container {
+    width: 100%;
+    aspect-ratio: 1853 / 812;
+    background: var(--ph);
+    overflow: hidden;
+    position: relative;
+    margin-top: 64px;
+  }
+
+  .hero-container img,
+  .hero-placeholder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .body-column {
+    max-width: 720px;
+  }
+
+  .lead {
+    font-size: 26px;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+  }
+
+  .remaining-paragraphs {
+    margin-top: 56px;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+
+  .remaining-paragraphs p {
+    margin-top: 1.2em;
+  }
+
+  .remaining-paragraphs p:first-child {
+    margin-top: 0;
+  }
+
+  .closing-footer {
+    margin-top: 120px;
+    padding: 32px 0 80px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 32px;
+  }
+
+  .share-button {
+    background: none;
+    border: 0;
+    padding: 6px 0;
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  // Share button: navigator.share if available, else copy URL, else silent no-op.
+  // Wrapped in try/catch to prevent unhandled rejections.
+  const shareButton = document.querySelector('.share-button') as HTMLElement;
+  if (shareButton) {
+    shareButton.addEventListener('click', async () => {
+      try {
+        const title = document.querySelector('h1')?.textContent || '';
+        const url = window.location.href;
+
+        if (navigator.share) {
+          // Native share available — invoke it
+          await navigator.share({ title, url });
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          // Clipboard API available — copy URL
+          await navigator.clipboard.writeText(url);
+        }
+        // If neither available, silently do nothing
+      } catch (e) {
+        // Swallow all errors: share cancellations, clipboard denials, etc.
+        // Do nothing — user will see the page is still there
+      }
+    });
+  }
+</script>
