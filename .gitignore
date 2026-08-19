@@ -1,5 +1,8 @@
-node_modules/
 dist/
 .DS_Store
 *.local
 .env
+node_modules/
+.claude/
+.superpowers/
+.astro/
