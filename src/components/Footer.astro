@@ -1,0 +1,209 @@
+---
+// Footer — studio accordions + live clocks.
+// Transcribed from design/handoff/design/MDMC Site.dc.html, the footer block
+// starting "Have a project in mind" (search that string), before the
+// <script type="text/x-dc"> tag. Full-black top rule is the only full-black
+// rule on the site (spec); inner accordion rows use the 0.12 hairline.
+//
+// The prototype's onClick handlers fire on several elements per row (label,
+// closed-address line, and the "+" button all call the same toggle). Our
+// accordion script (Step 3 of the task brief) binds exactly one
+// `[data-toggle]` element per row via `row.querySelector`, so only the "+"
+// button — the dedicated, already-aria-labelled toggle control — carries
+// that attribute; the label and closed-address line are static text.
+import { STUDIOS } from "../lib/studios.js";
+---
+
+<footer
+  data-footer
+  style="border-top: 1px solid #000; padding: 64px var(--gutter-r) 64px var(--gutter-l); font-size: 18px; color: #000"
+>
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: 64px; align-items: start">
+    <div>
+      <a href="/contact/" class="footer-cta" style="display: inline-block; font-size: 32px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; text-wrap: balance">
+        Have a project in mind? Let's talk. <span class="arrow">→</span>
+      </a>
+    </div>
+
+    <div>
+      {STUDIOS.map((s, i) => (
+        <div
+          class="studio-row"
+          data-studio
+          data-open="0"
+          style={`border-top: 1px solid var(--hairline); position: relative;${i === STUDIOS.length - 1 ? " border-bottom: 1px solid var(--hairline);" : ""}`}
+        >
+          <button
+            type="button"
+            data-toggle
+            class="studio-plus"
+            aria-expanded="false"
+            aria-label={`Toggle ${s.region} studio details`}
+          >+</button>
+
+          <div style="display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; padding: 24px 48px 24px 0">
+            <div class="label" style="padding-top: 5px">{s.region}</div>
+
+            <div>
+              <div class="studio-closed" style="font-size: 18px">{s.addressLines.join(", ")}</div>
+
+              <div class="studio-panel-wrap">
+                <div class="studio-panel">
+                  <div class="studio-image" aria-hidden="true"></div>
+
+                  <div class="studio-col">
+                    <div>
+                      <span data-clock={s.tz} class="studio-clock" aria-label={`Local time in ${s.region}`}></span>
+                    </div>
+                    <div>
+                      {s.addressLines.map((line, li) => (
+                        <>
+                          {line}
+                          {li < s.addressLines.length - 1 && <br />}
+                        </>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div class="studio-col">
+                    <div>
+                      <a class="studio-link" href={`mailto:${s.email}`}>{s.email}</a>
+                      {s.phone && (
+                        <>
+                          <br />
+                          <a class="studio-link" href={`tel:${s.phone.replace(/\s+/g, "")}`}>{s.phone}</a>
+                        </>
+                      )}
+                    </div>
+                    <a class="cta studio-link" href="/contact/" data-cta="message" style="align-self: flex-start">
+                      Send us a message <span class="arrow">→</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer-cta {
+    transition: opacity 0.2s ease;
+  }
+  .footer-cta:hover {
+    opacity: 0.6;
+  }
+
+  .studio-plus {
+    position: absolute;
+    top: 20px;
+    right: 0;
+    z-index: 2;
+    padding: 4px 0 4px 12px;
+    font-size: 22px;
+    line-height: 1;
+    font-weight: 400;
+    transition: transform 0.3s var(--ease);
+  }
+  [data-open="1"] .studio-plus {
+    transform: rotate(45deg);
+  }
+
+  .studio-closed {
+    display: block;
+  }
+  [data-open="1"] .studio-closed {
+    display: none;
+  }
+
+  .studio-panel-wrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 0.3s var(--ease), opacity 0.3s var(--ease);
+  }
+  [data-open="1"] .studio-panel-wrap {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  .studio-panel {
+    overflow: hidden;
+    min-height: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px 48px;
+    align-items: stretch;
+    padding-bottom: 16px;
+  }
+
+  .studio-image {
+    width: 220px;
+    flex: 0 0 220px;
+    aspect-ratio: 4 / 3;
+    background: var(--ph);
+    overflow: hidden;
+  }
+
+  .studio-col {
+    flex: 1 1 200px;
+    min-width: 200px;
+    font-size: 18px;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .studio-clock {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: baseline;
+  }
+
+  .studio-link {
+    display: inline-block;
+    transition: box-shadow 0.2s ease;
+  }
+  .studio-link:hover {
+    box-shadow: inset 0 -1px 0 currentColor;
+  }
+</style>
+
+<script>
+  const rows = document.querySelectorAll('[data-studio]');
+  rows.forEach((row) => {
+    const toggle = row.querySelector('[data-toggle]');
+    toggle.addEventListener('click', () => {
+      const isOpen = row.dataset.open === '1';
+      rows.forEach((r) => {
+        r.dataset.open = '0';
+        r.querySelector('[data-toggle]').setAttribute('aria-expanded', 'false');
+      });
+      row.dataset.open = isOpen ? '0' : '1';
+      toggle.setAttribute('aria-expanded', row.dataset.open === '1' ? 'true' : 'false');
+    });
+  });
+
+  const clocks = document.querySelectorAll('[data-clock]');
+  function tick() {
+    const blink = new Date().getSeconds() % 2 === 0;
+    clocks.forEach((el) => {
+      const t = new Intl.DateTimeFormat('en-NZ', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: el.dataset.clock,
+      }).format(new Date());
+      el.innerHTML = t.replace(':', `<span style="opacity:${blink ? 1 : 0}">:</span>`);
+    });
+  }
+  tick();
+  setInterval(tick, 1000);
+</script>
