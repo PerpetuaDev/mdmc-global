@@ -1,9 +1,14 @@
 ---
-// Project case-study stub — title + description only. Full case-study
-// layout (gallery/credits, per design/handoff/design/MDMC Site.dc.html
-// lines 486+) is Phase 2 scope; this just guarantees every project gets a
-// working /work/<slug>/ route ahead of that.
+// Project detail — header + Gallery view, transcribed from
+// design/handoff/design/MDMC Site.dc.html lines 486-551 (README §6).
+// Replaces the Phase-1 title+description stub. `data-view-pane="gallery"`
+// wraps the gallery content so Task 5 can add a sibling
+// `data-view-pane="story" hidden>` pane and wire the header toggle
+// (ProjectHeader.astro renders `data-view-toggle` markup with no handler
+// yet — see its header comment).
 import Base from "../../layouts/Base.astro";
+import ProjectHeader from "../../components/ProjectHeader.astro";
+import GalleryStack from "../../components/GalleryStack.astro";
 import { loadContent } from "../../lib/content.js";
 
 export async function getStaticPaths() {
@@ -15,13 +20,19 @@ export async function getStaticPaths() {
 }
 
 const { project } = Astro.props;
+const hasStory = Boolean(project.story);
 ---
 
 <Base title={project.title} active="work">
   <main style="animation: pageIn .6s var(--ease)">
-    <section class="gutter" style="padding-top: 80px; padding-bottom: 160px;">
-      <h1 style="font-size: clamp(40px, 4.4vw, 64px); line-height: 1.05; letter-spacing: -0.02em; font-weight: 500;">{project.title}</h1>
-      <p style="margin-top: 24px; max-width: 640px;">{project.description}</p>
-    </section>
+    <ProjectHeader project={project} hasStory={hasStory} />
+    <div data-view-pane="gallery">
+      <GalleryStack
+        gallery={project.gallery}
+        heroImage={project.heroImage}
+        pullQuote={project.pullQuote}
+        pullQuoteAttribution={project.pullQuoteAttribution}
+      />
+    </div>
   </main>
 </Base>
