@@ -1,0 +1,80 @@
+---
+// Work grid card — transcribed from design/handoff/design/MDMC Site.dc.html
+// lines 138-146 (the `allProjects` sc-for inside the home work grid; the
+// Work index page in Phase 2 reuses the identical markup at lines 178-186).
+// Missing `thumbnail` renders the same grey `var(--ph)` placeholder box the
+// prototype uses for all images — today 3 of 6 live projects have none.
+
+interface Props {
+  project: {
+    slug: string;
+    title: string;
+    description: string;
+    thumbnail: { url: string; alt: string } | null;
+  };
+  headingLevel?: "h2" | "h3";
+}
+
+const { project, headingLevel = "h3" } = Astro.props as Props;
+const Heading = headingLevel;
+---
+
+<a href={`/work/${project.slug}/`} class="work-card">
+  <div class="work-card-image">
+    {project.thumbnail ? (
+      <img src={project.thumbnail.url} alt={project.thumbnail.alt || project.title} />
+    ) : (
+      <div class="work-card-placeholder" aria-hidden="true"></div>
+    )}
+  </div>
+  <Heading class="work-card-title">{project.title}</Heading>
+  <p class="work-card-desc">{project.description}</p>
+  <span class="work-card-cta">View project <span class="arrow">→</span></span>
+</a>
+
+<style>
+  .work-card {
+    display: block;
+    cursor: pointer;
+  }
+
+  .work-card-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--ph);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.5s var(--ease);
+  }
+  .work-card:hover .work-card-image {
+    transform: translateY(-4px);
+  }
+
+  .work-card-image img,
+  .work-card-placeholder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .work-card-title {
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    margin-top: 24px;
+  }
+
+  .work-card-desc {
+    margin-top: 8px;
+    max-width: 460px;
+  }
+
+  .work-card-cta {
+    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+</style>

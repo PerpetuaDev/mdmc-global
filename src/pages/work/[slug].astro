@@ -1,0 +1,27 @@
+---
+// Project case-study stub — title + description only. Full case-study
+// layout (gallery/credits, per design/handoff/design/MDMC Site.dc.html
+// lines 486+) is Phase 2 scope; this just guarantees every project gets a
+// working /work/<slug>/ route ahead of that.
+import Base from "../../layouts/Base.astro";
+import { loadContent } from "../../lib/content.js";
+
+export async function getStaticPaths() {
+  const { projects } = await loadContent();
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+---
+
+<Base title={project.title} active="work">
+  <main style="animation: pageIn .6s var(--ease)">
+    <section class="gutter" style="padding-top: 80px; padding-bottom: 160px;">
+      <h1 style="font-size: clamp(40px, 4.4vw, 64px); line-height: 1.05; letter-spacing: -0.02em; font-weight: 500;">{project.title}</h1>
+      <p style="margin-top: 24px; max-width: 640px;">{project.description}</p>
+    </section>
+  </main>
+</Base>
