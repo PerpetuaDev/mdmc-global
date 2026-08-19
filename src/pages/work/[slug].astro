@@ -82,17 +82,28 @@ const hasStory = Boolean(project.story);
         }
 
         var view = new URLSearchParams(location.search).get('view') === 'story' ? 'story' : 'gallery';
+        // Tracks the in-flight fade's setTimeout id, if any, so a second
+        // click inside the .32s fade window can cancel it (see render()).
+        var fadeTimer = null;
+
+        function clearFade(pane) {
+          pane.style.opacity = '';
+          pane.style.transition = '';
+        }
 
         // Shows the pane for the current `view`, hides the other, and
         // updates the toggle label. `instant` skips the pageIn entrance
         // animation (used for the initial load and whenever reduced-motion
-        // is on).
+        // is on). Always clears any stale inline opacity/transition off the
+        // pane it's revealing — it may carry a leftover fade-out from a
+        // click that got superseded before its timer fired (see render()).
         function swap(instant) {
           var showing = panes[view];
           var hiding = panes[view === 'story' ? 'gallery' : 'story'];
           hiding.hidden = true;
           showing.hidden = false;
           showing.style.animation = instant ? 'none' : 'pageIn .5s var(--ease)';
+          clearFade(showing);
           if (label) label.textContent = labelFor(view);
         }
 
@@ -111,6 +122,27 @@ const hasStory = Boolean(project.story);
         // via swap(true) below) skips straight to the end state with no
         // timers and no scrolling.
         function render() {
+          // Cancel a fade still in flight from an earlier click before
+          // starting a new one. Left uncancelled, that earlier timer would
+          // still fire later and swap panes against whatever `view` is by
+          // then — using a pane reference it captured when *it* was
+          // scheduled, which a second click can have made stale. Concretely:
+          // click A starts fading pane X out; click B (before A's timer
+          // fires) starts fading pane Y out instead, but never touches X's
+          // leftover `opacity: 0` — so X sits invisible, even though it may
+          // be the pane B's timer is about to reveal, until A's uncancelled
+          // timer happens to clean it up. Cancelling here means only the
+          // most recent click's timer ever runs.
+          if (fadeTimer !== null) {
+            clearTimeout(fadeTimer);
+            fadeTimer = null;
+          }
+          // A cancelled fade may have left either pane mid-transition with
+          // a stale inline opacity — clear both rather than tracking which
+          // one a superseded click was fading.
+          clearFade(panes.gallery);
+          clearFade(panes.story);
+
           if (reducedMotion()) {
             swap(true);
             persistUrl();
@@ -119,10 +151,19 @@ const hasStory = Boolean(project.story);
           var hiding = panes[view === 'story' ? 'gallery' : 'story'];
           hiding.style.transition = 'opacity .32s ease';
           hiding.style.opacity = '0';
-          setTimeout(function () {
+          fadeTimer = setTimeout(function () {
+            fadeTimer = null;
+            // Re-derive the pane we just faded out from the current `view`
+            // rather than trusting the `hiding` reference closed over above
+            // — `view` can only change by going through render() again,
+            // which would already have cancelled this timer, so this always
+            // resolves to the same pane `hiding` does here. Reading it
+            // fresh means this callback never depends on a snapshot that
+            // could, under a future refactor, drift from the pane the fade
+            // actually ran on.
+            var justHidden = panes[view === 'story' ? 'gallery' : 'story'];
             swap(false);
-            hiding.style.opacity = '';
-            hiding.style.transition = '';
+            clearFade(justHidden);
           }, 320);
           persistUrl();
         }
