@@ -1,0 +1,48 @@
+---
+// Full-width closing pull-quote — transcribed from
+// design/handoff/design/MDMC Site.dc.html lines 544-549 (Gallery view).
+// The Story view's own pull-quote block (lines 622-627) is byte-identical
+// markup, so both GalleryStack.astro and StoryView.astro render this
+// component instead of duplicating the blockquote. Source is always the
+// top-level `project.pullQuote`/`pullQuoteAttribution` fields, never
+// `story.*` (see content.js's storyOf comment) — a quote-only project, with
+// no story sections authored, still gets a quote block on both views.
+interface Props {
+  quote: string | null;
+  attribution: string | null;
+}
+
+const { quote = null, attribution = null } = Astro.props as Props;
+---
+
+{quote && (
+  <section class="gutter pull-quote-section">
+    <blockquote class="pull-quote">
+      <p>{quote}</p>
+      {attribution && <footer>{attribution}</footer>}
+    </blockquote>
+  </section>
+)}
+
+<style>
+  .pull-quote-section {
+    padding-top: 128px;
+    padding-bottom: 40px;
+  }
+
+  .pull-quote {
+    margin: 0;
+    max-width: 1100px;
+  }
+  .pull-quote p {
+    font-size: clamp(28px, 3.2vw, 46px);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  .pull-quote footer {
+    margin-top: 32px;
+    font-size: 16px;
+    color: var(--muted);
+  }
+</style>

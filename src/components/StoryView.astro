@@ -1,0 +1,280 @@
+---
+// Project "Case Study" (story) view — two-column article + shared
+// pull-quote + next-project teaser. Transcribed from
+// design/handoff/design/MDMC Site.dc.html lines 553-643 (README §7). Only
+// ever rendered by [slug].astro when `hasStory` is true (content.js:
+// `story` is null unless overview/challenge/approach/outcome has at least
+// one authored paragraph — no live project has story content today, so
+// this view is exercised only via the temporary fixture described in the
+// phase-2 task-5 verification, not by production data yet).
+//
+// Left column ("gallery-style image stack"): the prototype's example
+// content (lines 556-595) mixes aspect ratios (4/5, 3/4) that don't
+// correspond to any `gallery-slot.kind` in our schema, and pairs two
+// `two_up` images into a 2-col row — that pairing reads as specific to that
+// mockup's placeholder content rather than a documented layout rule (unlike
+// GalleryStack's pair/full-bleed row logic, which IS spec'd for the gallery
+// view). Per the controlling task instructions, this renders every slot as
+// its own plain, full-width stacked frame (no pairing, no full-bleed edge-
+// escape), at the aspect ratio implied by its `kind` (hero → 16/9,
+// two_up → 4/3, square → 1/1, full_bleed → natural), captioned the same way
+// GalleryStack captions its slots (muted, below the image) — 14px/margin-top
+// 14px here, matching this view's own literal prototype value (line 561),
+// which differs slightly from the gallery view's 16px. Falls back to a
+// single heroImage frame when `gallery` is empty, matching GalleryStack's
+// fallback. Only the first hero-kind slot (or the heroImage fallback) gets
+// `data-image-id="hero"` — the same DOM id as the gallery view's hero image
+// (prototype line 559), since it's meant to be the same asset.
+//
+// The closing pull-quote is shared markup with GalleryStack.astro — see
+// PullQuote.astro. Source is always the top-level `pullQuote`/
+// `pullQuoteAttribution` props, never `story.*`.
+//
+// "Next project" block (lines 622-643): per the controlling task
+// instructions this lives in the story pane only — the raw prototype
+// markup actually places this `<a>` as a sibling *after* both view
+// `sc-if`s close (i.e. visible under both Gallery and Story in the
+// prototype), but the task brief explicitly overrides that reading, so it
+// is only rendered here. Hides entirely when `next` is null (fewer than 2
+// live projects, or slug not found — see normalize.js:nextProject).
+// Teaser image aspect ratio: the prototype's literal inline style is 16/7
+// (an intentionally wider crop than the 16/9 hero used elsewhere, matching
+// the section's "wide image" description) — kept literal over a
+// "16/9" paraphrase from the delegating task message, per this codebase's
+// precedent (see ProjectHeader.astro's header comment) of preferring the
+// prototype's literal value when brief prose and prototype disagree. The
+// prototype's "03 / 06" project-index counter next to the "Next project"
+// label is intentionally omitted — it isn't part of this task's acceptance
+// criteria and would need plumbing (current index + total project count)
+// this component isn't given.
+import PullQuote from './PullQuote.astro';
+
+interface GallerySlot {
+  url: string;
+  alt: string;
+  kind: 'hero' | 'two_up' | 'square' | 'full_bleed';
+  caption: string | null;
+}
+
+interface Story {
+  overview: string[];
+  challenge: string[];
+  approach: string[];
+  outcome: string[];
+}
+
+interface NextProject {
+  slug: string;
+  title: string;
+  heroImage: { url: string; alt: string } | null;
+}
+
+interface Props {
+  story: Story;
+  gallery: GallerySlot[];
+  heroImage: { url: string; alt: string } | null;
+  pullQuote: string | null;
+  pullQuoteAttribution: string | null;
+  next: NextProject | null;
+}
+
+const {
+  story,
+  gallery = [],
+  heroImage = null,
+  pullQuote = null,
+  pullQuoteAttribution = null,
+  next = null,
+} = Astro.props as Props;
+
+// Same fallback rule as GalleryStack: the real gallery when non-empty, else
+// a single synthetic hero-kind slot from heroImage, else nothing.
+const slots: GallerySlot[] =
+  gallery.length > 0
+    ? gallery
+    : heroImage
+      ? [{ url: heroImage.url, alt: heroImage.alt, kind: 'hero', caption: null }]
+      : [];
+
+let heroSeen = false;
+const stackItems = slots.map((slot) => {
+  const isHeroFirst = slot.kind === 'hero' && !heroSeen;
+  if (slot.kind === 'hero') heroSeen = true;
+  return { slot, isHeroFirst };
+});
+
+const FRAME_CLASS: Record<GallerySlot['kind'], string> = {
+  hero: 'story-frame-16-9',
+  two_up: 'story-frame-4-3',
+  square: 'story-frame-1-1',
+  full_bleed: 'story-frame-natural',
+};
+
+// Only sections with at least one authored paragraph render, in this fixed
+// overview/challenge/approach/outcome order (prototype 597-618).
+const sections = [
+  { key: 'overview', label: 'Overview', paragraphs: story?.overview ?? [] },
+  { key: 'challenge', label: 'Challenge', paragraphs: story?.challenge ?? [] },
+  { key: 'approach', label: 'Approach', paragraphs: story?.approach ?? [] },
+  { key: 'outcome', label: 'Outcome', paragraphs: story?.outcome ?? [] },
+].filter((section) => section.paragraphs.length > 0);
+---
+
+<section class="gutter story-columns">
+  <div class="story-images">
+    {stackItems.map(({ slot, isHeroFirst }) => (
+      <div>
+        <div class={`story-frame ${FRAME_CLASS[slot.kind]}`}>
+          <img src={slot.url} alt={slot.alt} data-image-id={isHeroFirst ? 'hero' : undefined} />
+        </div>
+        {slot.caption && <div class="story-caption">{slot.caption}</div>}
+      </div>
+    ))}
+  </div>
+  <div class="story-article">
+    {sections.map((section) => (
+      <div class="story-section">
+        <div class="label">{section.label}</div>
+        <div class="story-body">
+          {section.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+
+<PullQuote quote={pullQuote} attribution={pullQuoteAttribution} />
+
+{next && (
+  <a href={`/work/${next.slug}/`} class="next-project">
+    <div class="next-project-head">
+      <span class="label">Next project</span>
+    </div>
+    <div class="next-project-frame">
+      {next.heroImage && <img src={next.heroImage.url} alt={next.heroImage.alt} />}
+    </div>
+    <div class="next-project-foot">
+      <span class="next-project-title">{next.title}</span>
+      <span class="next-project-cta">View project <span class="arrow" aria-hidden="true">→</span></span>
+    </div>
+  </a>
+)}
+
+<style>
+  .story-columns {
+    padding-top: 96px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px clamp(48px, 5vw, 112px);
+    align-items: start;
+  }
+
+  .story-images {
+    display: grid;
+    gap: 72px;
+  }
+
+  .story-frame {
+    width: 100%;
+    background: var(--ph);
+    overflow: hidden;
+  }
+  .story-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .story-frame-16-9 {
+    aspect-ratio: 16 / 9;
+  }
+  .story-frame-4-3 {
+    aspect-ratio: 4 / 3;
+  }
+  .story-frame-1-1 {
+    aspect-ratio: 1 / 1;
+  }
+  /* full_bleed has no natural full-width escape here (it's confined to the
+     left column, not a section-width row) — just render at its intrinsic
+     ratio. */
+  .story-frame-natural img {
+    height: auto;
+  }
+
+  .story-caption {
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .story-article {
+    max-width: 640px;
+  }
+
+  .story-section + .story-section {
+    margin-top: 112px;
+  }
+
+  .story-body {
+    margin-top: 16px;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+  .story-body p + p {
+    margin-top: 1.2em;
+  }
+
+  .next-project {
+    display: block;
+    margin-top: 120px;
+    padding: 40px var(--gutter-r) 80px var(--gutter-l);
+    border-top: 1px solid var(--hairline);
+  }
+
+  .next-project-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 20px;
+  }
+
+  .next-project-frame {
+    width: 100%;
+    aspect-ratio: 16 / 7;
+    background: var(--ph);
+    overflow: hidden;
+    position: relative;
+    transition: transform .4s var(--ease);
+  }
+  .next-project:hover .next-project-frame {
+    transform: translateY(-4px);
+  }
+  .next-project-frame img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .next-project-foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 32px;
+    margin-top: 20px;
+  }
+
+  .next-project-title {
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .next-project-cta {
+    font-size: 20px;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+</style>
