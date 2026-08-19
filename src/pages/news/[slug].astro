@@ -15,13 +15,20 @@ export async function getStaticPaths() {
 }
 
 const { article } = Astro.props;
+const { projects } = await loadContent();
+const linkedProject = article.projectSlug
+  ? projects.find((p) => p.slug === article.projectSlug)
+  : null;
 const articleDescription = article.excerpt || "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
 ---
 
 <Base title={article.title} active="news" description={articleDescription}>
   <main style="animation: pageIn .6s var(--ease)">
     <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l)">
-      <div class="label" style="margin-bottom: 24px">{article.kindLabel} ・ {article.dateLabel}</div>
+      <div class="label" style="margin-bottom: 24px">
+        {article.kindLabel}
+        {article.dateLabel && <> ・ {article.dateLabel}</>}
+      </div>
       <h1 class="article-title">{article.title}</h1>
       <div class="hero-container">
         {article.heroImage ? (
@@ -47,7 +54,7 @@ const articleDescription = article.excerpt || "MDMC is an integrated design & di
         ) : (
           <p class="lead">{article.excerpt}</p>
         )}
-        {article.projectSlug && (
+        {article.projectSlug && linkedProject?.story && (
           <a href={`/work/${article.projectSlug}/?view=story`} class="cta" style="margin-top: 56px">
             See the full case study <span class="arrow">→</span>
           </a>

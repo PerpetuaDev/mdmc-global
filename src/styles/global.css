@@ -29,4 +29,4 @@ input, textarea { font: inherit; }
 .arrow { font-weight: 400; }
 @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @media (min-width: 1024px) { .zoom { zoom: 0.85; } }
-@media (prefers-reduced-motion: reduce) { main { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { main, .filter-list { animation: none !important; } }

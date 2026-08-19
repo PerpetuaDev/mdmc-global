@@ -129,8 +129,10 @@ function dateLabelOf(date) {
   if (!date) return ''
   const d = new Date(date)
   if (Number.isNaN(d.getTime())) return ''
+  // Pin to UTC: new Date('YYYY-MM-DD') parses as UTC midnight, so format
+  // must use the same zone to avoid off-by-one dates on builds outside UTC.
   return d
-    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
     .toUpperCase()
 }
 

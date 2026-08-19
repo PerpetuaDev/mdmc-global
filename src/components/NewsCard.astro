@@ -28,7 +28,10 @@ const { article } = Astro.props as Props;
       <div class="news-card-placeholder" aria-hidden="true"></div>
     )}
   </div>
-  <div class="label news-card-meta">{article.kindLabel} ・ {article.dateLabel}</div>
+  <div class="label news-card-meta">
+    {article.kindLabel}
+    {article.dateLabel && <> ・ {article.dateLabel}</>}
+  </div>
   <h3 class="news-card-title">{article.title}</h3>
 </a>
 
