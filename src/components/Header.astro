@@ -234,6 +234,24 @@ const defaultLocale = "en";
   const LOCALE_KEY = 'mdmc.locale';
   const REGION_LABELS = { nz: 'New Zealand', au: 'Australia', jp: 'Japan' };
 
+  // localStorage can throw (Safari private mode, storage disabled by
+  // policy, etc.) — these guards keep the locale UI working in-memory for
+  // the current page view even when persistence itself is unavailable.
+  function readStore(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+  function writeStore(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* ignore — persistence unavailable, UI still updates in-memory */
+    }
+  }
+
   function normalizeRegion(v) {
     return v === 'au' || v === 'jp' ? v : 'nz';
   }
@@ -244,9 +262,14 @@ const defaultLocale = "en";
     return String(v).toLowerCase().startsWith('ja') ? 'ja' : 'en';
   }
 
+  // In-memory fallback so clicks still update the UI within this page view
+  // even when readStore/writeStore can't touch localStorage at all.
+  let memRegion = normalizeRegion(readStore(REGION_KEY));
+  let memLocale = normalizeLocale(readStore(LOCALE_KEY));
+
   function renderLocaleUI() {
-    const region = normalizeRegion(localStorage.getItem(REGION_KEY));
-    const locale = normalizeLocale(localStorage.getItem(LOCALE_KEY));
+    const region = normalizeRegion(readStore(REGION_KEY) ?? memRegion);
+    const locale = normalizeLocale(readStore(LOCALE_KEY) ?? memLocale);
 
     const labelEl = header.querySelector('[data-locale-label]');
     const codeEl = header.querySelector('[data-locale-code]');
@@ -263,13 +286,15 @@ const defaultLocale = "en";
 
   header.querySelectorAll('[data-region]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      localStorage.setItem(REGION_KEY, btn.dataset.region);
+      memRegion = btn.dataset.region;
+      writeStore(REGION_KEY, memRegion);
       renderLocaleUI();
     });
   });
   header.querySelectorAll('[data-locale]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      localStorage.setItem(LOCALE_KEY, btn.dataset.locale);
+      memLocale = btn.dataset.locale;
+      writeStore(LOCALE_KEY, memLocale);
       renderLocaleUI();
     });
   });
