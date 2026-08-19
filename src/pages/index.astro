@@ -131,6 +131,7 @@ const first = heroSlides[0];
   const name = document.querySelector('[data-hero-name]')
   let i = 0
   function show(n) {
+    if (!slides.length) return
     i = (n + slides.length) % slides.length
     slides.forEach((s, j) => {
       const active = j === i

@@ -6,11 +6,11 @@
 // rule on the site (spec); inner accordion rows use the 0.12 hairline.
 //
 // The prototype's onClick handlers fire on several elements per row (label,
-// closed-address line, and the "+" button all call the same toggle). Our
-// accordion script (Step 3 of the task brief) binds exactly one
-// `[data-toggle]` element per row via `row.querySelector`, so only the "+"
-// button — the dedicated, already-aria-labelled toggle control — carries
-// that attribute; the label and closed-address line are static text.
+// closed-address line, and the "+" button all call the same toggle, lines
+// 712-716 and the equivalent AU/JP blocks). We mirror that: the region
+// label and the closed-address line are also `[data-toggle]` buttons, and
+// the script below binds every `[data-toggle]` in a row, keeping
+// aria-expanded synced across all of them.
 import { STUDIOS } from "../lib/studios.js";
 ---
 
@@ -42,10 +42,24 @@ import { STUDIOS } from "../lib/studios.js";
           >+</button>
 
           <div style="display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; padding: 24px 48px 24px 0">
-            <div class="label" style="padding-top: 5px">{s.region}</div>
+            <button
+              type="button"
+              data-toggle
+              class="label"
+              aria-expanded="false"
+              aria-label={`Toggle ${s.region} studio details`}
+              style="display: block; width: 100%; text-align: left; padding-top: 5px"
+            >{s.region}</button>
 
             <div>
-              <div class="studio-closed" style="font-size: 18px">{s.closedLine}</div>
+              <button
+                type="button"
+                data-toggle
+                class="studio-closed"
+                aria-expanded="false"
+                aria-label={`Toggle ${s.region} studio details`}
+                style="display: block; width: 100%; text-align: left; font-size: 18px"
+              >{s.closedLine}</button>
 
               <div class="studio-panel-wrap">
                 <div class="studio-panel">
@@ -96,7 +110,7 @@ import { STUDIOS } from "../lib/studios.js";
     <span class="footer-bottom-right">
       <button type="button" class="footer-link" data-footer-locale data-locale-part="region">New Zealand</button>
       <span class="footer-dot" aria-hidden="true">·</span>
-      <button type="button" class="footer-link" data-footer-locale data-locale-part="lang">EN</button>
+      <button type="button" class="footer-link" data-footer-locale data-locale-part="lang">English</button>
     </span>
   </div>
 </footer>
@@ -242,16 +256,23 @@ import { STUDIOS } from "../lib/studios.js";
 
 <script>
   const rows = document.querySelectorAll('[data-studio]');
+  function setRowExpanded(row, expanded) {
+    row.querySelectorAll('[data-toggle]').forEach((t) => {
+      t.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    });
+  }
   rows.forEach((row) => {
-    const toggle = row.querySelector('[data-toggle]');
-    toggle.addEventListener('click', () => {
-      const isOpen = row.dataset.open === '1';
-      rows.forEach((r) => {
-        r.dataset.open = '0';
-        r.querySelector('[data-toggle]').setAttribute('aria-expanded', 'false');
+    const toggles = row.querySelectorAll('[data-toggle]');
+    toggles.forEach((toggle) => {
+      toggle.addEventListener('click', () => {
+        const isOpen = row.dataset.open === '1';
+        rows.forEach((r) => {
+          r.dataset.open = '0';
+          setRowExpanded(r, false);
+        });
+        row.dataset.open = isOpen ? '0' : '1';
+        setRowExpanded(row, row.dataset.open === '1');
       });
-      row.dataset.open = isOpen ? '0' : '1';
-      toggle.setAttribute('aria-expanded', row.dataset.open === '1' ? 'true' : 'false');
     });
   });
 
@@ -265,7 +286,7 @@ import { STUDIOS } from "../lib/studios.js";
         hour12: false,
         timeZone: el.dataset.clock,
       }).format(new Date());
-      el.innerHTML = t.replace(':', `<span style="opacity:${blink ? 1 : 0}">:</span>`);
+      el.innerHTML = t.replace(':', `<span style="display:inline-block; padding:0 1px; opacity:${blink ? 1 : 0}">:</span>`);
     });
   }
   tick();
@@ -283,6 +304,7 @@ import { STUDIOS } from "../lib/studios.js";
   const REGION_KEY = 'mdmc.region';
   const LOCALE_KEY = 'mdmc.locale';
   const REGION_LABELS = { nz: 'New Zealand', au: 'Australia', jp: 'Japan' };
+  const LANG_LABELS = { en: 'English', ja: '日本語' };
   function normalizeRegion(v) {
     return v === 'au' || v === 'jp' ? v : 'nz';
   }
@@ -300,7 +322,7 @@ import { STUDIOS } from "../lib/studios.js";
   const regionBtn = document.querySelector('[data-locale-part="region"]');
   const langBtn = document.querySelector('[data-locale-part="lang"]');
   if (regionBtn) regionBtn.textContent = REGION_LABELS[normalizeRegion(readStore(REGION_KEY))];
-  if (langBtn) langBtn.textContent = normalizeLocale(readStore(LOCALE_KEY)).toUpperCase();
+  if (langBtn) langBtn.textContent = LANG_LABELS[normalizeLocale(readStore(LOCALE_KEY))];
 
   // Bottom bar locale buttons — prototype's footerLocale scrolls to top and
   // opens the header's locale panel. Header.astro listens for a named

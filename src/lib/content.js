@@ -77,7 +77,7 @@ function normalizeArticle(item) {
 // scripts/snapshot-content.mjs exactly so live and snapshot shapes agree.
 // mergeLocales already sorts newest-first by date, and normalizing/slugging
 // afterward preserves that order.
-export async function loadContent() {
+async function _load() {
   const [projectsEn, projectsJa, articlesEn, articlesJa] = await Promise.all([
     fetchJson('/projects?populate=*&sort=date:desc&locale=en'),
     fetchJson('/projects?populate=*&sort=date:desc&locale=ja'),
@@ -97,4 +97,15 @@ export async function loadContent() {
   const articles = assignSlugs(mergedArticles.map(normalizeArticle))
 
   return { projects, articles }
+}
+
+// Every page's frontmatter calls loadContent() independently, and each call
+// fetches Strapi (falling back to the snapshot) on its own. A transient
+// mid-build failure could then make some pages see live data and others see
+// the snapshot, emitting inconsistent slugs across pages on an otherwise
+// green build. Memoizing on a module-level promise ensures every caller
+// within a build awaits the same fetch/fallback outcome.
+let _p
+export function loadContent() {
+  return (_p ??= _load())
 }

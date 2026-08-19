@@ -26,7 +26,7 @@ const regions = [
   { code: "jp", label: "Japan" },
 ];
 const languages = [
-  { code: "en", label: "EN" },
+  { code: "en", label: "English" },
   { code: "ja", label: "日本語" },
 ];
 
@@ -227,6 +227,21 @@ const defaultLocale = "en";
   panel.style.transition = 'opacity .25s var(--ease), transform .25s var(--ease), visibility .25s';
   hide();
 
+  // mouseenter alone is inert for keyboard and touch users — the locale
+  // trigger also needs a click handler that toggles the panel open/closed.
+  const localeTrigger = header.querySelector('[data-mega-trigger="locale"]');
+  if (localeTrigger) {
+    localeTrigger.addEventListener('click', () => {
+      if (open === 'locale') hide();
+      else show('locale');
+    });
+  }
+
+  // Escape closes whatever panel is open, for keyboard users.
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && open) hide();
+  });
+
   // Explicit cross-component contract: other components (e.g. Footer's
   // bottom-bar locale buttons) open a named mega panel by dispatching this
   // event rather than simulating a mouseenter on a trigger element — keeps
@@ -299,6 +314,7 @@ const defaultLocale = "en";
       memRegion = btn.dataset.region;
       writeStore(REGION_KEY, memRegion);
       renderLocaleUI();
+      hide();
     });
   });
   header.querySelectorAll('[data-locale]').forEach((btn) => {
@@ -306,6 +322,7 @@ const defaultLocale = "en";
       memLocale = btn.dataset.locale;
       writeStore(LOCALE_KEY, memLocale);
       renderLocaleUI();
+      hide();
     });
   });
 
