@@ -9,31 +9,19 @@
 // README's Screens/Views item 5) and the contact payload contract (binding,
 // backend unchanged).
 //
-// Scope note: the "Tell us what you're working on." headline and the four
-// anchor-row labels (New Zealand / Australia / Japan / Send a message) have
-// no i18n.js dict key (no `contact.headline` key exists, and the brief's ja
-// scope for Contact is limited to form labels + Turnstile language), so they
-// render in English on ja pages too — a deliberate, documented EN fallback,
-// not a bug. Only the form's field labels/headers and TurnstileBox's
-// `language` prop are locale-driven here.
-//
-// Region/recipient split (fix round 1): the per-studio region label and the
-// visible "TO · <recipient>" text now localize the region word via
-// `regionLabel()` (same hasOwnProperty-guarded `work.region.*` lookup
-// WorkIndexView uses for its filter chips — see that file's header comment
-// for why a bare `t()` call is wrong here). The word "Studio" itself has no
-// dict key and is NOT invented in Japanese — on ja it stays literal, so the
-// visible ja recipient reads as a mixed string like "日本 Studio"
-// (acceptable per brief; flagged below for the native-pass list). Distinct
-// from this: the `recipient` value actually POSTed to the contact backend
-// (data-recipient, unchanged) stays the plain EN "{Region} Studio" string on
-// every locale — that's a backend contract, not user-facing copy, and must
-// not vary with locale. No new data-attribute was added to carry the
-// display string: the <script> below reads it straight off this same
-// studio fold's already-localized `.studio-info-top .label` div at click
-// time (region word via regionLabel(), " Studio" appended literally),
-// keeping data-recipient itself untouched (still the EN payload value) —
-// see the script's own comment for the wiring.
+// Localization (2026-08-20): headline, anchor-row labels, and the visible
+// "TO · <recipient>" text are now fully locale-driven — `contact.headline`
+// and `contact.studio` dict keys exist (ja values are user-authorized
+// PLACEHOLDERS pending native review, see i18n.js's PLACEHOLDER JA block).
+// The per-studio region word localizes via `regionLabel()` (same
+// hasOwnProperty-guarded `work.region.*` lookup WorkIndexView uses for its
+// filter chips — see that file's header comment for why a bare `t()` call
+// is wrong here); the display recipient joins region + studio word with a
+// space on en and no space on ja (日本スタジオ), carried to the click
+// handler via `data-recipient-label`. Distinct from this: the `recipient`
+// value actually POSTed to the contact backend (data-recipient, unchanged)
+// stays the plain EN "{Region} Studio" string on every locale — that's a
+// backend contract, not user-facing copy, and must not vary with locale.
 import TurnstileBox from "../components/TurnstileBox.astro";
 import { makeT, STRINGS } from "../lib/i18n.js";
 
@@ -55,16 +43,28 @@ const regionLabel = (r: string) => {
     ? t(key)
     : r;
 };
+
+// Visible recipient label ("TO · <this>") — display copy only; the POSTed
+// `recipient` value stays the EN data-recipient string (backend contract).
+const recipientLabel = (region: string) =>
+  locale === "ja" ? `${regionLabel(region)}${t("contact.studio")}` : `${region} ${t("contact.studio")}`;
+
+const headlineLines = t("contact.headline").split("\n");
 ---
 
 <main style="animation: pageIn .6s var(--ease)">
   <section style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
-    <h1 class="contact-title">Tell us what<br />you're working on.</h1>
+    <h1 class="contact-title">{headlineLines.map((line, li) => (
+      <>
+        {line}
+        {li < headlineLines.length - 1 && <br />}
+      </>
+    ))}</h1>
     <div class="anchor-row">
-      <a href="#studio-nz" class="cta" data-scroll="studio-nz">New Zealand <span class="arrow" aria-hidden="true">↓</span></a>
-      <a href="#studio-au" class="cta" data-scroll="studio-au">Australia <span class="arrow" aria-hidden="true">↓</span></a>
-      <a href="#studio-jp" class="cta" data-scroll="studio-jp">Japan <span class="arrow" aria-hidden="true">↓</span></a>
-      <a href="#contact-form" class="cta" data-scroll="contact-form">Send a message <span class="arrow" aria-hidden="true">↓</span></a>
+      <a href="#studio-nz" class="cta" data-scroll="studio-nz">{regionLabel("New Zealand")} <span class="arrow" aria-hidden="true">↓</span></a>
+      <a href="#studio-au" class="cta" data-scroll="studio-au">{regionLabel("Australia")} <span class="arrow" aria-hidden="true">↓</span></a>
+      <a href="#studio-jp" class="cta" data-scroll="studio-jp">{regionLabel("Japan")} <span class="arrow" aria-hidden="true">↓</span></a>
+      <a href="#contact-form" class="cta" data-scroll="contact-form">{t("contact.form.sendAMessage")} <span class="arrow" aria-hidden="true">↓</span></a>
     </div>
   </section>
 
@@ -101,7 +101,7 @@ const regionLabel = (r: string) => {
                 </>
               )}
             </div>
-            <a href="#contact-form" class="cta studio-message" data-recipient={`${s.region} Studio`}>
+            <a href="#contact-form" class="cta studio-message" data-recipient={`${s.region} Studio`} data-recipient-label={recipientLabel(s.region)}>
               {t("contact.form.sendUsAMessage")} <span class="arrow" aria-hidden="true">→</span>
             </a>
           </div>
@@ -327,11 +327,9 @@ const regionLabel = (r: string) => {
   // `recipient` (POSTed to the backend, see payload below) and the visible
   // "TO ·" label are deliberately allowed to diverge: recipient always stays
   // the plain EN "{Region} Studio" string from data-recipient (backend
-  // contract, never localized), while the visible label is read straight off
-  // this same studio fold's already-localized region text (the
-  // `.studio-info-top .label` div, rendered server-side via regionLabel() —
-  // see this view's header comment) — no separate data-attribute needed
-  // since that text already carries the right locale.
+  // contract, never localized), while the visible label comes from the
+  // server-rendered, locale-aware data-recipient-label (see this view's
+  // header comment for the join rule).
   const toLabel = document.getElementById('contact-to');
   let recipient = 'MDMC';
   function setRecipient(value: string, label: string) {
@@ -344,8 +342,7 @@ const regionLabel = (r: string) => {
       e.preventDefault();
       const el = btn as HTMLElement;
       const value = el.dataset.recipient || 'MDMC';
-      const regionEl = el.closest('.studio-info')?.querySelector('.studio-info-top .label');
-      const label = regionEl ? `${regionEl.textContent} Studio` : value;
+      const label = el.dataset.recipientLabel || value;
       setRecipient(value, label);
       scrollToId('contact-form');
     });

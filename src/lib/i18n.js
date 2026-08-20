@@ -10,6 +10,11 @@
 // written against different English words, so the key is added en-only).
 // See task-1-report.md for the full ported-vs-new-EN-only breakdown and the
 // "needs native JA pass" list.
+//
+// 2026-08-20: every formerly-EN-only key now has a machine-drafted Japanese
+// PLACEHOLDER (user-authorized, pending proper native review). Placeholder
+// entries are grouped under the "PLACEHOLDER JA" banner in STRINGS.ja below —
+// treat every value in that block as reviewable copy, not settled brand voice.
 
 export const LOCALES = ['en', 'ja']
 
@@ -22,9 +27,10 @@ export const STRINGS = {
     'nav.contact': 'Contact',
     'nav.careers': 'Careers',
 
-    // --- nav.region: redesign-only, no old-dict equivalent (old site used
-    // a Global/Japan "site" model, not a Region picker). ---
+    // --- nav.region / nav.language: redesign-only, no old-dict equivalent
+    // (old site used a Global/Japan "site" model, not a Region picker). ---
     'nav.region': 'Region',
+    'nav.language': 'Language',
 
     // --- lang.* (ported verbatim) ---
     'lang.label': 'English',
@@ -79,6 +85,14 @@ export const STRINGS = {
     'careers.job.readByHuman': 'Read by a human',
     'careers.form.aboutYou': 'About you',
     'careers.form.portfolioLinkedin': 'Portfolio / LinkedIn',
+
+    // --- contact.headline / contact.studio: redesign-only. headline uses \n
+    // for the designed line break (same convention as home.manifesto.*);
+    // studio is the visible "<Region> Studio" recipient word — display only,
+    // the POSTed `recipient` payload value stays the EN string on every
+    // locale (backend contract). ---
+    'contact.headline': "Tell us what\nyou're working on.",
+    'contact.studio': 'Studio',
 
     // --- contact.* (ported verbatim: field labels whose current wording is
     // unchanged from the old dict) ---
@@ -173,6 +187,56 @@ export const STRINGS = {
     'footer.cta.label': 'ご検討中のプロジェクトはありますか?',
     'footer.cta.action': '話しましょう。',
     'footer.copy': '© 2026 MDMC Group Inc.',
+
+    // ------------------------------------------------------------------
+    // PLACEHOLDER JA (2026-08-20) — machine-drafted from the EN values,
+    // user-authorized as placeholders PENDING PROPER NATIVE REVIEW.
+    // Nothing below is ported from the old dict; every value here is
+    // reviewable copy. Register aims to match the ported keys above
+    // (polite です/ます, katakana loans where the old dict used them).
+    // ------------------------------------------------------------------
+    'nav.region': '地域',
+    'nav.language': '言語',
+
+    'work.filter.region': '地域',
+    'work.filter.specialty': '専門分野',
+
+    'news.filter.filters': 'フィルター',
+    'news.backToAll': 'ニュース一覧へ戻る',
+    'news.shareArticle': 'この記事をシェアする',
+    'news.seeFullCaseStudy': 'ケーススタディの全文を見る',
+
+    'careers.openPositions': '募集中のポジション',
+    'careers.speculativeCta': '募集がなくても、ここが自分の場所だと思う方はご連絡ください',
+    'careers.meta.studio': 'スタジオ',
+    'careers.meta.type': '雇用形態',
+    'careers.job.readByHuman': '応募はすべて人が読みます',
+    'careers.form.aboutYou': '自己紹介',
+    'careers.form.portfolioLinkedin': 'ポートフォリオ / LinkedIn',
+
+    'contact.headline': 'いま取り組んでいることを\nお聞かせください。',
+    'contact.studio': 'スタジオ',
+    'contact.form.messageLabel': 'メッセージ',
+    'contact.form.sendMessage': 'メッセージを送信',
+    'contact.form.sendAMessage': 'メッセージを送る',
+    'contact.form.sendUsAMessage': 'メッセージを送る',
+    'contact.form.to': '宛先',
+
+    'form.thankYou': 'ありがとうございます。追ってご連絡いたします。',
+    'form.error': 'エラーが発生しました。もう一度お試しください。',
+
+    'project.section.challenge': '課題',
+    'project.section.approach': 'アプローチ',
+    'project.section.outcome': '成果',
+    'project.viewDetails': 'プロジェクト詳細を見る',
+    'project.viewGallery': 'ギャラリーを見る',
+
+    'footer.privacyTerms': 'プライバシー・利用規約',
+
+    'notFound.title': 'ページが見つかりません。',
+    'notFound.body': 'お探しのページは存在しないか、移動した可能性があります。',
+    'notFound.backHome': 'ホームへ戻る',
+    // ---------------------------- end PLACEHOLDER JA -------------------
   },
 }
 

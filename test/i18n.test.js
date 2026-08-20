@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { makeT, localePath, counterpartPath, LOCALES, STRINGS, ORIGINS, linkHref, tMisses, pickLocalized } from '../src/lib/i18n.js'
 
 describe('makeT', () => {
@@ -104,12 +104,17 @@ describe('counterpartPath', () => {
 })
 
 describe('tMisses', () => {
+  // Since the 2026-08-20 PLACEHOLDER JA pass, no real key is en-only any
+  // more — inject a synthetic one so the fallback machinery stays covered.
+  const TEST_KEY = '__test.enOnly'
+  beforeEach(() => { STRINGS.en[TEST_KEY] = 'Test-only EN value' })
+  afterEach(() => { delete STRINGS.en[TEST_KEY] })
+
   it('records ja keys served as EN fallback, keyed by locale', () => {
     const t = makeT('ja')
-    // A key that exists only in STRINGS.en (redesign-only, no ja pass yet).
-    t('project.section.challenge')
+    t(TEST_KEY)
     const misses = tMisses()
-    expect(misses.ja).toContain('project.section.challenge')
+    expect(misses.ja).toContain(TEST_KEY)
   })
   it('does not record a miss when the key exists in the ja dict', () => {
     const t = makeT('ja')
@@ -119,7 +124,7 @@ describe('tMisses', () => {
   })
   it('never creates an "en" bucket — en has nothing to fall back to', () => {
     const t = makeT('en')
-    t('project.section.challenge')
+    t(TEST_KEY)
     const misses = tMisses()
     expect(misses.en).toBeUndefined()
   })
@@ -280,15 +285,17 @@ describe('STRINGS.en: project.section.* (overview ported verbatim; challenge/app
     expect(STRINGS.en['project.section.overview']).toBe('Overview')
     expect(STRINGS.ja['project.section.overview']).toBe('概要')
   })
-  it('project.section.challenge (redesign-only, en-only)', () => {
+  it('project.section.challenge (redesign-only; ja is a placeholder)', () => {
     expect(STRINGS.en['project.section.challenge']).toBe('Challenge')
-    expect(STRINGS.ja['project.section.challenge']).toBeUndefined()
+    expect(STRINGS.ja['project.section.challenge']).toBe('課題')
   })
-  it('project.section.approach (redesign-only, en-only)', () => {
+  it('project.section.approach (redesign-only; ja is a placeholder)', () => {
     expect(STRINGS.en['project.section.approach']).toBe('Approach')
+    expect(STRINGS.ja['project.section.approach']).toBe('アプローチ')
   })
-  it('project.section.outcome (redesign-only, en-only)', () => {
+  it('project.section.outcome (redesign-only; ja is a placeholder)', () => {
     expect(STRINGS.en['project.section.outcome']).toBe('Outcome')
+    expect(STRINGS.ja['project.section.outcome']).toBe('成果')
   })
   it('project.next', () => {
     expect(STRINGS.en['project.next']).toBe('Next project')
@@ -358,21 +365,22 @@ describe('STRINGS.en: new redesign-only keys, exact match to live component lite
     expect(STRINGS.en['notFound.body']).toBe("The page you're looking for doesn't exist or has moved.")
     expect(STRINGS.en['notFound.backHome']).toBe('Back to home')
   })
-  it('all of the above are absent from STRINGS.ja (fallback serves EN on ja pages)', () => {
-    const newEnOnlyKeys = [
-      'project.viewDetails', 'project.viewGallery',
-      'work.filter.region', 'work.filter.specialty',
-      'news.filter.filters', 'careers.openPositions', 'careers.speculativeCta',
-      'careers.meta.studio', 'careers.meta.type', 'careers.job.readByHuman',
-      'careers.form.aboutYou', 'careers.form.portfolioLinkedin',
-      'contact.form.messageLabel', 'contact.form.sendMessage',
-      'contact.form.sendAMessage', 'contact.form.sendUsAMessage', 'contact.form.to',
-      'form.thankYou', 'form.error', 'footer.privacyTerms', 'nav.region',
-      'news.backToAll', 'news.shareArticle', 'news.seeFullCaseStudy',
-      'notFound.title', 'notFound.body', 'notFound.backHome',
-    ]
-    for (const key of newEnOnlyKeys) {
-      expect(STRINGS.ja, `expected ja to omit new EN-only key "${key}"`).not.toHaveProperty(key)
+  // 2026-08-20 PLACEHOLDER JA pass: every formerly-EN-only key now has a
+  // machine-drafted ja placeholder (user-authorized, pending native review),
+  // so the dictionaries are in full key parity — no key may be en-only.
+  it('every en key has a ja value (full parity after the placeholder pass)', () => {
+    for (const key of Object.keys(STRINGS.en)) {
+      expect(STRINGS.ja, `expected ja to cover en key "${key}"`).toHaveProperty(key)
     }
+  })
+  it('placeholder ja values render Japanese, not the EN fallback', () => {
+    const t = makeT('ja')
+    expect(t('project.viewDetails')).toBe('プロジェクト詳細を見る')
+    expect(t('careers.openPositions')).toBe('募集中のポジション')
+    expect(t('form.thankYou')).toBe('ありがとうございます。追ってご連絡いたします。')
+    expect(t('contact.form.to')).toBe('宛先')
+    expect(t('nav.language')).toBe('言語')
+    expect(t('contact.headline')).toBe('いま取り組んでいることを\nお聞かせください。')
+    expect(t('contact.studio')).toBe('スタジオ')
   })
 })

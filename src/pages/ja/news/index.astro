@@ -12,6 +12,7 @@ const { articles } = await loadContent();
 const KINDS = Object.entries(ARTICLE_KIND_LABELS).map(([value, label]) => ({ value, label }));
 ---
 
-<Base title="News — MDMC" active="news" description="News and writing from MDMC." locale="ja">
+{/* title/description are PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
+<Base title="ニュース — MDMC" active="news" description="MDMCからのニュースと読みものをお届けします。" locale="ja">
   <NewsIndexView locale="ja" articles={articles} kinds={KINDS} />
 </Base>
