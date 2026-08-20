@@ -14,10 +14,14 @@ interface Props {
   // `locale` wins when both are given. A later task removes `lang` for good.
   lang?: string;
   ogImage?: string;
+  // 404 has no ja counterpart (and no en counterpart either, really — it's
+  // not a "paired page" at all) — set by 404.astro to skip hreflang
+  // alternates entirely rather than emit a bogus /ja/404/ pair that 404s.
+  noHreflang?: boolean;
 }
 
 const defaultDescription = "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
-const { title, description = defaultDescription, active, locale, lang, ogImage } = Astro.props;
+const { title, description = defaultDescription, active, locale, lang, ogImage, noHreflang } = Astro.props;
 const resolvedLocale = locale ?? (lang === "ja" ? "ja" : "en");
 const { projects, articles } = await loadContent();
 
@@ -43,9 +47,9 @@ const jaAlternateUrl = ORIGINS.ja ? ORIGINS.ja + enPath : new URL("/ja" + enPath
   <meta property="og:url" content={canonicalUrl.toString()}>
   {ogImage && <meta property="og:image" content={ogImage}>}
   <link rel="canonical" href={canonicalUrl.toString()}>
-  <link rel="alternate" hreflang="en" href={enAlternateUrl}>
-  <link rel="alternate" hreflang="ja" href={jaAlternateUrl}>
-  <link rel="alternate" hreflang="x-default" href={enAlternateUrl}>
+  {!noHreflang && <link rel="alternate" hreflang="en" href={enAlternateUrl}>}
+  {!noHreflang && <link rel="alternate" hreflang="ja" href={jaAlternateUrl}>}
+  {!noHreflang && <link rel="alternate" hreflang="x-default" href={enAlternateUrl}>}
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <!-- Preload the text faces so per-navigation paints never flash the
        fallback font (font-display: swap re-flows the header otherwise). -->
