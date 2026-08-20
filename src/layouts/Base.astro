@@ -33,6 +33,10 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
   {ogImage && <meta property="og:image" content={ogImage}>}
   <link rel="canonical" href={canonicalUrl.toString()}>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <!-- Preload the text faces so per-navigation paints never flash the
+       fallback font (font-display: swap re-flows the header otherwise). -->
+  <link rel="preload" href="/fonts/sohne-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/sohne-500.woff2" as="font" type="font/woff2" crossorigin>
   <title>{title}</title>
 </head>
 <body>

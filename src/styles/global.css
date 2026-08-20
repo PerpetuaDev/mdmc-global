@@ -9,6 +9,13 @@
 @font-face { font-family: "Söhne"; src: url("/fonts/sohne-arrows-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; unicode-range: U+2190-21FF; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  /* Non-overlay scrollbars change the viewport width between scrolling and
+     non-scrolling pages (e.g. the empty /news/), shifting every clamp-based
+     gutter on navigation. Reserving the gutter keeps page width constant;
+     no-op on overlay-scrollbar setups. */
+  scrollbar-gutter: stable;
+}
 html, body {
   background: #fff; color: #000;
   font-family: "Söhne", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Helvetica Neue", Helvetica, Arial, sans-serif;
