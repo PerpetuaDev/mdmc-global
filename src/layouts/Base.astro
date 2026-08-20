@@ -3,25 +3,36 @@ import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { loadContent } from "../lib/content.js";
+import { counterpartPath, ORIGINS } from "../lib/i18n.js";
 
 interface Props {
   title: string;
   description?: string;
   active?: "home" | "work" | "news" | "about" | "contact";
+  locale?: "en" | "ja";
+  // TEMPORARY back-compat: /ja/about/ still passes the old `lang` prop.
+  // `locale` wins when both are given. A later task removes `lang` for good.
   lang?: string;
   ogImage?: string;
 }
 
 const defaultDescription = "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
-const { title, description = defaultDescription, active, lang = "en", ogImage } = Astro.props;
+const { title, description = defaultDescription, active, locale, lang, ogImage } = Astro.props;
+const resolvedLocale = locale ?? (lang === "ja" ? "ja" : "en");
 const { projects, articles } = await loadContent();
 
 // Construct canonical URL from site and pathname
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
+
+// EN-shaped path of the current page, regardless of which locale it's
+// rendering as — the shape linkHref/hreflang alternates are built from.
+const enPath = resolvedLocale === "ja" ? counterpartPath("ja", Astro.url.pathname) : Astro.url.pathname;
+const enAlternateUrl = new URL(enPath, Astro.site).toString();
+const jaAlternateUrl = ORIGINS.ja ? ORIGINS.ja + enPath : new URL("/ja" + enPath, Astro.site).toString();
 ---
 
 <!DOCTYPE html>
-<html lang={lang}>
+<html lang={resolvedLocale}>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,6 +43,9 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
   <meta property="og:url" content={canonicalUrl.toString()}>
   {ogImage && <meta property="og:image" content={ogImage}>}
   <link rel="canonical" href={canonicalUrl.toString()}>
+  <link rel="alternate" hreflang="en" href={enAlternateUrl}>
+  <link rel="alternate" hreflang="ja" href={jaAlternateUrl}>
+  <link rel="alternate" hreflang="x-default" href={enAlternateUrl}>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <!-- Preload the text faces so per-navigation paints never flash the
        fallback font (font-display: swap re-flows the header otherwise). -->
@@ -41,9 +55,9 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
 </head>
 <body>
   <div class="zoom">
-    <Header active={active} projects={projects} articles={articles} />
+    <Header active={active} locale={resolvedLocale} enPath={enPath} projects={projects} articles={articles} />
     <slot />
-    <Footer />
+    <Footer locale={resolvedLocale} />
   </div>
   <script>
     // Fade the outgoing page's content before same-origin navigations, for

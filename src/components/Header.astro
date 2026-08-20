@@ -9,6 +9,7 @@
 // it with the HTML, so it paints with first render. Vite's ?inline resolves
 // this to a data: string at build time.
 import logoDataUri from "../assets/mdmc-logo.png?inline";
+import { makeT, linkHref } from "../lib/i18n.js";
 
 interface ContentItem {
   slug: string;
@@ -17,11 +18,18 @@ interface ContentItem {
 
 interface Props {
   active?: "home" | "work" | "news" | "about" | "contact";
+  locale?: "en" | "ja";
+  // EN-shaped path of the current page (Base.astro computes this) — the
+  // input every linkHref call below uses, regardless of which locale we're
+  // rendering.
+  enPath?: string;
   projects: ContentItem[];
   articles: ContentItem[];
 }
 
-const { active, projects = [], articles = [] } = Astro.props as Props;
+const { active, locale = "en", enPath = "/", projects = [], articles = [] } = Astro.props as Props;
+const t = makeT(locale);
+const href = (path: string) => linkHref(locale, locale, path);
 
 const workItems = projects.slice(0, 4);
 const newsItems = articles.slice(0, 4);
@@ -31,22 +39,28 @@ const regions = [
   { code: "au", label: "Australia" },
   { code: "jp", label: "Japan" },
 ];
+// Language row labels never translate (the English row always reads
+// "English", even on a ja page) — lang.en/lang.ja happen to hold identical
+// values in both dicts, so t() is just a convenient lookup here.
 const languages = [
-  { code: "en", label: "English" },
-  { code: "ja", label: "日本語" },
+  { code: "en", label: t("lang.en"), href: linkHref(locale, "en", enPath) },
+  { code: "ja", label: t("lang.ja"), href: linkHref(locale, "ja", enPath) },
 ];
 
 // Server-rendered defaults — localStorage (region/locale persistence) only
-// exists client-side, so first paint always shows nz/en per spec.
+// exists client-side, so first paint always shows nz per spec; locale's
+// initial active row reflects the actual page locale (client script then
+// overrides both from stored preference, same as it always has for region).
 const defaultRegion = "nz";
-const defaultLocale = "en";
+const defaultLocale = locale;
 ---
 
 <header
   data-header
+  data-page-locale={locale}
   style="position: relative; z-index: 100; background: #fff; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; padding: 64px var(--gutter-r) 36px var(--gutter-l); font-size: 20px"
 >
-  <a href="/" aria-label="MDMC home" style="display: flex; align-items: center; gap: 14px; justify-self: start">
+  <a href={href("/")} aria-label="MDMC home" style="display: flex; align-items: center; gap: 14px; justify-self: start">
     {/* width/height attrs reserve the box pre-decode; the data-URI src makes
         the pixels part of the document so nothing flashes on navigation. */}
     <img src={logoDataUri} alt="MDMC" width="400" height="94" style="height: 22px; width: auto; aspect-ratio: 400 / 94">
@@ -54,26 +68,25 @@ const defaultLocale = "en";
 
   <nav aria-label="Primary" style="justify-self: start; display: flex; gap: 72px; margin-left: 225px">
     <a
-      href="/work/"
+      href={href("/work/")}
       data-mega-trigger="work"
       class:list={["nav-link", { "is-active": active === "work" }]}
-    >Work</a>
+    >{t("nav.work")}</a>
     <a
-      href="/news/"
+      href={href("/news/")}
       data-mega-trigger="news"
       class:list={["nav-link", { "is-active": active === "news" }]}
-    >News</a>
+    >{t("nav.news")}</a>
     <a
-      href="/about/"
+      href={href("/about/")}
       data-mega-trigger="about"
-      data-about-link
       class:list={["nav-link", { "is-active": active === "about" }]}
-    >About</a>
+    >{t("nav.about")}</a>
     <a
-      href="/contact/"
+      href={href("/contact/")}
       data-mega-close
       class:list={["nav-link", { "is-active": active === "contact" }]}
-    >Contact</a>
+    >{t("nav.contact")}</a>
   </nav>
 
   <div></div>
@@ -98,22 +111,22 @@ const defaultLocale = "en";
   >
     <div style="padding: 40px var(--gutter-r) 48px var(--gutter-l)">
       <div data-panel="work">
-        <div class="label" style="margin-bottom: 18px">Work</div>
+        <div class="label" style="margin-bottom: 18px">{t("work.title")}</div>
         <ul style="list-style: none">
           {workItems.map((p) => (
             <li style="margin-top: 10px">
-              <a href={`/work/${p.slug}/`} class="mega-link" style="font-size: 20px">{p.title}</a>
+              <a href={href(`/work/${p.slug}/`)} class="mega-link" style="font-size: 20px">{p.title}</a>
             </li>
           ))}
         </ul>
       </div>
 
       <div data-panel="news" hidden>
-        <div class="label" style="margin-bottom: 18px">News</div>
+        <div class="label" style="margin-bottom: 18px">{t("news.title")}</div>
         <ul style="list-style: none">
           {newsItems.map((n) => (
             <li style="margin-top: 10px">
-              <a href={`/news/${n.slug}/`} class="mega-link" style="font-size: 20px">{n.title}</a>
+              <a href={href(`/news/${n.slug}/`)} class="mega-link" style="font-size: 20px">{n.title}</a>
             </li>
           ))}
         </ul>
@@ -121,18 +134,18 @@ const defaultLocale = "en";
 
       <div data-panel="about" hidden>
         <div style="display: flex; align-items: baseline; margin-bottom: 18px">
-          <div style="flex: 0 0 335px" class="label">About</div>
+          <div style="flex: 0 0 335px" class="label">{t("nav.about")}</div>
         </div>
         <ul style="list-style: none">
-          <li style="margin-top: 10px"><a href="/about/" data-about-link class="mega-link" style="font-size: 20px">About</a></li>
-          <li style="margin-top: 10px"><a href="/careers/" class="mega-link" style="font-size: 20px">Careers</a></li>
+          <li style="margin-top: 10px"><a href={href("/about/")} class="mega-link" style="font-size: 20px">{t("nav.about")}</a></li>
+          <li style="margin-top: 10px"><a href={href("/careers/")} class="mega-link" style="font-size: 20px">{t("nav.careers")}</a></li>
         </ul>
       </div>
 
       <div data-panel="locale" hidden>
         <div style="display: flex; justify-content: flex-end; gap: 64px">
           <div style="width: 260px">
-            <div class="label" style="margin-bottom: 18px; text-align: right">Region</div>
+            <div class="label" style="margin-bottom: 18px; text-align: right">{t("nav.region")}</div>
             <ul style="list-style: none">
               {regions.map((r) => (
                 <li style="margin-top: 10px">
@@ -151,12 +164,13 @@ const defaultLocale = "en";
             <ul style="list-style: none">
               {languages.map((l) => (
                 <li style="margin-top: 10px">
-                  <button
-                    type="button"
+                  <a
+                    href={l.href}
                     data-locale={l.code}
+                    data-locale-link
                     class:list={["mega-link", "locale-btn", { "is-active": l.code === defaultLocale }]}
                     style="display: block; width: 100%; text-align: right; font-size: 20px"
-                  >{l.label}</button>
+                  >{l.label}</a>
                 </li>
               ))}
             </ul>
@@ -290,9 +304,14 @@ const defaultLocale = "en";
     return v === 'au' || v === 'jp' ? v : 'nz';
   }
   // Migrates whatever the old (pre-Astro) site left in mdmc.locale — any
-  // value that isn't recognizably Japanese collapses to 'en'.
+  // value that isn't recognizably Japanese collapses to 'en'. With nothing
+  // stored yet, fall back to the ACTUAL locale of the page being viewed
+  // (data-page-locale, set server-side from the `locale` prop) rather than
+  // hardcoding 'en' — a first-ever visit landing straight on a /ja/ page
+  // must show the locale panel's 日本語 row as active, not English.
+  const pageLocale = header.dataset.pageLocale === 'ja' ? 'ja' : 'en';
   function normalizeLocale(v) {
-    if (!v) return 'en';
+    if (!v) return pageLocale;
     return String(v).toLowerCase().startsWith('ja') ? 'ja' : 'en';
   }
 
@@ -316,14 +335,6 @@ const defaultLocale = "en";
     header.querySelectorAll('[data-locale]').forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.locale === locale);
     });
-
-    // Both pages (/about/ and /ja/about/) stay directly reachable regardless
-    // of stored locale — this only repoints the nav link + About-panel link
-    // so browsing follows the visitor's chosen locale, no redirects.
-    const aboutHref = locale === 'ja' ? '/ja/about/' : '/about/';
-    header.querySelectorAll('[data-about-link]').forEach((a) => {
-      a.setAttribute('href', aboutHref);
-    });
   }
 
   header.querySelectorAll('[data-region]').forEach((btn) => {
@@ -334,12 +345,13 @@ const defaultLocale = "en";
       hide();
     });
   });
-  header.querySelectorAll('[data-locale]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      memLocale = btn.dataset.locale;
-      writeStore(LOCALE_KEY, memLocale);
-      renderLocaleUI();
-      hide();
+  // Language rows are real links now (real navigation, per-locale pages) —
+  // the click handler only needs to persist the choice before the browser
+  // follows the href; it must not preventDefault or otherwise block
+  // navigation.
+  header.querySelectorAll('[data-locale-link]').forEach((a) => {
+    a.addEventListener('click', () => {
+      writeStore(LOCALE_KEY, a.dataset.locale);
     });
   });
 

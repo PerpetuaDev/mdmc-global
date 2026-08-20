@@ -12,6 +12,25 @@
 // the script below binds every `[data-toggle]` in a row, keeping
 // aria-expanded synced across all of them.
 import { STUDIOS } from "../lib/studios.js";
+import { makeT, linkHref } from "../lib/i18n.js";
+
+interface Props {
+  locale?: "en" | "ja";
+}
+
+const { locale = "en" } = Astro.props as Props;
+const t = makeT(locale);
+const regionLabel = (region: string) => t(`work.region.${region}`);
+
+// Built as raw HTML strings (injected via <Fragment set:html>, not as plain
+// `{expr}` children) so the EN build stays byte-identical to the pre-i18n
+// markup: a literal text node's leading/trailing whitespace compiles
+// differently than a whitespace-only text node sitting next to a `{}`
+// expression (the latter collapses to a single space, dropping the
+// newline). Baking the newline/space into the string itself sidesteps that
+// entirely, for exact-byte EN output.
+const ctaHtml = `\n${t("footer.cta.label")} ${t("footer.cta.action")} `;
+const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
 ---
 
 <footer
@@ -20,8 +39,7 @@ import { STUDIOS } from "../lib/studios.js";
 >
   <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: 64px; align-items: start">
     <div>
-      <a href="/contact/" class="footer-cta" style="display: inline-block; font-size: 32px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; text-wrap: balance">
-        Have a project in mind? Let's talk. <span class="arrow">→</span>
+      <a href={linkHref(locale, locale, "/contact/")} class="footer-cta" style="display: inline-block; font-size: 32px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; text-wrap: balance"><Fragment set:html={ctaHtml} /><span class="arrow">→</span>
       </a>
     </div>
 
@@ -38,7 +56,7 @@ import { STUDIOS } from "../lib/studios.js";
             data-toggle
             class="studio-plus"
             aria-expanded="false"
-            aria-label={`Toggle ${s.region} studio details`}
+            aria-label={`Toggle ${regionLabel(s.region)} studio details`}
           >+</button>
 
           <div style="display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; padding: 24px 48px 24px 0">
@@ -47,9 +65,9 @@ import { STUDIOS } from "../lib/studios.js";
               data-toggle
               class="label"
               aria-expanded="false"
-              aria-label={`Toggle ${s.region} studio details`}
+              aria-label={`Toggle ${regionLabel(s.region)} studio details`}
               style="display: block; width: 100%; text-align: left; padding-top: 5px; align-self: start"
-            >{s.region}</button>
+            >{regionLabel(s.region)}</button>
 
             <div>
               <div class="studio-closed-wrap">
@@ -58,7 +76,7 @@ import { STUDIOS } from "../lib/studios.js";
                   data-toggle
                   class="studio-closed"
                   aria-expanded="false"
-                  aria-label={`Toggle ${s.region} studio details`}
+                  aria-label={`Toggle ${regionLabel(s.region)} studio details`}
                 >{s.closedLine}</button>
               </div>
 
@@ -68,7 +86,7 @@ import { STUDIOS } from "../lib/studios.js";
 
                   <div class="studio-col">
                     <div>
-                      <span data-clock={s.tz} class="studio-clock" aria-label={`Local time in ${s.region}`}></span>
+                      <span data-clock={s.tz} class="studio-clock" aria-label={`Local time in ${regionLabel(s.region)}`}></span>
                     </div>
                     <div>
                       {s.addressLines.map((line, li) => (
@@ -90,8 +108,7 @@ import { STUDIOS } from "../lib/studios.js";
                         </>
                       )}
                     </div>
-                    <a class="studio-message studio-link" href="/contact/" data-cta="message">
-                      Send us a message <span class="arrow">→</span>
+                    <a class="studio-message studio-link" href={linkHref(locale, locale, "/contact/")} data-cta="message"><Fragment set:html={sendMessageHtml} /><span class="arrow">→</span>
                     </a>
                   </div>
                 </div>

@@ -21,11 +21,16 @@
 // TURNSTILE_SECRET_KEY on the Strapi side.
 interface Props {
   name: string;
+  // Cloudflare Turnstile's own `language` render option (e.g. "ja") — locks
+  // the widget's UI copy instead of letting it auto-detect from the
+  // visitor's browser. Omitted entirely (not even sent as "auto") when not
+  // set, so default behavior on today's (all-EN) pages is untouched.
+  language?: string;
 }
-const { name } = Astro.props;
+const { name, language } = Astro.props;
 ---
 
-<div class="turnstile-box" data-turnstile={name}></div>
+<div class="turnstile-box" data-turnstile={name} data-turnstile-language={language}></div>
 
 <style>
   .turnstile-box {
@@ -72,14 +77,18 @@ const { name } = Astro.props;
       if (!boxName) return;
       box.dataset.turnstileRendered = '1';
 
-      const widgetId = window.turnstile.render(box, {
+      const renderOptions = {
         sitekey: SITE_KEY,
         theme: 'light',
         size: 'flexible',
         callback: (token) => dispatch(boxName, token),
         'expired-callback': () => dispatch(boxName, null),
         'error-callback': () => dispatch(boxName, null),
-      });
+      };
+      if (box.dataset.turnstileLanguage) {
+        renderOptions.language = box.dataset.turnstileLanguage;
+      }
+      const widgetId = window.turnstile.render(box, renderOptions);
       widgetIds[boxName] = widgetId;
     });
   }
