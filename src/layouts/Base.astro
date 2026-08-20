@@ -45,5 +45,32 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
     <slot />
     <Footer />
   </div>
+  <script>
+    // Fade the outgoing page's content before same-origin navigations, for
+    // browsers WITHOUT cross-document View Transitions (those get the CSS
+    // @view-transition crossfade in global.css instead). The incoming page's
+    // own pageIn animation covers the fade-in half.
+    const supportsVT = "startViewTransition" in document;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!supportsVT && !reduced) {
+      document.addEventListener("click", (e) => {
+        if (e.defaultPrevented || e.button !== 0) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const a = e.target instanceof Element ? e.target.closest("a[href]") : null;
+        if (!a || a.target || a.hasAttribute("download")) return;
+        const url = new URL(a.href, location.href);
+        if (url.origin !== location.origin) return;
+        // Same-page hash jumps (contact anchors) never fade.
+        if (url.pathname === location.pathname && url.hash) return;
+        e.preventDefault();
+        document.documentElement.classList.add("page-leaving");
+        setTimeout(() => location.assign(url.href), 190);
+      });
+    }
+    // A bfcache restore brings the faded page back — always clear the state.
+    addEventListener("pageshow", () => {
+      document.documentElement.classList.remove("page-leaving");
+    });
+  </script>
 </body>
 </html>

@@ -46,6 +46,25 @@ input, textarea { font: inherit; }
 .cta:hover { border-bottom-color: currentColor; }
 .arrow { font-weight: 400; }
 @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cross-page transitions. Browsers with cross-document View Transitions get
+   a quick root crossfade (back/forward included); the old page's content is
+   handed off to the incoming page's own pageIn rise. Chrome/Edge today —
+   others fall back to the JS fade-out in Base.astro. */
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation-duration: 0.22s; }
+::view-transition-new(root) { animation-duration: 0.22s; }
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+}
+
+/* JS fallback: Base.astro sets .page-leaving on <html> before same-origin
+   navigations in browsers without cross-document view transitions. Only main
+   fades — the header/footer are identical across pages and stay put. */
+html.page-leaving main {
+  opacity: 0 !important;
+  transition: opacity 0.18s var(--ease);
+}
 /* CSS zoom scales viewport units inside the wrapper (100svh renders at
    zoom × viewport — measured in Chrome and Firefox), so any viewport-height
    sizing inside .zoom must divide by --page-zoom to hit the real viewport.
