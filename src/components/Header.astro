@@ -41,7 +41,10 @@ const defaultLocale = "en";
   style="position: relative; z-index: 100; background: #fff; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; padding: 64px var(--gutter-r) 36px var(--gutter-l); font-size: 20px"
 >
   <a href="/" aria-label="MDMC home" style="display: flex; align-items: center; gap: 14px; justify-self: start">
-    <img src="/mdmc.png" alt="MDMC" style="height: 22px; width: auto">
+    {/* width/height attrs reserve the box before the PNG decodes — with
+        width:auto the logo occupied 0px for a frame on every navigation,
+        shifting the whole nav row (it keys off this grid column). */}
+    <img src="/mdmc.png" alt="MDMC" width="1000" height="235" style="height: 22px; width: auto; aspect-ratio: 1000 / 235">
   </a>
 
   <nav aria-label="Primary" style="justify-self: start; display: flex; gap: 72px; margin-left: 225px">
