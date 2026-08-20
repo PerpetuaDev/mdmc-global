@@ -12,12 +12,52 @@ import Base from "../layouts/Base.astro";
 import WorkCard from "../components/WorkCard.astro";
 import { loadContent } from "../lib/content.js";
 
-const { projects } = await loadContent();
+const { projects, articles, jobs } = await loadContent();
 const heroSlides = projects.slice(0, 4);
 const first = heroSlides[0];
+
+// documentId -> slug maps for the legacy hash-redirect shim below, one per
+// old-site section (work=projects, news=articles, careers=jobs). Built at
+// build time so the inline script only ever inlines VALUES via define:vars.
+const redirectMap = {
+  work: Object.fromEntries(projects.map((p) => [p.documentId, p.slug])),
+  news: Object.fromEntries(articles.map((a) => [a.documentId, a.slug])),
+  careers: Object.fromEntries(jobs.map((j) => [j.documentId, j.slug])),
+};
 ---
 
 <Base title="MDMC" active="home">
+  <!--
+    Legacy hash-URL redirect shim — CANONICAL implementation + tests live in
+    src/lib/legacy-redirects.js (legacyRedirect). define:vars only serializes
+    VALUES into the inline script, so it can't import that module; this is a
+    duplicate of legacyRedirect's body, kept in sync by hand. Runs first (no
+    is:inline JS above it) so a legacy visitor is replaced to the new route
+    before any hero/slideshow work below runs.
+  -->
+  <script is:inline define:vars={{ redirectMap }}>
+    if (location.hash) {
+      const legacyRedirect = (hash, map) => {
+        const h = hash.replace(/^#\/?/, '')
+        if (!h) return null
+        const parts = h.split('/')
+        const section = parts[0]
+        const id = parts[1]
+        if (section === 'work' || section === 'news' || section === 'careers') {
+          if (id) {
+            const slug = map[section] && map[section][id]
+            return slug ? `/${section}/${slug}/` : `/${section}/`
+          }
+          return `/${section}/`
+        }
+        if (['about', 'contact'].includes(section)) return `/${section}/`
+        return null
+      }
+      const target = legacyRedirect(location.hash, redirectMap)
+      if (target) location.replace(target)
+    }
+  </script>
+
   <main style="animation: pageIn .6s var(--ease)">
     <section style="padding: 40px var(--gutter-r) 0 var(--gutter-l)">
       <div class="hero-frame">

@@ -1,0 +1,25 @@
+---
+// 404 — NOT in the design handoff (design/handoff/design/MDMC Site.dc.html
+// has no not-found view); this is a new surface for the Astro rebuild,
+// flagged for user review. Kept minimal and in the house voice: statement-
+// scale headline (same clamp used on About's h1), one line of copy, a
+// single .cta back to home. Same .gutter section rhythm and pageIn entrance
+// as every other page.
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Page not found — MDMC">
+  <main style="animation: pageIn .6s var(--ease)">
+    <section class="gutter" style="padding: 160px 0 200px;">
+      <h1 style="font-size: clamp(48px, 5.6vw, 88px); font-weight: 500; letter-spacing: -0.025em; line-height: 1.02; text-wrap: balance; max-width: 1100px">
+        Page not found.
+      </h1>
+      <p style="margin-top: 32px; font-size: 20px; line-height: 1.5; max-width: 560px">
+        The page you're looking for doesn't exist or has moved.
+      </p>
+      <a href="/" class="cta" style="margin-top: 40px">
+        Back to home <span class="arrow" aria-hidden="true">→</span>
+      </a>
+    </section>
+  </main>
+</Base>
