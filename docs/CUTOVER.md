@@ -46,10 +46,10 @@ git push origin main
 Then watch the deploy:
 
 ```bash
-gh run watch --workflow "Deploy to GitHub Pages"
+gh run watch "$(gh run list --workflow 'Deploy to GitHub Pages' --branch main --limit 1 --json databaseId --jq '.[0].databaseId')"
 ```
 
-(`Deploy to GitHub Pages` is the workflow name in `.github/workflows/deploy.yml`;
+(Bare `gh run watch` also works and prompts an interactive run picker. `Deploy to GitHub Pages` is the workflow name in `.github/workflows/deploy.yml`;
 the push to `main` is what triggers it — the `on: push: branches: [main]`
 trigger is live as of the `redesign/astro` merge, since that same commit is
 what swaps `deploy.yml` from the old React build to the Astro build.)
@@ -102,7 +102,7 @@ a GitHub Pages rebuild automatically, the same way the old site's CMS did.
 
 **What's actually true (verified against Strapi 5 docs while writing this):**
 Strapi's webhook editor (Settings → Webhooks → Create new webhook) gives you
-exactly three configurable things — **Name**, **URL**, **Request headers**,
+exactly four configurable things — **Name**, **URL**, **Request headers**,
 and a checklist of **trigger events** (`entry.create`, `entry.update`,
 `entry.publish`, `entry.unpublish`, `entry.delete`, plus media events). There
 is no field anywhere in that form to set a custom request body. Every
