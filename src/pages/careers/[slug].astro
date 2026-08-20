@@ -41,9 +41,10 @@ const { job } = Astro.props as {
     heroImage: { url: string; alt: string } | null;
   };
 };
+const ogImage = job.heroImage?.url;
 ---
 
-<Base title={`${job.title} — MDMC`} description={job.excerpt || undefined}>
+<Base title={`${job.title} — MDMC`} description={job.excerpt || undefined} ogImage={ogImage}>
   <main style="animation: pageIn .6s var(--ease)">
     <section style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
       <div class="label">

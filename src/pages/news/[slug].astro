@@ -20,9 +20,10 @@ const linkedProject = article.projectSlug
   ? projects.find((p) => p.slug === article.projectSlug)
   : null;
 const articleDescription = article.excerpt || "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
+const ogImage = article.heroImage?.url;
 ---
 
-<Base title={article.title} active="news" description={articleDescription}>
+<Base title={`${article.title} — MDMC`} active="news" description={articleDescription} ogImage={ogImage}>
   <main style="animation: pageIn .6s var(--ease)">
     <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l)">
       <div class="label" style="margin-bottom: 24px">

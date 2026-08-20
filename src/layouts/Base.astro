@@ -9,11 +9,15 @@ interface Props {
   description?: string;
   active?: "home" | "work" | "news" | "about" | "contact";
   lang?: string;
+  ogImage?: string;
 }
 
 const defaultDescription = "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
-const { title, description = defaultDescription, active, lang = "en" } = Astro.props;
+const { title, description = defaultDescription, active, lang = "en", ogImage } = Astro.props;
 const { projects, articles } = await loadContent();
+
+// Construct canonical URL from site and pathname
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!DOCTYPE html>
@@ -22,8 +26,12 @@ const { projects, articles } = await loadContent();
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content={description}>
+  <meta property="og:type" content="website">
   <meta property="og:title" content={title}>
   <meta property="og:description" content={description}>
+  <meta property="og:url" content={canonicalUrl.toString()}>
+  {ogImage && <meta property="og:image" content={ogImage}>}
+  <link rel="canonical" href={canonicalUrl.toString()}>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <title>{title}</title>
 </head>
