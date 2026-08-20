@@ -18,7 +18,7 @@ describe('normalizeProject', () => {
     client: 'Client Co',
     date: '2026-01-01',
     region: 'Japan, Asia',
-    services: 'Web Design, Strategy',
+    disciplines: [{ name: 'Web Design' }, { name: 'Strategy' }],
     dark_hero: false,
     thumbnail: null,
     hero_image: null,
@@ -68,18 +68,15 @@ describe('normalizeProject', () => {
     expect(out.pullQuoteAttribution).toBe('CEO')
   })
 
-  it('prefers discipline relation names over the legacy services string', () => {
+  it('drops null/empty discipline entries and yields [] when the relation is empty or absent', () => {
     const out = normalizeProject({
       ...withStory,
-      disciplines: [{ name: 'Brand Identity' }, { name: 'Collateral Design' }, null, { name: '' }],
+      disciplines: [{ name: 'Brand Identity' }, null, { name: '' }],
     })
-    expect(out.services).toEqual(['Brand Identity', 'Collateral Design'])
-    expect(out.specialties).toEqual(['Brand Identity', 'Collateral Design'])
-  })
-
-  it('falls back to splitting services when disciplines is absent or empty', () => {
-    expect(normalizeProject({ ...withStory, disciplines: [] }).specialties).toEqual(['Web Design', 'Strategy'])
-    expect(normalizeProject(withStory).specialties).toEqual(['Web Design', 'Strategy'])
+    expect(out.services).toEqual(['Brand Identity'])
+    expect(out.specialties).toEqual(['Brand Identity'])
+    expect(normalizeProject({ ...withStory, disciplines: [] }).specialties).toEqual([])
+    expect(normalizeProject({ ...withStory, disciplines: undefined }).specialties).toEqual([])
   })
 
   it('yields gallery: [], story: null, and pullQuote: null when those fields are absent', () => {
@@ -110,7 +107,6 @@ describe('normalizeProject', () => {
       ja: {
         title: 'テストプロジェクト',
         description: 'JA desc',
-        services: 'ウェブデザイン',
         pull_quote: 'JA quote',
         pull_quote_attribution: 'JA CEO',
       },
@@ -119,8 +115,6 @@ describe('normalizeProject', () => {
     expect(out.ja).toEqual({
       title: 'テストプロジェクト',
       description: 'JA desc',
-      services: ['ウェブデザイン'],
-      specialties: ['ウェブデザイン'],
       story: null,
       pullQuote: 'JA quote',
       pullQuoteAttribution: 'JA CEO',
