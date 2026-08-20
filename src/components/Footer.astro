@@ -91,7 +91,11 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
 
               <div class="studio-panel-wrap">
                 <div class="studio-panel">
-                  <div class="studio-image" aria-hidden="true"></div>
+                  {s.image ? (
+                    <img class="studio-image" src={s.image} alt="" loading="lazy" decoding="async" />
+                  ) : (
+                    <div class="studio-image" aria-hidden="true"></div>
+                  )}
 
                   <div class="studio-col">
                     <div>
@@ -225,6 +229,10 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
     aspect-ratio: 4 / 3;
     background: var(--ph);
     overflow: hidden;
+    /* Applies only when the slot is an <img> (real photo wired) — the
+       placeholder <div> ignores both. */
+    object-fit: cover;
+    display: block;
   }
 
   .studio-col {

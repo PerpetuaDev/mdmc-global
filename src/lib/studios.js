@@ -15,9 +15,14 @@
 //   contact@mdmc.co, which is what we mirror here). No JP phone number
 //   exists anywhere on the old site.
 //
-// image: null for all three — studio photography doesn't exist yet. Footer
-// renders a var(--ph) placeholder box at the prototype's 220px/4:3 dimensions
-// until real photos arrive (content needed from user).
+// image: self-hosted studio photography (public/images/studios/, 1600w webp,
+// wired 2026-08-20): nz = the Christchurch office interior (the old About
+// page's mdmc-about-us.jpg, user-confirmed as the real office), au = the
+// North Sydney office (user-supplied sydney-office.webp), jp = the Nisankai
+// Yokohama office (same photo the careers hero uses from Strapi). Self-hosted
+// rather than Strapi-media URLs so the pending media-library purge can't
+// break the site chrome. Images are decorative (alt="") — the address text
+// beside them carries the information.
 //
 // closedLine: the footer's closed-accordion one-liner. The prototype
 // deliberately shortens these (drops the middle address line for NZ, drops
@@ -43,7 +48,7 @@ export const STUDIOS = [
     addressLines: ['Level 2, 47 Salisbury St', 'Christchurch Central', 'Christchurch 8013'],
     email: 'nz@mdmc.co',
     phone: '+64 3 660 0336',
-    image: null,
+    image: '/images/studios/nz.webp',
   },
   {
     id: 'au',
@@ -53,7 +58,7 @@ export const STUDIOS = [
     addressLines: ['100 Arthur Street, Level 10', 'North Sydney NSW 2060'],
     email: 'au@mdmc.co',
     phone: null,
-    image: null,
+    image: '/images/studios/au.webp',
   },
   {
     id: 'jp',
@@ -70,6 +75,6 @@ export const STUDIOS = [
     ],
     email: 'contact@mdmc.co',
     phone: null,
-    image: null,
+    image: '/images/studios/jp.webp',
   },
 ]
