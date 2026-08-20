@@ -30,7 +30,7 @@ const { project, hasStory, locale = "en" } = Astro.props as Props;
 const t = makeT(locale);
 const title = pickLocalized(locale, project, "title");
 const description = pickLocalized(locale, project, "description");
-const specialties = project.specialties ?? [];
+const specialties = (locale === "ja" ? (project.specialtiesJa ?? project.specialties) : project.specialties) ?? [];
 const showMetaRow = specialties.length > 0 || hasStory;
 ---
 

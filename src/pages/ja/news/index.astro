@@ -5,11 +5,11 @@
 // derivation, provenance notes) — unchanged here.
 import Base from "../../../layouts/Base.astro";
 import NewsIndexView from "../../../views/NewsIndexView.astro";
-import { loadContent, ARTICLE_KIND_LABELS } from "../../../lib/content.js";
+import { loadContent, ARTICLE_KIND_LABELS_JA } from "../../../lib/content.js";
 
 const { articles } = await loadContent();
 
-const KINDS = Object.entries(ARTICLE_KIND_LABELS).map(([value, label]) => ({ value, label }));
+const KINDS = Object.entries(ARTICLE_KIND_LABELS_JA).map(([value, label]) => ({ value, label }));
 ---
 
 {/* title/description are PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}

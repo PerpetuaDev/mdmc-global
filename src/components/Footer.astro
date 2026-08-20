@@ -11,8 +11,8 @@
 // label and the closed-address line are also `[data-toggle]` buttons, and
 // the script below binds every `[data-toggle]` in a row, keeping
 // aria-expanded synced across all of them.
-import { STUDIOS } from "../lib/studios.js";
-import { makeT, linkHref } from "../lib/i18n.js";
+import { studiosForLocale } from "../lib/studios.js";
+import { makeT, linkHref, interpolate } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -21,6 +21,15 @@ interface Props {
 const { locale = "en" } = Astro.props as Props;
 const t = makeT(locale);
 const regionLabel = (region: string) => t(`work.region.${region}`);
+// Local studio leads: ja renders JP first (studiosForLocale), en unchanged.
+const STUDIOS = studiosForLocale(locale);
+// The bottom-bar script needs localized region names but is a bundled
+// <script> (no server vars) — carried via a data attribute on the button.
+const regionLabelsJson = JSON.stringify({
+  nz: regionLabel("New Zealand"),
+  au: regionLabel("Australia"),
+  jp: regionLabel("Japan"),
+});
 
 // Built as raw HTML strings (injected via <Fragment set:html>, not as plain
 // `{expr}` children) so the EN build stays byte-identical to the pre-i18n
@@ -56,7 +65,7 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
             data-toggle
             class="studio-plus"
             aria-expanded="false"
-            aria-label={`Toggle ${regionLabel(s.region)} studio details`}
+            aria-label={interpolate(t("a11y.toggleStudio"), { region: regionLabel(s.region) })}
           >+</button>
 
           <div style="display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; padding: 24px 48px 24px 0">
@@ -65,7 +74,7 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
               data-toggle
               class="label"
               aria-expanded="false"
-              aria-label={`Toggle ${regionLabel(s.region)} studio details`}
+              aria-label={interpolate(t("a11y.toggleStudio"), { region: regionLabel(s.region) })}
               style="display: block; width: 100%; text-align: left; padding-top: 5px; align-self: start"
             >{regionLabel(s.region)}</button>
 
@@ -76,7 +85,7 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
                   data-toggle
                   class="studio-closed"
                   aria-expanded="false"
-                  aria-label={`Toggle ${regionLabel(s.region)} studio details`}
+                  aria-label={interpolate(t("a11y.toggleStudio"), { region: regionLabel(s.region) })}
                 >{s.closedLine}</button>
               </div>
 
@@ -86,7 +95,7 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
 
                   <div class="studio-col">
                     <div>
-                      <span data-clock={s.tz} class="studio-clock" aria-label={`Local time in ${regionLabel(s.region)}`}></span>
+                      <span data-clock={s.tz} class="studio-clock" aria-label={interpolate(t("a11y.localTime"), { region: regionLabel(s.region) })}></span>
                     </div>
                     <div>
                       {s.addressLines.map((line, li) => (
@@ -123,10 +132,10 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
   <div class="footer-bottom">
     <span class="footer-bottom-left">
       <span>© 2026 MDMC Group Inc.</span>
-      <a href="#" class="footer-link">Privacy &amp; Terms</a>
+      <a href="#" class="footer-link">{t("footer.privacyTerms")}</a>
     </span>
     <span class="footer-bottom-right">
-      <button type="button" class="footer-link" data-footer-locale data-locale-part="region">New Zealand</button>
+      <button type="button" class="footer-link" data-footer-locale data-locale-part="region" data-region-labels={regionLabelsJson}>{regionLabel("New Zealand")}</button>
       <span class="footer-dot" aria-hidden="true">·</span>
       <button type="button" class="footer-link" data-footer-locale data-locale-part="lang">English</button>
     </span>
@@ -351,7 +360,6 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
   // full locale routing.
   const REGION_KEY = 'mdmc.region';
   const LOCALE_KEY = 'mdmc.locale';
-  const REGION_LABELS = { nz: 'New Zealand', au: 'Australia', jp: 'Japan' };
   const LANG_LABELS = { en: 'English', ja: '日本語' };
   function normalizeRegion(v) {
     return v === 'au' || v === 'jp' ? v : 'nz';
@@ -374,8 +382,14 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
       return null;
     }
   }
-  const regionBtn = document.querySelector('[data-locale-part="region"]');
+  const regionBtn = document.querySelector('[data-locale-part="region"]') as HTMLElement | null;
   const langBtn = document.querySelector('[data-locale-part="lang"]');
+  // Localized region names come from the server via data-region-labels
+  // (this script is bundled, so it can't read the page's locale directly).
+  let REGION_LABELS: Record<string, string> = { nz: 'New Zealand', au: 'Australia', jp: 'Japan' };
+  try {
+    if (regionBtn?.dataset.regionLabels) REGION_LABELS = { ...REGION_LABELS, ...JSON.parse(regionBtn.dataset.regionLabels) };
+  } catch { /* keep EN fallback */ }
   if (regionBtn) regionBtn.textContent = REGION_LABELS[normalizeRegion(readStore(REGION_KEY))];
   if (langBtn) langBtn.textContent = LANG_LABELS[normalizeLocale(readStore(LOCALE_KEY))];
 

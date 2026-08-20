@@ -23,7 +23,7 @@
 // stays the plain EN "{Region} Studio" string on every locale — that's a
 // backend contract, not user-facing copy, and must not vary with locale.
 import TurnstileBox from "../components/TurnstileBox.astro";
-import { makeT, STRINGS } from "../lib/i18n.js";
+import { makeT, STRINGS, interpolate } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -60,10 +60,12 @@ const headlineLines = t("contact.headline").split("\n");
         {li < headlineLines.length - 1 && <br />}
       </>
     ))}</h1>
+    {/* Anchor order mirrors the studios prop (locale-aware: ja leads with
+        the Japan studio via studiosForLocale in the page wrapper). */}
     <div class="anchor-row">
-      <a href="#studio-nz" class="cta" data-scroll="studio-nz">{regionLabel("New Zealand")} <span class="arrow" aria-hidden="true">↓</span></a>
-      <a href="#studio-au" class="cta" data-scroll="studio-au">{regionLabel("Australia")} <span class="arrow" aria-hidden="true">↓</span></a>
-      <a href="#studio-jp" class="cta" data-scroll="studio-jp">{regionLabel("Japan")} <span class="arrow" aria-hidden="true">↓</span></a>
+      {studios.map((s) => (
+        <a href={`#studio-${s.id}`} class="cta" data-scroll={`studio-${s.id}`}>{regionLabel(s.region)} <span class="arrow" aria-hidden="true">↓</span></a>
+      ))}
       <a href="#contact-form" class="cta" data-scroll="contact-form">{t("contact.form.sendAMessage")} <span class="arrow" aria-hidden="true">↓</span></a>
     </div>
   </section>
@@ -82,7 +84,7 @@ const headlineLines = t("contact.headline").split("\n");
           <div class="studio-info" style={imageFirst ? "" : "order: 1"}>
             <div class="studio-info-top">
               <div class="label">{regionLabel(s.region)}</div>
-              <span data-clock={s.tz} class="studio-clock" aria-label={`Local time in ${s.region}`}></span>
+              <span data-clock={s.tz} class="studio-clock" aria-label={interpolate(t("a11y.localTime"), { region: regionLabel(s.region) })}></span>
             </div>
             <div class="studio-address">
               {s.addressLines.map((line, li) => (

@@ -142,6 +142,20 @@ export const STRINGS = {
     'notFound.title': 'Page not found.',
     'notFound.body': "The page you're looking for doesn't exist or has moved.",
     'notFound.backHome': 'Back to home',
+
+    // --- a11y.*: screen-reader strings (aria-label/alt), previously
+    // hardcoded EN in components. {region}/{title} are interpolate() slots. ---
+    'a11y.homeLink': 'MDMC home',
+    'a11y.primaryNav': 'Primary',
+    'a11y.toggleStudio': 'Toggle {region} studio details',
+    'a11y.localTime': 'Local time in {region}',
+    'a11y.openProject': 'Open {title}',
+    'a11y.browseProjects': 'Browse featured projects',
+    'a11y.prevSlide': 'Previous slide',
+    'a11y.nextSlide': 'Next slide',
+    'a11y.filterByType': 'Filter by type',
+    'a11y.filterBySpecialty': 'Filter by specialty',
+    'a11y.filterByRegion': 'Filter by region',
   },
 
   ja: {
@@ -236,6 +250,18 @@ export const STRINGS = {
     'notFound.title': 'ページが見つかりません。',
     'notFound.body': 'お探しのページは存在しないか、移動した可能性があります。',
     'notFound.backHome': 'ホームへ戻る',
+
+    'a11y.homeLink': 'MDMCホーム',
+    'a11y.primaryNav': 'メインナビゲーション',
+    'a11y.toggleStudio': '{region}スタジオの詳細を開閉',
+    'a11y.localTime': '{region}の現地時間',
+    'a11y.openProject': '{title}を開く',
+    'a11y.browseProjects': '注目プロジェクトを見る',
+    'a11y.prevSlide': '前のスライド',
+    'a11y.nextSlide': '次のスライド',
+    'a11y.filterByType': '種類で絞り込み',
+    'a11y.filterBySpecialty': '専門分野で絞り込み',
+    'a11y.filterByRegion': '地域で絞り込み',
     // ---------------------------- end PLACEHOLDER JA -------------------
   },
 }
@@ -257,6 +283,15 @@ export function makeT(locale) {
     }
     return key
   }
+}
+
+// Fills {slot} tokens in a dict string: interpolate(t('a11y.localTime'),
+// { region: '日本' }) → '日本の現地時間'. Slots without a matching var are
+// left literal (visible in output = a bug you can see).
+export function interpolate(str, vars = {}) {
+  return String(str).replace(/\{(\w+)\}/g, (m, k) =>
+    Object.prototype.hasOwnProperty.call(vars, k) ? String(vars[k]) : m,
+  )
 }
 
 export function tMisses() {

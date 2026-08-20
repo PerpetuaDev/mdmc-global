@@ -49,8 +49,8 @@ const t = makeT(locale);
 <main style="animation: pageIn .6s var(--ease)">
   <section style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
     <div class="label">
-      {job.location}
-      {job.typeLabel && <><span class="meta-dot" aria-hidden="true">·</span>{job.typeLabel}</>}
+      {locale === "ja" ? (job.locationLabelJa ?? job.location) : job.location}
+      {job.typeLabel && <><span class="meta-dot" aria-hidden="true">·</span>{locale === "ja" ? (job.typeLabelJa ?? job.typeLabel) : job.typeLabel}</>}
     </div>
     <h1 class="job-title">{job.title}</h1>
     <div class="hero-container">

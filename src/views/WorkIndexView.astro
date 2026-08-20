@@ -38,7 +38,10 @@ const regionLabel = (r: string) => {
 };
 
 const regions = [...new Set(projects.flatMap((p) => p.regions))].sort();
-const specialties = [...new Set(projects.flatMap((p) => p.specialties))].sort();
+// On ja, both the filter chips AND each card's data-specialties use the same
+// ja label set (specialtiesJa, per-entry EN fallback) so matching stays exact.
+const specialtiesOf = (p: any) => (locale === "ja" ? (p.specialtiesJa ?? p.specialties) : p.specialties);
+const specialties = [...new Set(projects.flatMap(specialtiesOf))].sort();
 
 // Filter values are pipe-joined into data-attributes (see <script> below).
 // None of today's live region/service strings contain "|", so this is a
@@ -71,7 +74,7 @@ const specialties = [...new Set(projects.flatMap((p) => p.specialties))].sort();
       <div
         class="filter-list filter-list-region"
         role="group"
-        aria-label="Filter by region"
+        aria-label={t("a11y.filterByRegion")}
         data-filter-list="region"
         hidden
       >
@@ -85,7 +88,7 @@ const specialties = [...new Set(projects.flatMap((p) => p.specialties))].sort();
       <div
         class="filter-list filter-list-specialty"
         role="group"
-        aria-label="Filter by specialty"
+        aria-label={t("a11y.filterBySpecialty")}
         data-filter-list="specialty"
         hidden
       >
@@ -102,7 +105,7 @@ const specialties = [...new Set(projects.flatMap((p) => p.specialties))].sort();
         <div
           data-work-card
           data-regions={p.regions.join("|")}
-          data-specialties={p.specialties.join("|")}
+          data-specialties={specialtiesOf(p).join("|")}
         >
           <WorkCard project={p} headingLevel="h3" locale={locale} />
         </div>
