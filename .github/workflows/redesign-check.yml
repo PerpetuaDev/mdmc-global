@@ -1,0 +1,20 @@
+name: Redesign build check
+on:
+  push:
+    branches: ['redesign/**']
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npm test
+      - name: Refresh content snapshot
+        run: node scripts/snapshot-content.mjs
+        env:
+          VITE_STRAPI_TOKEN: ${{ secrets.VITE_STRAPI_TOKEN }}
+      - run: npm run build
+        env:
+          STRAPI_TOKEN: ${{ secrets.VITE_STRAPI_TOKEN }}

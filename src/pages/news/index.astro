@@ -1,0 +1,25 @@
+---
+// News index — thin wrapper: loads content, derives the fixed `kind` enum,
+// and renders NewsIndexView inside Base. See NewsIndexView.astro for the
+// template itself (Phase-5 Task 4 extraction) and its header comment for
+// prototype provenance notes.
+//
+// The three kinds are a fixed enum (news/article/case_study), not derived
+// from live data like Work's regions/specialties — deriving from `articles`
+// would collapse the filter list to empty today (zero live articles), but
+// the prototype always renders all three (`hint-placeholder-count="3"`).
+// Derived from content.js's ARTICLE_KIND_LABELS (single source of truth for
+// the fixed kind enum) rather than a second hardcoded copy here — order and
+// labels are unchanged from before (news, article, case_study).
+import Base from "../../layouts/Base.astro";
+import NewsIndexView from "../../views/NewsIndexView.astro";
+import { loadContent, ARTICLE_KIND_LABELS } from "../../lib/content.js";
+
+const { articles } = await loadContent();
+
+const KINDS = Object.entries(ARTICLE_KIND_LABELS).map(([value, label]) => ({ value, label }));
+---
+
+<Base title="News — MDMC" active="news" description="News and writing from MDMC.">
+  <NewsIndexView locale="en" articles={articles} kinds={KINDS} />
+</Base>

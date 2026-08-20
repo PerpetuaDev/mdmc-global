@@ -1,0 +1,17 @@
+---
+// Contact page — thin wrapper: renders ContactView inside Base. See
+// ContactView.astro for the template itself (Phase-5 Task 4 extraction) and
+// its header comment for prototype provenance notes + the contact payload
+// contract.
+import Base from "../../layouts/Base.astro";
+import ContactView from "../../views/ContactView.astro";
+import { STUDIOS } from "../../lib/studios.js";
+---
+
+<Base
+  title="Contact — MDMC"
+  active="contact"
+  description="Tell us what you're working on — MDMC works from New Zealand, Australia and Japan."
+>
+  <ContactView locale="en" studios={STUDIOS} />
+</Base>

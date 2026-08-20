@@ -1,0 +1,41 @@
+---
+// Job posting page — thin wrapper: loads paths/content and renders JobView
+// inside Base. See JobView.astro for the template itself (Phase-5 Task 4
+// extraction) and its header comment for prototype provenance notes + the
+// apply payload contract.
+//
+// NO `active` prop: prototype underlines no nav item on job pages (dc line
+// 909 scopes the underline to the About page only; same ruling applied to
+// the careers index in Task 5).
+import Base from "../../layouts/Base.astro";
+import JobView from "../../views/JobView.astro";
+import { loadContent } from "../../lib/content.js";
+
+export async function getStaticPaths() {
+  const { jobs } = await loadContent();
+  return jobs.map((job) => ({
+    params: { slug: job.slug },
+    props: { job },
+  }));
+}
+
+const { job } = Astro.props as {
+  job: {
+    slug: string;
+    documentId: string;
+    title: string;
+    excerpt: string;
+    body: string[];
+    location: string;
+    typeLabel: string;
+    locationLabel?: string;
+    applyEmail: string;
+    heroImage: { url: string; alt: string } | null;
+  };
+};
+const ogImage = job.heroImage?.url;
+---
+
+<Base title={`${job.title} — MDMC`} description={job.excerpt || undefined} ogImage={ogImage}>
+  <JobView locale="en" job={job} />
+</Base>

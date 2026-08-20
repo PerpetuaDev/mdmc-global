@@ -1,0 +1,397 @@
+---
+// Footer — studio accordions + live clocks.
+// Transcribed from design/handoff/design/MDMC Site.dc.html, the footer block
+// starting "Have a project in mind" (search that string), before the
+// <script type="text/x-dc"> tag. Full-black top rule is the only full-black
+// rule on the site (spec); inner accordion rows use the 0.12 hairline.
+//
+// The prototype's onClick handlers fire on several elements per row (label,
+// closed-address line, and the "+" button all call the same toggle, lines
+// 712-716 and the equivalent AU/JP blocks). We mirror that: the region
+// label and the closed-address line are also `[data-toggle]` buttons, and
+// the script below binds every `[data-toggle]` in a row, keeping
+// aria-expanded synced across all of them.
+import { STUDIOS } from "../lib/studios.js";
+import { makeT, linkHref } from "../lib/i18n.js";
+
+interface Props {
+  locale?: "en" | "ja";
+}
+
+const { locale = "en" } = Astro.props as Props;
+const t = makeT(locale);
+const regionLabel = (region: string) => t(`work.region.${region}`);
+
+// Built as raw HTML strings (injected via <Fragment set:html>, not as plain
+// `{expr}` children) so the EN build stays byte-identical to the pre-i18n
+// markup: a literal text node's leading/trailing whitespace compiles
+// differently than a whitespace-only text node sitting next to a `{}`
+// expression (the latter collapses to a single space, dropping the
+// newline). Baking the newline/space into the string itself sidesteps that
+// entirely, for exact-byte EN output.
+const ctaHtml = `\n${t("footer.cta.label")} ${t("footer.cta.action")} `;
+const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
+---
+
+<footer
+  data-footer
+  style="border-top: 1px solid #000; padding: 64px var(--gutter-r) 0 var(--gutter-l); font-size: 18px; color: #000"
+>
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: 64px; align-items: start">
+    <div>
+      <a href={linkHref(locale, locale, "/contact/")} class="footer-cta" style="display: inline-block; font-size: 32px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; text-wrap: balance"><Fragment set:html={ctaHtml} /><span class="arrow">→</span>
+      </a>
+    </div>
+
+    <div>
+      {STUDIOS.map((s, i) => (
+        <div
+          class="studio-row"
+          data-studio
+          data-open="0"
+          style={`border-top: 1px solid var(--hairline); position: relative;${i === STUDIOS.length - 1 ? " border-bottom: 1px solid var(--hairline);" : ""}`}
+        >
+          <button
+            type="button"
+            data-toggle
+            class="studio-plus"
+            aria-expanded="false"
+            aria-label={`Toggle ${regionLabel(s.region)} studio details`}
+          >+</button>
+
+          <div style="display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; padding: 24px 48px 24px 0">
+            <button
+              type="button"
+              data-toggle
+              class="label"
+              aria-expanded="false"
+              aria-label={`Toggle ${regionLabel(s.region)} studio details`}
+              style="display: block; width: 100%; text-align: left; padding-top: 5px; align-self: start"
+            >{regionLabel(s.region)}</button>
+
+            <div>
+              <div class="studio-closed-wrap">
+                <button
+                  type="button"
+                  data-toggle
+                  class="studio-closed"
+                  aria-expanded="false"
+                  aria-label={`Toggle ${regionLabel(s.region)} studio details`}
+                >{s.closedLine}</button>
+              </div>
+
+              <div class="studio-panel-wrap">
+                <div class="studio-panel">
+                  <div class="studio-image" aria-hidden="true"></div>
+
+                  <div class="studio-col">
+                    <div>
+                      <span data-clock={s.tz} class="studio-clock" aria-label={`Local time in ${regionLabel(s.region)}`}></span>
+                    </div>
+                    <div>
+                      {s.addressLines.map((line, li) => (
+                        <>
+                          {line}
+                          {li < s.addressLines.length - 1 && <br />}
+                        </>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div class="studio-col">
+                    <div>
+                      <a class="studio-link" href={`mailto:${s.email}`}>{s.email}</a>
+                      {s.phone && (
+                        <>
+                          <br />
+                          <a class="studio-link" href={`tel:${s.phone.replace(/\s+/g, "")}`}>{s.phone}</a>
+                        </>
+                      )}
+                    </div>
+                    <a class="studio-message studio-link" href={linkHref(locale, locale, "/contact/")} data-cta="message"><Fragment set:html={sendMessageHtml} /><span class="arrow">→</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span class="footer-bottom-left">
+      <span>© 2026 MDMC Group Inc.</span>
+      <a href="#" class="footer-link">Privacy &amp; Terms</a>
+    </span>
+    <span class="footer-bottom-right">
+      <button type="button" class="footer-link" data-footer-locale data-locale-part="region">New Zealand</button>
+      <span class="footer-dot" aria-hidden="true">·</span>
+      <button type="button" class="footer-link" data-footer-locale data-locale-part="lang">English</button>
+    </span>
+  </div>
+</footer>
+
+<style>
+  .footer-cta {
+    transition: opacity 0.2s ease;
+  }
+  .footer-cta:hover {
+    opacity: 0.6;
+  }
+
+  .studio-plus {
+    position: absolute;
+    top: 21px; /* optically centers the glyph in the 24px-padded closed row */
+    right: 0;
+    z-index: 2;
+    padding: 4px 0 4px 12px;
+    font-size: 22px;
+    line-height: 1;
+    font-weight: 400;
+    transition: transform 0.3s var(--ease);
+  }
+  [data-open="1"] .studio-plus {
+    transform: rotate(45deg);
+  }
+
+  /* Closed one-liner: fades out AND collapses (same 0fr grid trick as the
+     panel) when the fold opens, mirroring the prototype's replaced row. */
+  .studio-closed-wrap {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.3s var(--ease);
+  }
+  [data-open="1"] .studio-closed-wrap {
+    grid-template-rows: 0fr;
+  }
+  .studio-closed {
+    display: block;
+    width: 100%;
+    text-align: left;
+    font-size: 18px;
+    min-height: 0;
+    overflow: hidden;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s var(--ease), visibility 0.3s;
+  }
+  [data-open="1"] .studio-closed {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .studio-panel-wrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 0.3s var(--ease), opacity 0.3s var(--ease);
+  }
+  [data-open="1"] .studio-panel-wrap {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  .studio-panel {
+    overflow: hidden;
+    min-height: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px 48px;
+    align-items: stretch;
+    /* Padding lives only in the open state: a 0fr grid track still honors the
+       item's padding as min-content height, so closed rows would otherwise
+       carry 16px of phantom height (which also skewed vertical centering). */
+    padding-bottom: 0;
+    transition: padding-bottom 0.3s var(--ease);
+  }
+  [data-open="1"] .studio-panel {
+    padding-bottom: 16px;
+  }
+
+  .studio-image {
+    width: 220px;
+    flex: 0 0 220px;
+    aspect-ratio: 4 / 3;
+    background: var(--ph);
+    overflow: hidden;
+  }
+
+  .studio-col {
+    flex: 1 1 200px;
+    min-width: 200px;
+    font-size: 18px;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .studio-clock {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: baseline;
+  }
+
+  .studio-link {
+    display: inline-block;
+    transition: box-shadow 0.2s ease;
+  }
+  .studio-link:hover {
+    box-shadow: inset 0 -1px 0 currentColor;
+  }
+
+  /* "Send us a message →" — deliberately not `.cta` (global.css's .cta is
+     20px/padding:6px 0/border-bottom-hover, which stacked a second,
+     larger, doubled hover indicator on top of .studio-link's inset
+     box-shadow and bumped the size past the 18px the prototype's
+     studio-col context uses). This inherits font-size from .studio-col
+     and gets only the shared .studio-link hover treatment. */
+  .studio-message {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    align-self: flex-start;
+  }
+
+  .footer-bottom {
+    margin-top: 80px;
+    border-top: 1px solid var(--hairline);
+    margin-left: calc(-1 * var(--gutter-l));
+    margin-right: calc(-1 * var(--gutter-r));
+    padding: 24px var(--gutter-r) 40px var(--gutter-l);
+    display: flex;
+    justify-content: space-between;
+    gap: 32px;
+    font-size: 14px;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+
+  .footer-bottom-left {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 32px;
+  }
+
+  .footer-bottom-right {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+
+  .footer-dot {
+    color: var(--faint);
+  }
+
+  .footer-link {
+    font-size: 14px;
+    color: inherit;
+    transition: color 0.2s ease;
+  }
+  .footer-link:hover {
+    color: #000;
+  }
+</style>
+
+<script>
+  const rows = document.querySelectorAll('[data-studio]');
+  function setRowExpanded(row, expanded) {
+    row.querySelectorAll('[data-toggle]').forEach((t) => {
+      t.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    });
+  }
+  rows.forEach((row) => {
+    const toggles = row.querySelectorAll('[data-toggle]');
+    toggles.forEach((toggle) => {
+      toggle.addEventListener('click', () => {
+        const isOpen = row.dataset.open === '1';
+        rows.forEach((r) => {
+          r.dataset.open = '0';
+          setRowExpanded(r, false);
+        });
+        row.dataset.open = isOpen ? '0' : '1';
+        setRowExpanded(row, row.dataset.open === '1');
+      });
+    });
+  });
+
+  // Scoped to this footer's own subtree ([data-footer], set on the root
+  // <footer> above) — other pages (e.g. /contact/) render their own
+  // [data-clock] spans inside <main>, with their own independent tick
+  // interval, and must not be picked up by this one (or vice versa).
+  const clocks = document.querySelectorAll('[data-footer] [data-clock]');
+  function tick() {
+    const blink = new Date().getSeconds() % 2 === 0;
+    clocks.forEach((el) => {
+      const t = new Intl.DateTimeFormat('en-NZ', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: el.dataset.clock,
+      }).format(new Date());
+      el.innerHTML = t.replace(':', `<span style="display:inline-block; padding:0 1px; opacity:${blink ? 1 : 0}">:</span>`);
+    });
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // Bottom bar region/language labels — reuse Header's stored choice
+  // (same localStorage keys, same normalize logic) so this stays in sync
+  // with the header on every fresh page load. This is an MPA (no client
+  // routing yet), so "page load" is also whenever the header's own click
+  // handlers would have taken effect on a *different* page; if the user
+  // switches locale via the header dropdown without navigating, this
+  // label won't update until the next navigation — acceptable for Phase 1
+  // per the same reasoning Header.astro's own comments give for deferring
+  // full locale routing.
+  const REGION_KEY = 'mdmc.region';
+  const LOCALE_KEY = 'mdmc.locale';
+  const REGION_LABELS = { nz: 'New Zealand', au: 'Australia', jp: 'Japan' };
+  const LANG_LABELS = { en: 'English', ja: '日本語' };
+  function normalizeRegion(v) {
+    return v === 'au' || v === 'jp' ? v : 'nz';
+  }
+  // Mirrors Header.astro's fallback: with nothing in storage yet, fall back
+  // to the ACTUAL locale of the page being viewed (read off the header's
+  // data-page-locale attribute, present on every page) rather than
+  // hardcoding 'en' — a first-ever visit landing straight on a /ja/ page
+  // must show 日本語 in the footer, not English.
+  const headerEl = document.querySelector('[data-page-locale]');
+  const pageLocale = headerEl && headerEl.dataset.pageLocale === 'ja' ? 'ja' : 'en';
+  function normalizeLocale(v) {
+    if (!v) return pageLocale;
+    return String(v).toLowerCase().startsWith('ja') ? 'ja' : 'en';
+  }
+  function readStore(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+  const regionBtn = document.querySelector('[data-locale-part="region"]');
+  const langBtn = document.querySelector('[data-locale-part="lang"]');
+  if (regionBtn) regionBtn.textContent = REGION_LABELS[normalizeRegion(readStore(REGION_KEY))];
+  if (langBtn) langBtn.textContent = LANG_LABELS[normalizeLocale(readStore(LOCALE_KEY))];
+
+  // Bottom bar locale buttons — prototype's footerLocale scrolls to top and
+  // opens the header's locale panel. Header.astro listens for a named
+  // `mdmc:open-mega` CustomEvent (detail: panel name, or falsy to hide) —
+  // an explicit contract between the two components that survives Header
+  // internals changing, rather than synthesizing a `mouseenter` on its
+  // trigger element.
+  function openHeaderLocalePanel() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      document.dispatchEvent(new CustomEvent('mdmc:open-mega', { detail: 'locale' }));
+    }, 400);
+  }
+  document.querySelectorAll('[data-footer-locale]').forEach((btn) => {
+    btn.addEventListener('click', openHeaderLocalePanel);
+  });
+</script>

@@ -1,0 +1,26 @@
+---
+// Home (ja) — identical to src/pages/index.astro except locale="ja" passed
+// to both Base and HomeView (Phase-5 Task 4). See index.astro for the full
+// header comment (data loading, legacy-redirect map, provenance notes) —
+// unchanged here.
+import Base from "../../layouts/Base.astro";
+import HomeView from "../../views/HomeView.astro";
+import { loadContent } from "../../lib/content.js";
+
+const { projects, articles, jobs } = await loadContent();
+
+const redirectMap = {
+  work: Object.fromEntries(projects.map((p) => [p.documentId, p.slug])),
+  news: Object.fromEntries(articles.map((a) => [a.documentId, a.slug])),
+  careers: Object.fromEntries(jobs.map((j) => [j.documentId, j.slug])),
+};
+---
+
+{/* description is PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
+<Base title="MDMC" active="home" locale="ja" description="MDMCは、デザインとデジタル戦略を横断する統合エージェンシーです。ニュージーランド・オーストラリア・日本の3拠点で活動しています。">
+  <!--
+    Legacy hash-URL redirect shim — see src/pages/index.astro's identical
+    comment for the full explanation; unchanged here, just locale="ja".
+  -->
+  <HomeView locale="ja" projects={projects} redirectMap={redirectMap} />
+</Base>

@@ -1,0 +1,39 @@
+---
+// Home — thin wrapper: loads content, builds the legacy-redirect map, and
+// renders HomeView inside Base. See HomeView.astro for the template itself
+// (Phase-5 Task 3 extraction) and its header comment for prototype
+// provenance notes.
+import Base from "../layouts/Base.astro";
+import HomeView from "../views/HomeView.astro";
+import { loadContent } from "../lib/content.js";
+
+const { projects, articles, jobs } = await loadContent();
+
+// documentId -> slug maps for the legacy hash-redirect shim (see
+// HomeView.astro), one per old-site section (work=projects, news=articles,
+// careers=jobs). Built at build time so the inline script only ever inlines
+// VALUES via define:vars.
+const redirectMap = {
+  work: Object.fromEntries(projects.map((p) => [p.documentId, p.slug])),
+  news: Object.fromEntries(articles.map((a) => [a.documentId, a.slug])),
+  careers: Object.fromEntries(jobs.map((j) => [j.documentId, j.slug])),
+};
+---
+
+<Base title="MDMC" active="home">
+  <!--
+    Legacy hash-URL redirect shim — CANONICAL implementation + tests live in
+    src/lib/legacy-redirects.js (legacyRedirect). The actual inline script
+    (a hand-kept duplicate of legacyRedirect's body — define:vars only
+    serializes VALUES, so it can't import that module) lives in HomeView.astro
+    and runs first there, before any hero/slideshow work. This doc comment
+    stays here, one level up: HomeView is a plain component (not a route
+    under src/pages), and Astro's compiler only strips top-level HTML
+    comments in page files like this one — inside HomeView.astro itself an
+    HTML comment would render into the output HTML verbatim, which this
+    page's build never did before this extraction (verified against the
+    pre-extraction build). See HomeView.astro's frontmatter for a pointer
+    back to this note.
+  -->
+  <HomeView locale="en" projects={projects} redirectMap={redirectMap} />
+</Base>

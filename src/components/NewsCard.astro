@@ -1,0 +1,82 @@
+---
+// News grid card — transcribed from design/handoff/design/MDMC Site.dc.html
+// lines ~348-358 (the `visibleNews` sc-for inside the `isNews` main). Unlike
+// WorkCard, there is no description/CTA row in the prototype — just image,
+// meta line, title. Missing `heroImage` renders the same grey `var(--ph)`
+// placeholder box WorkCard uses (today's live articles are zero, so this
+// path is what actually builds).
+
+// `locale` gained in Phase-5 Task 4 (same pattern as WorkCard's Task-3
+// addition): default "en" keeps every existing call site byte-identical;
+// title now resolves through pickLocalized so ja pages read the `.ja`
+// overlay title when one exists.
+import { pickLocalized, linkHref } from "../lib/i18n.js";
+
+interface Props {
+  article: {
+    slug: string;
+    title: string;
+    kind: "news" | "article" | "case_study";
+    kindLabel: string;
+    dateLabel: string;
+    heroImage: { url: string; alt: string } | null;
+  };
+  locale?: "en" | "ja";
+}
+
+const { article, locale = "en" } = Astro.props as Props;
+---
+
+<a href={linkHref(locale, locale, `/news/${article.slug}/`)} class="news-card">
+  <div class="news-card-image">
+    {article.heroImage ? (
+      <img src={article.heroImage.url} alt={article.heroImage.alt || pickLocalized(locale, article, "title")} />
+    ) : (
+      <div class="news-card-placeholder" aria-hidden="true"></div>
+    )}
+  </div>
+  <div class="label news-card-meta">
+    {article.kindLabel}
+    {article.dateLabel && <><span class="meta-dot" aria-hidden="true">·</span>{article.dateLabel}</>}
+  </div>
+  <h3 class="news-card-title">{pickLocalized(locale, article, "title")}</h3>
+</a>
+
+<style>
+  .news-card {
+    display: block;
+    cursor: pointer;
+  }
+
+  .news-card-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--ph);
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.5s var(--ease);
+  }
+  .news-card:hover .news-card-image {
+    transform: translateY(-4px);
+  }
+
+  .news-card-image img,
+  .news-card-placeholder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .news-card-meta {
+    margin-top: 20px;
+  }
+
+  .news-card-title {
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    margin-top: 12px;
+  }
+</style>

@@ -1,0 +1,270 @@
+---
+// Work index view — pure template, extracted from src/pages/work/index.astro
+// (Phase-5 Task 3). Data loading (loadContent) stays in the page wrapper;
+// this component receives `projects` (and derives `regions`/`specialties`
+// from it) as a prop.
+//
+// See src/pages/work/index.astro's original header comment for provenance
+// notes (design/handoff/design/MDMC Site.dc.html lines 153-190) and the
+// measurement note about trigger-row/filter-item spacing.
+import WorkCard from "../components/WorkCard.astro";
+import { makeT, STRINGS } from "../lib/i18n.js";
+
+interface Props {
+  locale?: "en" | "ja";
+  projects: any[];
+}
+
+const { locale = "en", projects } = Astro.props as Props;
+const t = makeT(locale);
+
+// Region chip labels: t('work.region.' + value) when the dict actually has
+// that key for this locale, else the raw CMS value untouched. Deliberately
+// NOT just `t('work.region.' + r)` — makeT() falls back to the EN string for
+// any key present in STRINGS.en (so an unmapped region would silently render
+// its EN dict counterpart, e.g. a future region added to STRINGS.en only),
+// but a region string that isn't in the dict AT ALL (live CMS data with no
+// matching key, same category as Task 3's "leave literal" call for
+// specialties) must stay exactly as CMS returned it, not fall through to a
+// key lookup that returns the raw dict KEY string. hasOwnProperty against
+// the resolved locale's own dict (falling back to en's dict shape, same
+// dicts used by makeT) is the correct existence check for that.
+const regionLabel = (r: string) => {
+  const dict = STRINGS[locale] || STRINGS.en;
+  const key = `work.region.${r}`;
+  return Object.prototype.hasOwnProperty.call(dict, key) || Object.prototype.hasOwnProperty.call(STRINGS.en, key)
+    ? t(key)
+    : r;
+};
+
+const regions = [...new Set(projects.flatMap((p) => p.regions))].sort();
+const specialties = [...new Set(projects.flatMap((p) => p.specialties))].sort();
+
+// Filter values are pipe-joined into data-attributes (see <script> below).
+// None of today's live region/service strings contain "|", so this is a
+// safe delimiter for now — if that ever changes, switch to a JSON
+// data-attribute instead of splitting on "|".
+---
+
+<main style="animation: pageIn .6s var(--ease)">
+  <section class="gutter" style="padding-top: 80px; padding-bottom: 160px;">
+    <div style="margin-bottom: 36px">
+      <h2 class="work-h2">{t("work.title")}</h2>
+
+      <div class="filter-triggers">
+        <button
+          type="button"
+          class="filter-trigger"
+          data-filter-trigger="region"
+          aria-expanded="false"
+        >{t("work.filter.region")}<span aria-hidden="true" class="filter-plus" data-plus="region">+</span>
+        </button>
+        <button
+          type="button"
+          class="filter-trigger"
+          data-filter-trigger="specialty"
+          aria-expanded="false"
+        >{t("work.filter.specialty")}<span aria-hidden="true" class="filter-plus" data-plus="specialty">+</span>
+        </button>
+      </div>
+
+      <div
+        class="filter-list filter-list-region"
+        role="group"
+        aria-label="Filter by region"
+        data-filter-list="region"
+        hidden
+      >
+        {regions.map((r) => (
+          <button type="button" class="filter-item" data-filter-item="region" data-value={r} aria-pressed="false">
+            <span class="filter-circle" aria-hidden="true"></span>{regionLabel(r)}
+          </button>
+        ))}
+      </div>
+
+      <div
+        class="filter-list filter-list-specialty"
+        role="group"
+        aria-label="Filter by specialty"
+        data-filter-list="specialty"
+        hidden
+      >
+        {specialties.map((s) => (
+          <button type="button" class="filter-item" data-filter-item="specialty" data-value={s} aria-pressed="false">
+            <span class="filter-circle" aria-hidden="true"></span>{s}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div class="work-grid">
+      {projects.map((p) => (
+        <div
+          data-work-card
+          data-regions={p.regions.join("|")}
+          data-specialties={p.specialties.join("|")}
+        >
+          <WorkCard project={p} headingLevel="h3" locale={locale} />
+        </div>
+      ))}
+    </div>
+  </section>
+</main>
+
+<style>
+  .work-h2 {
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 64px;
+  }
+
+  .filter-triggers {
+    display: flex;
+    gap: 40px;
+    align-items: baseline;
+  }
+
+  .filter-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    letter-spacing: -0.005em;
+    transition: opacity 0.2s ease;
+  }
+  .filter-trigger:hover {
+    opacity: 0.6;
+  }
+
+  .filter-plus {
+    font-family: "Söhne", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 1;
+    transform: rotate(0deg);
+    transition: transform 0.3s var(--ease);
+  }
+  .filter-plus[data-open="true"] {
+    transform: rotate(45deg);
+  }
+
+  /* [hidden] and .filter-list-region/.filter-list-specialty have equal
+     specificity (one class, one attribute selector) — author rules beat the
+     UA `[hidden]{display:none}` on a tie, so `display: grid` below would
+     silently defeat the `hidden` attribute the toggle script relies on.
+     This rule adds a class to the selector to win the tie explicitly. */
+  .filter-list[hidden] {
+    display: none;
+  }
+
+  .filter-list {
+    margin-top: 40px;
+    padding-bottom: 32px;
+    justify-items: start;
+    animation: pageIn 0.3s var(--ease);
+  }
+  .filter-list-region {
+    display: grid;
+    gap: 16px;
+  }
+  .filter-list-specialty {
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+    gap: 16px 128px;
+  }
+
+  .filter-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 18px;
+    letter-spacing: -0.005em;
+    text-align: left;
+    color: var(--muted);
+    transition: color 0.2s ease;
+  }
+  .filter-item:hover,
+  .filter-item[data-active="true"] {
+    color: #000;
+  }
+
+  .filter-circle {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    position: relative;
+    top: 1px;
+    background: transparent;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .filter-item[data-active="true"] .filter-circle {
+    background: #000;
+  }
+
+  .work-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 26px;
+    row-gap: 64px;
+  }
+</style>
+
+<script>
+  const state = { regions: new Set(), specialties: new Set(), open: null }
+  const cards = [...document.querySelectorAll('[data-work-card]')]
+
+  const groups = ['region', 'specialty'] as const
+  const triggers = Object.fromEntries(
+    groups.map((g) => [g, document.querySelector(`[data-filter-trigger="${g}"]`)])
+  )
+  const plusEls = Object.fromEntries(
+    groups.map((g) => [g, document.querySelector(`[data-plus="${g}"]`)])
+  )
+  const lists = Object.fromEntries(
+    groups.map((g) => [g, document.querySelector(`[data-filter-list="${g}"]`)])
+  )
+
+  // each card carries data-regions="NZ|Japan" data-specialties="Web Design|Development" (pipe-joined)
+  function applyFilters() {
+    cards.forEach((card) => {
+      const r = card.dataset.regions ? card.dataset.regions.split('|') : []
+      const s = card.dataset.specialties ? card.dataset.specialties.split('|') : []
+      const okR = !state.regions.size || r.some((x) => state.regions.has(x))
+      const okS = !state.specialties.size || s.some((x) => state.specialties.has(x))
+      ;(card as HTMLElement).hidden = !(okR && okS)
+    })
+  }
+
+  function setOpen(group: 'region' | 'specialty') {
+    state.open = state.open === group ? null : group
+    for (const key of groups) {
+      const isOpen = state.open === key
+      triggers[key]?.setAttribute('aria-expanded', String(isOpen))
+      plusEls[key]?.setAttribute('data-open', String(isOpen))
+      const list = lists[key] as HTMLElement | undefined
+      if (list) list.hidden = !isOpen
+    }
+  }
+
+  triggers.region?.addEventListener('click', () => setOpen('region'))
+  triggers.specialty?.addEventListener('click', () => setOpen('specialty'))
+
+  document.querySelectorAll('[data-filter-item]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const group = (btn as HTMLElement).dataset.filterItem as 'region' | 'specialty'
+      const value = (btn as HTMLElement).dataset.value ?? ''
+      const set = group === 'region' ? state.regions : state.specialties
+      const wasActive = set.has(value)
+      if (wasActive) set.delete(value)
+      else set.add(value)
+      btn.setAttribute('aria-pressed', String(!wasActive))
+      btn.setAttribute('data-active', String(!wasActive))
+      applyFilters()
+    })
+  })
+
+  applyFilters()
+</script>

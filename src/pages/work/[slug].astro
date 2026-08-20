@@ -1,0 +1,25 @@
+---
+// Project detail — thin wrapper: loads paths/content and renders ProjectView
+// inside Base. See ProjectView.astro for the template itself (Phase-5 Task 3
+// extraction) and its header comment for prototype provenance notes.
+import Base from "../../layouts/Base.astro";
+import ProjectView from "../../views/ProjectView.astro";
+import { loadContent } from "../../lib/content.js";
+import { nextProject } from "../../lib/normalize.js";
+
+export async function getStaticPaths() {
+  const { projects } = await loadContent();
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { project, next: nextProject(projects, project.slug) },
+  }));
+}
+
+const { project, next } = Astro.props;
+const projectDescription = project.description || "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
+const ogImage = project.heroImage?.url || project.thumbnail?.url;
+---
+
+<Base title={`${project.title} — MDMC`} active="work" description={projectDescription} ogImage={ogImage}>
+  <ProjectView locale="en" project={project} next={next} />
+</Base>

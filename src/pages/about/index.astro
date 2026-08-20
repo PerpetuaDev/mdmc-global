@@ -1,0 +1,96 @@
+---
+// About EN — transcribed from design/handoff/design/MDMC Site.dc.html lines
+// 193–240 (statement headline → hero → lede → four key-value sections →
+// three-up studio strip). Sections are only rendered when populated (kv_*
+// title exists); studio photos are grey placeholders until content arrives.
+import Base from "../../layouts/Base.astro";
+import { loadContent } from "../../lib/content.js";
+import { STUDIOS } from "../../lib/studios.js";
+
+const { about } = await loadContent();
+
+// Fallback for null about: headline → "About", lede → null (uses default)
+const headline = about?.headline ?? "About";
+const lede = about?.lede ?? "";
+const heroImage = about?.heroImage;
+const sections = about?.sections ?? [];
+
+// Description for og:description: first paragraph of lede (for SEO) or default
+const description = lede ? lede.substring(0, 160) : undefined;
+---
+
+<Base title="About — MDMC" active="about" description={description}>
+  <main style="animation: pageIn .6s var(--ease)">
+    {/* Statement headline + full-width hero */}
+    <section style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
+      <h1 style="font-size: clamp(48px, 5.6vw, 88px); font-weight: 500; letter-spacing: -0.025em; line-height: 1.02; text-wrap: balance; max-width: 1100px">
+        {headline}
+      </h1>
+      <div style="margin-top: 80px; width: 100%; aspect-ratio: 1853 / 812; background: var(--ph); overflow: hidden">
+        {heroImage ? (
+          <img src={heroImage.url} alt={heroImage.alt || "About MDMC"} style="width: 100%; height: 100%; object-fit: cover" />
+        ) : (
+          <div aria-hidden="true" style="width: 100%; height: 100%; background: var(--ph)"></div>
+        )}
+      </div>
+    </section>
+
+    {/* Lede section with label grid */}
+    {lede && (
+      <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l); display: grid; grid-template-columns: 240px minmax(0, 720px); gap: 48px">
+        <h2 class="label" style="padding-top: 10px">About</h2>
+        <p style="font-size: 26px; line-height: 1.45; letter-spacing: -0.01em">
+          {lede}
+        </p>
+      </section>
+    )}
+
+    {/* Four key-value sections with label grid (only if title exists) */}
+    {sections.length > 0 && (
+      <section style="padding: 144px var(--gutter-r) 0 var(--gutter-l); display: grid; grid-template-columns: 240px minmax(0, 720px); gap: 96px 48px">
+        {sections.map((section) => (
+          <>
+            <h2 class="label" style="padding-top: 6px">
+              {section.title}
+            </h2>
+            <div>
+              {section.body.map((para) => (
+                <p style="font-size: 20px; line-height: 1.6; margin: 0">
+                  {para}
+                </p>
+              ))}
+            </div>
+          </>
+        ))}
+      </section>
+    )}
+
+    {/* Three-up studio strip */}
+    <section style="padding: 160px var(--gutter-r) 160px var(--gutter-l)">
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px">
+        {STUDIOS.map((studio) => (
+          <div>
+            <div style="width: 100%; aspect-ratio: 4 / 3; background: var(--ph); overflow: hidden">
+              {studio.image ? (
+                <img src={studio.image.url} alt={studio.image.alt || studio.region} style="width: 100%; height: 100%; object-fit: cover" />
+              ) : (
+                <div aria-hidden="true" style="width: 100%; height: 100%; background: var(--ph)"></div>
+              )}
+            </div>
+            <div class="label" style="margin-top: 20px">
+              {studio.region}
+            </div>
+            <div style="margin-top: 10px; font-size: 18px; line-height: 1.5">
+              {studio.addressLines.map((line, i) => (
+                <>
+                  {line}
+                  {i < studio.addressLines.length - 1 && <br />}
+                </>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  </main>
+</Base>

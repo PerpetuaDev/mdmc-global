@@ -1,0 +1,168 @@
+---
+// Article detail view — pure template, extracted from
+// src/pages/news/[slug].astro (Phase-5 Task 4). Data loading (getStaticPaths,
+// loadContent, linkedProject lookup) stays in the page wrapper; this
+// component receives `article` + `linkedProject` as props.
+//
+// See src/pages/news/[slug].astro's original header comment for provenance
+// notes (design/handoff/design/MDMC Site.dc.html lines 365-390). Zero live
+// articles today, so this view never actually renders in a build — verified
+// by hand-checking markup/logic only (see task-4 report).
+import { makeT, pickLocalized, linkHref } from "../lib/i18n.js";
+
+interface Props {
+  locale?: "en" | "ja";
+  article: any;
+  linkedProject: any;
+}
+
+const { locale = "en", article, linkedProject } = Astro.props as Props;
+const t = makeT(locale);
+const title = pickLocalized(locale, article, "title");
+const body = pickLocalized(locale, article, "body");
+const excerpt = pickLocalized(locale, article, "excerpt");
+---
+
+<main style="animation: pageIn .6s var(--ease)">
+  <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l)">
+    <div class="label" style="margin-bottom: 24px">
+      {article.kindLabel}
+      {article.dateLabel && <><span class="meta-dot" aria-hidden="true">·</span>{article.dateLabel}</>}
+    </div>
+    <h1 class="article-title">{title}</h1>
+    <div class="hero-container">
+      {article.heroImage ? (
+        <img src={article.heroImage.url} alt={article.heroImage.alt || title} />
+      ) : (
+        <div class="hero-placeholder" aria-hidden="true"></div>
+      )}
+    </div>
+  </section>
+  <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l)">
+    <div class="body-column">
+      {body.length > 0 ? (
+        <>
+          <p class="lead">{body[0]}</p>
+          {body.length > 1 && (
+            <div class="remaining-paragraphs">
+              {body.slice(1).map((para) => (
+                <p>{para}</p>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <p class="lead">{excerpt}</p>
+      )}
+      {article.projectSlug && linkedProject?.story && (
+        <a href={linkHref(locale, locale, `/work/${article.projectSlug}/`) + '?view=story'} class="cta" style="margin-top: 56px">
+          {t("news.seeFullCaseStudy")} <span class="arrow">→</span>
+        </a>
+      )}
+    </div>
+    <div class="closing-footer">
+      <a href={linkHref(locale, locale, "/news/")} class="cta">
+        <span class="arrow">←</span> {t("news.backToAll")}
+      </a>
+      <button class="share-button cta">
+        {t("news.shareArticle")} <span class="arrow">↗</span>
+      </button>
+    </div>
+  </section>
+</main>
+
+<style>
+  .article-title {
+    font-size: clamp(40px, 4.4vw, 64px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    text-wrap: balance;
+    max-width: 900px;
+  }
+
+  .hero-container {
+    width: 100%;
+    aspect-ratio: 1853 / 812;
+    background: var(--ph);
+    overflow: hidden;
+    position: relative;
+    margin-top: 64px;
+  }
+
+  .hero-container img,
+  .hero-placeholder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .body-column {
+    max-width: 720px;
+  }
+
+  .lead {
+    font-size: 26px;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+  }
+
+  .remaining-paragraphs {
+    margin-top: 56px;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+
+  .remaining-paragraphs p {
+    margin-top: 1.2em;
+  }
+
+  .remaining-paragraphs p:first-child {
+    margin-top: 0;
+  }
+
+  .closing-footer {
+    margin-top: 120px;
+    padding: 32px 0 80px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 32px;
+  }
+
+  .share-button {
+    background: none;
+    border: 0;
+    padding: 6px 0;
+    cursor: pointer;
+  }
+</style>
+
+<script>
+  // Share button: navigator.share if available, else copy URL, else silent no-op.
+  // Wrapped in try/catch to prevent unhandled rejections.
+  const shareButton = document.querySelector('.share-button') as HTMLElement;
+  if (shareButton) {
+    shareButton.addEventListener('click', async () => {
+      try {
+        const title = document.querySelector('h1')?.textContent || '';
+        const url = window.location.href;
+
+        if (navigator.share) {
+          // Native share available — invoke it
+          await navigator.share({ title, url });
+        } else if (navigator.clipboard && navigator.clipboard.writeText) {
+          // Clipboard API available — copy URL
+          await navigator.clipboard.writeText(url);
+        }
+        // If neither available, silently do nothing
+      } catch (e) {
+        // Swallow all errors: share cancellations, clipboard denials, etc.
+        // Do nothing — user will see the page is still there
+      }
+    });
+  }
+</script>

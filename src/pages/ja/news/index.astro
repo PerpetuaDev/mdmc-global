@@ -1,0 +1,18 @@
+---
+// News index (ja) — identical to src/pages/news/index.astro except
+// locale="ja" passed to both Base and NewsIndexView (Phase-5 Task 4). See
+// news/index.astro for the full header comment (data loading, KINDS
+// derivation, provenance notes) — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import NewsIndexView from "../../../views/NewsIndexView.astro";
+import { loadContent, ARTICLE_KIND_LABELS } from "../../../lib/content.js";
+
+const { articles } = await loadContent();
+
+const KINDS = Object.entries(ARTICLE_KIND_LABELS).map(([value, label]) => ({ value, label }));
+---
+
+{/* title/description are PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
+<Base title="ニュース — MDMC" active="news" description="MDMCからのニュースと読みものをお届けします。" locale="ja">
+  <NewsIndexView locale="ja" articles={articles} kinds={KINDS} />
+</Base>

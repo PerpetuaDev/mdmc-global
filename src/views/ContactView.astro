@@ -1,0 +1,507 @@
+---
+// Contact view — pure template, extracted from src/pages/contact/index.astro
+// (Phase-5 Task 4). No data loading in this page beyond the static STUDIOS
+// import (kept in the wrapper for symmetry with the other views, though it
+// has no per-request variance); this component receives `studios` as a prop.
+//
+// See src/pages/contact/index.astro's original header comment for
+// provenance notes (design/handoff/design/MDMC Site.dc.html lines 393-483,
+// README's Screens/Views item 5) and the contact payload contract (binding,
+// backend unchanged).
+//
+// Localization (2026-08-20): headline, anchor-row labels, and the visible
+// "TO · <recipient>" text are now fully locale-driven — `contact.headline`
+// and `contact.studio` dict keys exist (ja values are user-authorized
+// PLACEHOLDERS pending native review, see i18n.js's PLACEHOLDER JA block).
+// The per-studio region word localizes via `regionLabel()` (same
+// hasOwnProperty-guarded `work.region.*` lookup WorkIndexView uses for its
+// filter chips — see that file's header comment for why a bare `t()` call
+// is wrong here); the display recipient joins region + studio word with a
+// space on en and no space on ja (日本スタジオ), carried to the click
+// handler via `data-recipient-label`. Distinct from this: the `recipient`
+// value actually POSTed to the contact backend (data-recipient, unchanged)
+// stays the plain EN "{Region} Studio" string on every locale — that's a
+// backend contract, not user-facing copy, and must not vary with locale.
+import TurnstileBox from "../components/TurnstileBox.astro";
+import { makeT, STRINGS } from "../lib/i18n.js";
+
+interface Props {
+  locale?: "en" | "ja";
+  studios: any[];
+}
+
+const { locale = "en", studios } = Astro.props as Props;
+const t = makeT(locale);
+
+// Same hasOwnProperty-guarded pattern as WorkIndexView's regionLabel(): only
+// translate a region word when the dict actually has a `work.region.*` key
+// for it (either locale's dict), else keep the raw CMS value untouched.
+const regionLabel = (r: string) => {
+  const dict = STRINGS[locale] || STRINGS.en;
+  const key = `work.region.${r}`;
+  return Object.prototype.hasOwnProperty.call(dict, key) || Object.prototype.hasOwnProperty.call(STRINGS.en, key)
+    ? t(key)
+    : r;
+};
+
+// Visible recipient label ("TO · <this>") — display copy only; the POSTed
+// `recipient` value stays the EN data-recipient string (backend contract).
+const recipientLabel = (region: string) =>
+  locale === "ja" ? `${regionLabel(region)}${t("contact.studio")}` : `${region} ${t("contact.studio")}`;
+
+const headlineLines = t("contact.headline").split("\n");
+---
+
+<main style="animation: pageIn .6s var(--ease)">
+  <section style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
+    <h1 class="contact-title">{headlineLines.map((line, li) => (
+      <>
+        {line}
+        {li < headlineLines.length - 1 && <br />}
+      </>
+    ))}</h1>
+    <div class="anchor-row">
+      <a href="#studio-nz" class="cta" data-scroll="studio-nz">{regionLabel("New Zealand")} <span class="arrow" aria-hidden="true">↓</span></a>
+      <a href="#studio-au" class="cta" data-scroll="studio-au">{regionLabel("Australia")} <span class="arrow" aria-hidden="true">↓</span></a>
+      <a href="#studio-jp" class="cta" data-scroll="studio-jp">{regionLabel("Japan")} <span class="arrow" aria-hidden="true">↓</span></a>
+      <a href="#contact-form" class="cta" data-scroll="contact-form">{t("contact.form.sendAMessage")} <span class="arrow" aria-hidden="true">↓</span></a>
+    </div>
+  </section>
+
+  {studios.map((s, i) => {
+    const imageFirst = i !== 1; // AU (index 1) swaps sides
+    return (
+      <section id={`studio-${s.id}`} class="studio-fold">
+        <div
+          class="studio-grid"
+          style={imageFirst
+            ? "grid-template-columns: minmax(0, 7fr) minmax(0, 4fr)"
+            : "grid-template-columns: minmax(0, 4fr) minmax(0, 7fr)"}
+        >
+          <div class="studio-image" style={imageFirst ? "" : "order: 2"} aria-hidden="true"></div>
+          <div class="studio-info" style={imageFirst ? "" : "order: 1"}>
+            <div class="studio-info-top">
+              <div class="label">{regionLabel(s.region)}</div>
+              <span data-clock={s.tz} class="studio-clock" aria-label={`Local time in ${s.region}`}></span>
+            </div>
+            <div class="studio-address">
+              {s.addressLines.map((line, li) => (
+                <>
+                  {line}
+                  {li < s.addressLines.length - 1 && <br />}
+                </>
+              ))}
+            </div>
+            <div class="studio-contact-links">
+              <a class="studio-link" href={`mailto:${s.email}`}>{s.email}</a>
+              {s.phone && (
+                <>
+                  <br />
+                  <a class="studio-link" href={`tel:${s.phone.replace(/\s+/g, "")}`}>{s.phone}</a>
+                </>
+              )}
+            </div>
+            <a href="#contact-form" class="cta studio-message" data-recipient={`${s.region} Studio`} data-recipient-label={recipientLabel(s.region)}>
+              {t("contact.form.sendUsAMessage")} <span class="arrow" aria-hidden="true">→</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    );
+  })}
+
+  <section id="contact-form" class="form-section">
+    <div class="form-header">
+      <h2 class="label">{t("contact.form.sendAMessage")}</h2>
+      <div class="label">{t("contact.form.to")}<span class="meta-dot" aria-hidden="true">·</span><span id="contact-to">MDMC</span></div>
+    </div>
+
+    <form id="contact-form-el">
+      <div class="form-row form-row-top" style="align-items: baseline">
+        <label for="cf-name" class="label">{t("contact.form.name")}</label>
+        <input id="cf-name" name="name" type="text" required />
+      </div>
+      <div class="form-row" style="align-items: baseline">
+        <label for="cf-email" class="label">{t("contact.form.email")}</label>
+        <input id="cf-email" name="email" type="email" required />
+      </div>
+      <div class="form-row" style="align-items: baseline">
+        <label for="cf-company" class="label">{t("contact.form.company")}</label>
+        <input id="cf-company" name="company" type="text" />
+      </div>
+      <div class="form-row" style="align-items: baseline">
+        <label for="cf-budget" class="label">{t("contact.form.budget")}</label>
+        <input id="cf-budget" name="budget" type="text" placeholder={t("contact.form.budgetPh")} />
+      </div>
+      <div class="form-row">
+        <label for="cf-message" class="label" style="padding-top: 6px">{t("contact.form.messageLabel")}</label>
+        <textarea id="cf-message" name="message" rows="5"></textarea>
+      </div>
+
+      <div class="turnstile-row">
+        <TurnstileBox name="contact" language={locale === "ja" ? "ja" : undefined} />
+      </div>
+
+      <p id="contact-error" class="contact-error" role="alert" hidden></p>
+
+      <div style="padding-top: 40px">
+        <button type="submit" id="contact-submit" class="cta" disabled>
+          {t("contact.form.sendMessage")} <span class="arrow" aria-hidden="true">→</span>
+        </button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<style>
+  .contact-title {
+    font-size: clamp(48px, 5.6vw, 88px);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.02;
+  }
+
+  .anchor-row {
+    margin-top: 72px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 56px;
+  }
+
+  .studio-fold {
+    padding: 176px var(--gutter-r) 0 var(--gutter-l);
+  }
+
+  .studio-grid {
+    display: grid;
+    gap: 48px clamp(48px, 5vw, 112px);
+    align-items: end;
+  }
+
+  .studio-image {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: var(--ph);
+    overflow: hidden;
+  }
+
+  .studio-info-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .studio-clock {
+    font-size: 18px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: baseline;
+  }
+
+  .studio-address {
+    margin-top: 24px;
+    font-size: 22px;
+    line-height: 1.5;
+  }
+
+  .studio-contact-links {
+    margin-top: 32px;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+
+  .studio-link {
+    display: inline-block;
+    transition: box-shadow 0.2s ease;
+  }
+  .studio-link:hover {
+    box-shadow: inset 0 -1px 0 currentColor;
+  }
+
+  /* .cta's default align-items is `center`; the prototype's per-fold
+     message CTA uses `baseline` (dc.html: "align-items: baseline" on the
+     msgNz/msgAu/msgJp anchors). Compound selector for specificity over
+     .cta alone, regardless of stylesheet order. */
+  .cta.studio-message {
+    margin-top: 40px;
+    align-items: baseline;
+  }
+
+  .form-section {
+    padding: 176px var(--gutter-r) 160px var(--gutter-l);
+  }
+
+  .form-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 48px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .form-row-top {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .form-row input,
+  .form-row textarea {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font-size: 20px;
+    letter-spacing: -0.005em;
+    padding: 0;
+    border-radius: 0;
+    outline: none;
+  }
+
+  .form-row textarea {
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 140px;
+  }
+
+  .turnstile-row {
+    margin-top: 32px;
+    max-width: 400px;
+  }
+
+  .contact-error {
+    margin-top: 16px;
+    font-size: 16px;
+  }
+
+  #contact-submit:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .contact-confirm {
+    font-size: 20px;
+    padding: 28px 0;
+    border-top: 1px solid var(--hairline);
+  }
+</style>
+
+<script>
+  // Contact page behavior: anchor/CTA smooth-scroll with a fixed −96px
+  // offset (never scrollIntoView, per README's Interactions & Behavior
+  // section), the per-studio "Send us a message" recipient hand-off, this
+  // page's own three live clocks, and the gated form submission.
+  const CONTACT_URL = 'https://upbeat-approval-82a9e54c20.strapiapp.com/api/contact';
+
+  function reducedMotion() {
+    return matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function scrollToId(id: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const top = rect.top + window.scrollY - 96;
+    window.scrollTo({ top, behavior: reducedMotion() ? 'auto' : 'smooth' });
+  }
+
+  // Top anchor row: New Zealand / Australia / Japan / Send a message — all
+  // scroll only. The top "Send a message ↓" anchor does NOT touch the
+  // recipient (stays at the default "MDMC"); only a studio fold's own
+  // "Send us a message →" CTA (below) sets a studio recipient.
+  document.querySelectorAll('[data-scroll]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = (a as HTMLElement).getAttribute('data-scroll');
+      if (id) scrollToId(id);
+    });
+  });
+
+  // `recipient` (POSTed to the backend, see payload below) and the visible
+  // "TO ·" label are deliberately allowed to diverge: recipient always stays
+  // the plain EN "{Region} Studio" string from data-recipient (backend
+  // contract, never localized), while the visible label comes from the
+  // server-rendered, locale-aware data-recipient-label (see this view's
+  // header comment for the join rule).
+  const toLabel = document.getElementById('contact-to');
+  let recipient = 'MDMC';
+  function setRecipient(value: string, label: string) {
+    recipient = value;
+    if (toLabel) toLabel.textContent = label;
+  }
+
+  document.querySelectorAll('.studio-message').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const el = btn as HTMLElement;
+      const value = el.dataset.recipient || 'MDMC';
+      const label = el.dataset.recipientLabel || value;
+      setRecipient(value, label);
+      scrollToId('contact-form');
+    });
+  });
+
+  // Live clocks, scoped to `main [data-clock]` so this page's own three
+  // studio clocks tick from this one shared interval only. Footer.astro
+  // renders its own identical [data-clock] spans as a sibling outside
+  // this page's <main> (see Base.astro) and runs its own separate
+  // interval — scoped to `[data-footer] [data-clock]` on its side — so
+  // the two intervals each own a disjoint set of nodes and never both
+  // write the same clock. Same tick pattern as Footer, just scoped.
+  const clocks = document.querySelectorAll('main [data-clock]');
+  function tick() {
+    const blink = new Date().getSeconds() % 2 === 0;
+    clocks.forEach((el) => {
+      const t = new Intl.DateTimeFormat('en-NZ', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: (el as HTMLElement).dataset.clock,
+      }).format(new Date());
+      (el as HTMLElement).innerHTML = t.replace(':', `<span style="display:inline-block; padding:0 1px; opacity:${blink ? 1 : 0}">:</span>`);
+    });
+  }
+  if (clocks.length) {
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  // Contact form: tracks the 'contact' Turnstile token from the shared
+  // mdmc:turnstile CustomEvent, POSTs JSON to the legacy /api/contact
+  // endpoint, and never lets a submission attempt throw uncaught. Reset
+  // (window.mdmcTurnstileReset) does NOT dispatch a fresh null event by
+  // contract, so this script nulls its own stored token whenever it calls
+  // reset.
+  const form = document.getElementById('contact-form-el') as HTMLFormElement | null;
+
+  if (form) {
+    let token: string | null = null;
+    // Cloudflare's default refresh-expired:'auto' means a fresh
+    // mdmc:turnstile token event can fire while a submission is already in
+    // flight. isSubmitting gates the UI so that event can update `token`
+    // but can never re-enable the button mid-POST — the enable/disable
+    // state is only (re)applied once the flag clears.
+    let isSubmitting = false;
+
+    const submitBtn = document.getElementById('contact-submit') as HTMLButtonElement | null;
+    const errorEl = document.getElementById('contact-error') as HTMLElement | null;
+
+    function setSubmitEnabled(enabled: boolean) {
+      if (submitBtn) submitBtn.disabled = !enabled;
+    }
+
+    // Single source of truth for the button's enabled state: enabled only
+    // when a token is held AND no submission is currently in flight.
+    function syncSubmitState() {
+      setSubmitEnabled(!isSubmitting && Boolean(token));
+    }
+
+    function clearError() {
+      if (errorEl) {
+        errorEl.hidden = true;
+        errorEl.textContent = '';
+      }
+    }
+
+    function showError(message: string) {
+      if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.hidden = false;
+      }
+    }
+
+    setSubmitEnabled(false);
+
+    document.addEventListener('mdmc:turnstile', (e) => {
+      try {
+        const detail = (e as CustomEvent).detail || {};
+        if (detail.name !== 'contact') return;
+        // Always record the latest token, even mid-flight — but only ever
+        // reflect it into the button's disabled state via syncSubmitState,
+        // which itself refuses to enable while isSubmitting is true.
+        token = detail.token || null;
+        if (token) clearError();
+        syncSubmitState();
+      } catch {
+        // Never let a listener throw.
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        if (!token || !submitBtn || submitBtn.disabled || isSubmitting) return;
+        isSubmitting = true;
+        setSubmitEnabled(false);
+        clearError();
+
+        const nameEl = document.getElementById('cf-name') as HTMLInputElement | null;
+        const emailEl = document.getElementById('cf-email') as HTMLInputElement | null;
+        const companyEl = document.getElementById('cf-company') as HTMLInputElement | null;
+        const budgetEl = document.getElementById('cf-budget') as HTMLInputElement | null;
+        const messageEl = document.getElementById('cf-message') as HTMLTextAreaElement | null;
+
+        const payload = {
+          name: (nameEl?.value || '').trim(),
+          email: (emailEl?.value || '').trim(),
+          company: (companyEl?.value || '').trim(),
+          budget: (budgetEl?.value || '').trim(),
+          message: (messageEl?.value || '').trim(),
+          turnstileToken: token,
+          recipient,
+        };
+
+        let ok = false;
+        try {
+          const res = await fetch(CONTACT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          ok = res.ok;
+        } catch {
+          ok = false;
+        }
+
+        isSubmitting = false;
+
+        if (ok) {
+          const confirmLine = document.createElement('p');
+          confirmLine.className = 'contact-confirm';
+          confirmLine.textContent = "Thank you — we'll be in touch.";
+          confirmLine.setAttribute('role', 'status');
+          confirmLine.tabIndex = -1;
+          form.replaceWith(confirmLine);
+          confirmLine.focus();
+        } else {
+          showError('Something went wrong — please try again.');
+          try {
+            (window as any).mdmcTurnstileReset?.('contact');
+          } catch {
+            // Reset is best-effort.
+          }
+          token = null;
+          syncSubmitState();
+        }
+      } catch {
+        // Absolute last resort: no path through this handler may throw.
+        isSubmitting = false;
+        showError('Something went wrong — please try again.');
+        try {
+          (window as any).mdmcTurnstileReset?.('contact');
+        } catch {
+          // Reset is best-effort.
+        }
+        token = null;
+        syncSubmitState();
+      }
+    });
+  }
+</script>

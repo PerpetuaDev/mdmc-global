@@ -1,0 +1,21 @@
+---
+// Careers page — thin wrapper: loads content and renders CareersView inside
+// Base. See CareersView.astro for the template itself (Phase-5 Task 4
+// extraction) and its header comment for prototype provenance notes.
+//
+// Fallback for null career: headline → "Careers"
+import Base from "../../layouts/Base.astro";
+import CareersView from "../../views/CareersView.astro";
+import { loadContent } from "../../lib/content.js";
+
+const { career, jobs } = await loadContent();
+
+const headline = career?.headline ?? "Careers";
+const intro = career?.intro ?? [];
+const heroImage = career?.heroImage;
+const contactEmail = career?.contactEmail ?? "careers@mdmc.co";
+---
+
+<Base title="Careers — MDMC" description={intro[0] || undefined}>
+  <CareersView locale="en" headline={headline} intro={intro} heroImage={heroImage} contactEmail={contactEmail} jobs={jobs} />
+</Base>

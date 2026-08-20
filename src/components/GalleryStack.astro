@@ -1,0 +1,180 @@
+---
+// Project "Gallery" view image stack + closing pull-quote — transcribed
+// from design/handoff/design/MDMC Site.dc.html lines 497-551 (README §6).
+// Task 5 wraps this in a sibling `data-view-pane="story"` pane and this
+// component only ever renders the gallery-view stack.
+//
+// Degradation (today's live reality — all 6 projects have an empty
+// `gallery`): fall back to a single full-width hero built from `heroImage`
+// when present, or render no image block at all when it isn't (3 of 6 live
+// projects have neither) — no empty grey placeholder frames on real pages.
+// The pull-quote block only renders when `pullQuote` is set (top-level
+// Project field, never `story.*` — see content.js's storyOf comment); no
+// live project has one today.
+//
+// Slot captions: every slot kind renders a caption when `slot.caption` is
+// set (controller ruling — the brief's per-kind wording describing captions
+// only under `square` was descriptive of that example's content, not
+// restrictive; the schema carries `caption` on every slot and the prototype
+// shows captions under `two_up` too). Styling is identical everywhere: 14px
+// muted, 16px below the image. In a `two_up` pair, each slot's caption sits
+// under its own image inside that pair cell.
+//
+// The closing pull-quote block is shared with StoryView.astro (identical
+// markup at prototype lines 544-549 / 622-627) — see PullQuote.astro.
+
+import PullQuote from './PullQuote.astro';
+
+interface GallerySlot {
+  url: string;
+  alt: string;
+  kind: 'hero' | 'two_up' | 'square' | 'full_bleed';
+  caption: string | null;
+}
+
+interface Props {
+  gallery: GallerySlot[];
+  heroImage: { url: string; alt: string } | null;
+  pullQuote: string | null;
+  pullQuoteAttribution: string | null;
+}
+
+const {
+  gallery = [],
+  heroImage = null,
+  pullQuote = null,
+  pullQuoteAttribution = null,
+} = Astro.props as Props;
+
+const slots: GallerySlot[] =
+  gallery.length > 0
+    ? gallery
+    : heroImage
+      ? [{ url: heroImage.url, alt: heroImage.alt, kind: 'hero', caption: null }]
+      : [];
+
+// Group consecutive `two_up` slots into 2-col pairs; every other kind (and
+// an odd trailing two_up) renders as its own full-width row. Only the
+// first hero-kind slot gets data-image-id="hero" (prototype line 502).
+type Row =
+  | { type: 'pair'; slots: [GallerySlot, GallerySlot] }
+  | { type: 'single'; kind: GallerySlot['kind']; slot: GallerySlot; isHeroFirst: boolean };
+
+const rows: Row[] = [];
+let heroSeen = false;
+for (let i = 0; i < slots.length; i++) {
+  const slot = slots[i];
+  const next = slots[i + 1];
+  if (slot.kind === 'two_up' && next?.kind === 'two_up') {
+    rows.push({ type: 'pair', slots: [slot, next] });
+    i += 1;
+    continue;
+  }
+  const isHeroFirst = slot.kind === 'hero' && !heroSeen;
+  if (slot.kind === 'hero') heroSeen = true;
+  rows.push({ type: 'single', kind: slot.kind, slot, isHeroFirst });
+}
+---
+
+{rows.length > 0 && (
+  <section class="gutter gallery-stack">
+    {rows.map((row) => (
+      row.type === 'pair' ? (
+        <div class="gallery-pair">
+          {row.slots.map((s) => (
+            <div>
+              <div class="gallery-frame gallery-frame-4-3">
+                <img src={s.url} alt={s.alt} />
+              </div>
+              {s.caption && <div class="gallery-caption">{s.caption}</div>}
+            </div>
+          ))}
+        </div>
+      ) : row.kind === 'hero' ? (
+        <div>
+          <div class="gallery-frame gallery-frame-16-9">
+            <img src={row.slot.url} alt={row.slot.alt} data-image-id={row.isHeroFirst ? 'hero' : undefined} />
+          </div>
+          {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
+        </div>
+      ) : row.kind === 'two_up' ? (
+        <div>
+          <div class="gallery-frame gallery-frame-4-3">
+            <img src={row.slot.url} alt={row.slot.alt} />
+          </div>
+          {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
+        </div>
+      ) : row.kind === 'square' ? (
+        <div>
+          <div class="gallery-frame gallery-frame-1-1">
+            <img src={row.slot.url} alt={row.slot.alt} />
+          </div>
+          {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
+        </div>
+      ) : (
+        <div>
+          <div class="gallery-full-bleed">
+            <img src={row.slot.url} alt={row.slot.alt} />
+          </div>
+          {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
+        </div>
+      )
+    ))}
+  </section>
+)}
+
+<PullQuote quote={pullQuote} attribution={pullQuoteAttribution} />
+
+<style>
+  .gallery-stack {
+    display: grid;
+    gap: 96px;
+    padding-top: 96px;
+  }
+
+  .gallery-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+  }
+
+  .gallery-frame {
+    width: 100%;
+    background: var(--ph);
+    overflow: hidden;
+  }
+  .gallery-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .gallery-frame-16-9 {
+    aspect-ratio: 16 / 9;
+  }
+  .gallery-frame-4-3 {
+    aspect-ratio: 4 / 3;
+  }
+  .gallery-frame-1-1 {
+    aspect-ratio: 1 / 1;
+  }
+
+  .gallery-caption {
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  /* full_bleed escapes the section gutters via negative margins — the
+     section already pads by --gutter-l/--gutter-r, so pulling back by the
+     same amount lets the image reach the viewport edges. Natural ratio: no
+     aspect-ratio lock, height follows the image's intrinsic proportions. */
+  .gallery-full-bleed {
+    margin-left: calc(-1 * var(--gutter-l));
+    margin-right: calc(-1 * var(--gutter-r));
+  }
+  .gallery-full-bleed img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+</style>

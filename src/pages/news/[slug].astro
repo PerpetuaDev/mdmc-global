@@ -1,0 +1,30 @@
+---
+// Article detail — thin wrapper: loads paths/content and renders ArticleView
+// inside Base. See ArticleView.astro for the template itself (Phase-5 Task 4
+// extraction) and its header comment for prototype provenance notes. Zero
+// live articles today, so getStaticPaths emits an empty array (valid Astro)
+// and this wrapper never actually renders in a build.
+import Base from "../../layouts/Base.astro";
+import ArticleView from "../../views/ArticleView.astro";
+import { loadContent } from "../../lib/content.js";
+
+export async function getStaticPaths() {
+  const { articles } = await loadContent();
+  return articles.map((article) => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
+}
+
+const { article } = Astro.props;
+const { projects } = await loadContent();
+const linkedProject = article.projectSlug
+  ? projects.find((p) => p.slug === article.projectSlug)
+  : null;
+const articleDescription = article.excerpt || "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
+const ogImage = article.heroImage?.url;
+---
+
+<Base title={`${article.title} — MDMC`} active="news" description={articleDescription} ogImage={ogImage}>
+  <ArticleView locale="en" article={article} linkedProject={linkedProject} />
+</Base>

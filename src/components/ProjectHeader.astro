@@ -1,0 +1,100 @@
+---
+// Project detail header — transcribed from
+// design/handoff/design/MDMC Site.dc.html lines 488-496 (README §6).
+//
+// Description gap: the brief prose says "22px description (12px gap)" but
+// the prototype's literal inline style is `margin-top: 28px` on the
+// paragraph (line 490) — following WorkCard.astro's precedent (see its
+// header comment) of transcribing the prototype's literal pixel value over
+// a paraphrase, this uses 28px.
+//
+// The view toggle only ever appears when `hasStory` is true — no live
+// project has story content today (content.js: story is null unless at
+// least one of overview/challenge/approach/outcome is authored), so this
+// element is markup-only for now. Task 5 wires its click behavior and
+// swaps the label between "View project details ↓" / "View gallery ↓";
+// this renders the gallery-view default label and no handler.
+import { makeT, pickLocalized } from "../lib/i18n.js";
+
+interface Props {
+  project: {
+    title: string;
+    description: string;
+    specialties: string[];
+  };
+  hasStory: boolean;
+  locale?: "en" | "ja";
+}
+
+const { project, hasStory, locale = "en" } = Astro.props as Props;
+const t = makeT(locale);
+const title = pickLocalized(locale, project, "title");
+const description = pickLocalized(locale, project, "description");
+const specialties = project.specialties ?? [];
+const showMetaRow = specialties.length > 0 || hasStory;
+---
+
+<section class="gutter project-header">
+  <h1 class="project-title">{title}</h1>
+  {description && <p class="project-description">{description}</p>}
+  {showMetaRow && (
+    <div class="project-meta">
+      {specialties.length > 0 && (
+        <div class="project-specialties">
+          {specialties.map((s, i) => (
+            <>
+              {i > 0 && <span aria-hidden="true" class="dot">·</span>}
+              <span>{s}</span>
+            </>
+          ))}
+        </div>
+      )}
+      {hasStory && (
+        <button type="button" class="cta view-toggle" data-view-toggle>
+          <span data-view-toggle-label>{t("project.viewDetails")}</span> <span class="arrow" aria-hidden="true">↓</span>
+        </button>
+      )}
+    </div>
+  )}
+</section>
+
+<style>
+  .project-header {
+    padding-top: 80px;
+  }
+
+  .project-title {
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .project-description {
+    margin-top: 28px;
+    font-size: 22px;
+    line-height: 1.5;
+    max-width: 720px;
+  }
+
+  .project-meta {
+    margin-top: 24px;
+    display: flex;
+    align-items: baseline;
+    gap: 32px;
+  }
+
+  .project-specialties {
+    font-size: 18px;
+    color: var(--muted);
+  }
+
+  .dot {
+    color: var(--faint);
+    margin: 0 6px;
+  }
+
+  .view-toggle {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+</style>

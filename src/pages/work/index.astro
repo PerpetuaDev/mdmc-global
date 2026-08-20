@@ -1,0 +1,14 @@
+---
+// Work index — thin wrapper: loads content and renders WorkIndexView inside
+// Base. See WorkIndexView.astro for the template itself (Phase-5 Task 3
+// extraction) and its header comment for prototype provenance notes.
+import Base from "../../layouts/Base.astro";
+import WorkIndexView from "../../views/WorkIndexView.astro";
+import { loadContent } from "../../lib/content.js";
+
+const { projects } = await loadContent();
+---
+
+<Base title="Work — MDMC" active="work" description="Selected work by MDMC — an integrated design & digital strategy agency.">
+  <WorkIndexView locale="en" projects={projects} />
+</Base>
