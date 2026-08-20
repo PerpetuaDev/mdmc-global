@@ -228,7 +228,7 @@ export function counterpartPath(locale, path) {
   return localePath('ja', path)
 }
 
-export const ORIGINS = { en: 'https://mdmc.co', ja: null }
+export const ORIGINS = { en: 'https://mdmc.co', ja: 'https://mdmc.co.jp' }
 
 // `path` is always the EN-shaped path ('/work/', '/'), regardless of
 // fromLocale/toLocale — same convention as localePath/counterpartPath above.

@@ -27,10 +27,11 @@ describe('paths', () => {
 
 describe('linkHref', () => {
   const live = { en: 'https://mdmc.co', ja: 'https://mdmc.co.jp' }
+  const sameOrigin = { en: 'https://mdmc.co', ja: null }
   it('is relative in same-origin mode', () => {
-    expect(linkHref('en', 'ja', '/work/')).toBe('/ja/work/')
-    expect(linkHref('ja', 'ja', '/work/')).toBe('/ja/work/')
-    expect(linkHref('ja', 'en', '/work/')).toBe('/work/')
+    expect(linkHref('en', 'ja', '/work/', sameOrigin)).toBe('/ja/work/')
+    expect(linkHref('ja', 'ja', '/work/', sameOrigin)).toBe('/ja/work/')
+    expect(linkHref('ja', 'en', '/work/', sameOrigin)).toBe('/work/')
   })
   it('crosses domains when the ja origin is live', () => {
     expect(linkHref('en', 'ja', '/work/', live)).toBe('https://mdmc.co.jp/work/')
@@ -73,8 +74,8 @@ describe('ORIGINS', () => {
   it('ships en live', () => {
     expect(ORIGINS.en).toBe('https://mdmc.co')
   })
-  it('ships ja unset — the domain has not been purchased yet', () => {
-    expect(ORIGINS.ja).toBeNull()
+  it('ships ja on mdmc.co.jp', () => {
+    expect(ORIGINS.ja).toBe('https://mdmc.co.jp')
   })
 })
 

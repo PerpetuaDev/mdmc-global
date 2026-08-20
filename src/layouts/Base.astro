@@ -25,14 +25,19 @@ const { title, description = defaultDescription, active, locale, lang, ogImage, 
 const resolvedLocale = locale ?? (lang === "ja" ? "ja" : "en");
 const { projects, articles } = await loadContent();
 
-// Construct canonical URL from site and pathname
-const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
-
 // EN-shaped path of the current page, regardless of which locale it's
 // rendering as — the shape linkHref/hreflang alternates are built from.
 const enPath = resolvedLocale === "ja" ? counterpartPath("ja", Astro.url.pathname) : Astro.url.pathname;
 const enAlternateUrl = new URL(enPath, Astro.site).toString();
 const jaAlternateUrl = ORIGINS.ja ? ORIGINS.ja + enPath : new URL("/ja" + enPath, Astro.site).toString();
+
+// Canonical follows the ja origin: with mdmc.co.jp live, ja pages' canonical
+// is the co.jp URL (they're also reachable at mdmc.co/ja/* until the 301 —
+// this consolidates indexing onto the ja domain).
+const canonicalUrl =
+  resolvedLocale === "ja" && ORIGINS.ja
+    ? jaAlternateUrl
+    : new URL(Astro.url.pathname, Astro.site).toString();
 ---
 
 <!DOCTYPE html>
@@ -44,9 +49,9 @@ const jaAlternateUrl = ORIGINS.ja ? ORIGINS.ja + enPath : new URL("/ja" + enPath
   <meta property="og:type" content="website">
   <meta property="og:title" content={title}>
   <meta property="og:description" content={description}>
-  <meta property="og:url" content={canonicalUrl.toString()}>
+  <meta property="og:url" content={canonicalUrl}>
   {ogImage && <meta property="og:image" content={ogImage}>}
-  <link rel="canonical" href={canonicalUrl.toString()}>
+  <link rel="canonical" href={canonicalUrl}>
   {!noHreflang && <link rel="alternate" hreflang="en" href={enAlternateUrl}>}
   {!noHreflang && <link rel="alternate" hreflang="ja" href={jaAlternateUrl}>}
   {!noHreflang && <link rel="alternate" hreflang="x-default" href={enAlternateUrl}>}

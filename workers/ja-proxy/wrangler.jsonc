@@ -1,0 +1,8 @@
+{
+  "name": "mdmc-ja-proxy",
+  "main": "worker.js",
+  "compatibility_date": "2026-08-20",
+  "routes": [
+    { "pattern": "mdmc.co.jp/*", "zone_name": "mdmc.co.jp" }
+  ]
+}
