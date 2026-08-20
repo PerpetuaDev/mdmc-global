@@ -52,14 +52,15 @@ import { STUDIOS } from "../lib/studios.js";
             >{s.region}</button>
 
             <div>
-              <button
-                type="button"
-                data-toggle
-                class="studio-closed"
-                aria-expanded="false"
-                aria-label={`Toggle ${s.region} studio details`}
-                style="display: block; width: 100%; text-align: left; font-size: 18px"
-              >{s.closedLine}</button>
+              <div class="studio-closed-wrap">
+                <button
+                  type="button"
+                  data-toggle
+                  class="studio-closed"
+                  aria-expanded="false"
+                  aria-label={`Toggle ${s.region} studio details`}
+                >{s.closedLine}</button>
+              </div>
 
               <div class="studio-panel-wrap">
                 <div class="studio-panel">
@@ -125,7 +126,7 @@ import { STUDIOS } from "../lib/studios.js";
 
   .studio-plus {
     position: absolute;
-    top: 20px;
+    top: 21px; /* optically centers the glyph in the 24px-padded closed row */
     right: 0;
     z-index: 2;
     padding: 4px 0 4px 12px;
@@ -138,11 +139,30 @@ import { STUDIOS } from "../lib/studios.js";
     transform: rotate(45deg);
   }
 
+  /* Closed one-liner: fades out AND collapses (same 0fr grid trick as the
+     panel) when the fold opens, mirroring the prototype's replaced row. */
+  .studio-closed-wrap {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.3s var(--ease);
+  }
+  [data-open="1"] .studio-closed-wrap {
+    grid-template-rows: 0fr;
+  }
   .studio-closed {
     display: block;
+    width: 100%;
+    text-align: left;
+    font-size: 18px;
+    min-height: 0;
+    overflow: hidden;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s var(--ease), visibility 0.3s;
   }
   [data-open="1"] .studio-closed {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
   }
 
   .studio-panel-wrap {
@@ -163,6 +183,13 @@ import { STUDIOS } from "../lib/studios.js";
     flex-wrap: wrap;
     gap: 32px 48px;
     align-items: stretch;
+    /* Padding lives only in the open state: a 0fr grid track still honors the
+       item's padding as min-content height, so closed rows would otherwise
+       carry 16px of phantom height (which also skewed vertical centering). */
+    padding-bottom: 0;
+    transition: padding-bottom 0.3s var(--ease);
+  }
+  [data-open="1"] .studio-panel {
     padding-bottom: 16px;
   }
 
