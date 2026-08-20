@@ -252,6 +252,12 @@ const { job } = Astro.props as {
 
   if (form) {
     let token: string | null = null;
+    // Cloudflare's default refresh-expired:'auto' means a fresh mdmc:turnstile
+    // token event can fire while a submission is already in flight (plausible
+    // with multi-MB file uploads). isSubmitting gates the UI so that event
+    // can update `token` but can never re-enable the button mid-POST — the
+    // enable/disable state is only (re)applied once the flag clears.
+    let isSubmitting = false;
 
     const submitBtn = document.getElementById('apply-submit') as HTMLButtonElement | null;
     const errorEl = document.getElementById('apply-error') as HTMLElement | null;
@@ -262,6 +268,12 @@ const { job } = Astro.props as {
 
     function setSubmitEnabled(enabled: boolean) {
       if (submitBtn) submitBtn.disabled = !enabled;
+    }
+
+    // Single source of truth for the button's enabled state: enabled only
+    // when a token is held AND no submission is currently in flight.
+    function syncSubmitState() {
+      setSubmitEnabled(!isSubmitting && Boolean(token));
     }
 
     function clearError() {
@@ -284,9 +296,12 @@ const { job } = Astro.props as {
       try {
         const detail = (e as CustomEvent).detail || {};
         if (detail.name !== 'apply') return;
+        // Always record the latest token, even mid-flight — but only ever
+        // reflect it into the button's disabled state via syncSubmitState,
+        // which itself refuses to enable while isSubmitting is true.
         token = detail.token || null;
-        setSubmitEnabled(Boolean(token));
         if (token) clearError();
+        syncSubmitState();
       } catch {
         // Never let a listener throw.
       }
@@ -311,7 +326,8 @@ const { job } = Astro.props as {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
-        if (!token || !submitBtn || submitBtn.disabled) return;
+        if (!token || !submitBtn || submitBtn.disabled || isSubmitting) return;
+        isSubmitting = true;
         setSubmitEnabled(false);
         clearError();
 
@@ -345,6 +361,8 @@ const { job } = Astro.props as {
           ok = false;
         }
 
+        isSubmitting = false;
+
         if (ok) {
           const confirmLine = document.createElement('p');
           confirmLine.className = 'apply-confirm';
@@ -358,10 +376,11 @@ const { job } = Astro.props as {
             // Reset is best-effort.
           }
           token = null;
-          setSubmitEnabled(false);
+          syncSubmitState();
         }
       } catch {
         // Absolute last resort: no path through this handler may throw.
+        isSubmitting = false;
         showError('Something went wrong — please try again.');
         try {
           (window as any).mdmcTurnstileReset?.('apply');
@@ -369,7 +388,7 @@ const { job } = Astro.props as {
           // Reset is best-effort.
         }
         token = null;
-        setSubmitEnabled(false);
+        syncSubmitState();
       }
     });
   }
