@@ -48,7 +48,7 @@
 // criteria and would need plumbing (current index + total project count)
 // this component isn't given.
 import PullQuote from './PullQuote.astro';
-import { makeT, pickLocalized } from '../lib/i18n.js';
+import { makeT, pickLocalized, linkHref } from '../lib/i18n.js';
 
 interface GallerySlot {
   url: string;
@@ -150,7 +150,7 @@ const sections = [
 <PullQuote quote={pullQuote} attribution={pullQuoteAttribution} />
 
 {next && (
-  <a href={`/work/${next.slug}/`} class="next-project">
+  <a href={linkHref(locale, locale, `/work/${next.slug}/`)} class="next-project">
     <div class="next-project-head">
       <span class="label">{t('project.next')}</span>
     </div>

@@ -4,7 +4,7 @@
 // Work index page in Phase 2 reuses the identical markup at lines 178-186).
 // Missing `thumbnail` renders the same grey `var(--ph)` placeholder box the
 // prototype uses for all images — today 3 of 6 live projects have none.
-import { makeT, pickLocalized } from "../lib/i18n.js";
+import { makeT, pickLocalized, linkHref } from "../lib/i18n.js";
 
 interface Props {
   project: {
@@ -24,7 +24,7 @@ const title = pickLocalized(locale, project, "title");
 const description = pickLocalized(locale, project, "description");
 ---
 
-<a href={`/work/${project.slug}/`} class="work-card">
+<a href={linkHref(locale, locale, `/work/${project.slug}/`)} class="work-card">
   <div class="work-card-image">
     {project.thumbnail ? (
       <img src={project.thumbnail.url} alt={project.thumbnail.alt || title} />

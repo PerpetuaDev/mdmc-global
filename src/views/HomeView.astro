@@ -9,7 +9,7 @@
 // (design/handoff/design/MDMC Site.dc.html lines 111-146; hero window = 4
 // newest projects, 6000ms auto-advance, workCols = 2, thumbRatio = 16 / 9).
 import WorkCard from "../components/WorkCard.astro";
-import { makeT, pickLocalized } from "../lib/i18n.js";
+import { makeT, pickLocalized, linkHref } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -71,10 +71,10 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
     <div class="hero-frame">
       {heroSlides.map((p, i) => (
         <a
-          href={`/work/${p.slug}/`}
+          href={linkHref(locale, locale, `/work/${p.slug}/`)}
           data-slide
           data-title={pickLocalized(locale, p, "title")}
-          data-href={`/work/${p.slug}/`}
+          data-href={linkHref(locale, locale, `/work/${p.slug}/`)}
           aria-label={`Open ${pickLocalized(locale, p, "title")}`}
           aria-hidden={i === 0 ? "false" : "true"}
           tabindex="-1"
@@ -91,7 +91,7 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
 
       <div class="hero-overlay">
         <a
-          href={first ? `/work/${first.slug}/` : "#"}
+          href={first ? linkHref(locale, locale, `/work/${first.slug}/`) : "#"}
           data-hero-name
           style="pointer-events: auto; font-size: 20px; color: #000"
         >{first ? pickLocalized(locale, first, "title") : undefined}</a>

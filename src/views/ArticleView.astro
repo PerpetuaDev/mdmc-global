@@ -8,7 +8,7 @@
 // notes (design/handoff/design/MDMC Site.dc.html lines 365-390). Zero live
 // articles today, so this view never actually renders in a build — verified
 // by hand-checking markup/logic only (see task-4 report).
-import { makeT, pickLocalized } from "../lib/i18n.js";
+import { makeT, pickLocalized, linkHref } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -55,13 +55,13 @@ const excerpt = pickLocalized(locale, article, "excerpt");
         <p class="lead">{excerpt}</p>
       )}
       {article.projectSlug && linkedProject?.story && (
-        <a href={`/work/${article.projectSlug}/?view=story`} class="cta" style="margin-top: 56px">
+        <a href={linkHref(locale, locale, `/work/${article.projectSlug}/`) + '?view=story'} class="cta" style="margin-top: 56px">
           {t("news.seeFullCaseStudy")} <span class="arrow">→</span>
         </a>
       )}
     </div>
     <div class="closing-footer">
-      <a href="/news/" class="cta">
+      <a href={linkHref(locale, locale, "/news/")} class="cta">
         <span class="arrow">←</span> {t("news.backToAll")}
       </a>
       <button class="share-button cta">

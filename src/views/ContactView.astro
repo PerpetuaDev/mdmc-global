@@ -16,8 +16,26 @@
 // render in English on ja pages too — a deliberate, documented EN fallback,
 // not a bug. Only the form's field labels/headers and TurnstileBox's
 // `language` prop are locale-driven here.
+//
+// Region/recipient split (fix round 1): the per-studio region label and the
+// visible "TO · <recipient>" text now localize the region word via
+// `regionLabel()` (same hasOwnProperty-guarded `work.region.*` lookup
+// WorkIndexView uses for its filter chips — see that file's header comment
+// for why a bare `t()` call is wrong here). The word "Studio" itself has no
+// dict key and is NOT invented in Japanese — on ja it stays literal, so the
+// visible ja recipient reads as a mixed string like "日本 Studio"
+// (acceptable per brief; flagged below for the native-pass list). Distinct
+// from this: the `recipient` value actually POSTed to the contact backend
+// (data-recipient, unchanged) stays the plain EN "{Region} Studio" string on
+// every locale — that's a backend contract, not user-facing copy, and must
+// not vary with locale. No new data-attribute was added to carry the
+// display string: the <script> below reads it straight off this same
+// studio fold's already-localized `.studio-info-top .label` div at click
+// time (region word via regionLabel(), " Studio" appended literally),
+// keeping data-recipient itself untouched (still the EN payload value) —
+// see the script's own comment for the wiring.
 import TurnstileBox from "../components/TurnstileBox.astro";
-import { makeT } from "../lib/i18n.js";
+import { makeT, STRINGS } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -26,6 +44,17 @@ interface Props {
 
 const { locale = "en", studios } = Astro.props as Props;
 const t = makeT(locale);
+
+// Same hasOwnProperty-guarded pattern as WorkIndexView's regionLabel(): only
+// translate a region word when the dict actually has a `work.region.*` key
+// for it (either locale's dict), else keep the raw CMS value untouched.
+const regionLabel = (r: string) => {
+  const dict = STRINGS[locale] || STRINGS.en;
+  const key = `work.region.${r}`;
+  return Object.prototype.hasOwnProperty.call(dict, key) || Object.prototype.hasOwnProperty.call(STRINGS.en, key)
+    ? t(key)
+    : r;
+};
 ---
 
 <main style="animation: pageIn .6s var(--ease)">
@@ -52,7 +81,7 @@ const t = makeT(locale);
           <div class="studio-image" style={imageFirst ? "" : "order: 2"} aria-hidden="true"></div>
           <div class="studio-info" style={imageFirst ? "" : "order: 1"}>
             <div class="studio-info-top">
-              <div class="label">{s.region}</div>
+              <div class="label">{regionLabel(s.region)}</div>
               <span data-clock={s.tz} class="studio-clock" aria-label={`Local time in ${s.region}`}></span>
             </div>
             <div class="studio-address">
@@ -295,17 +324,29 @@ const t = makeT(locale);
     });
   });
 
+  // `recipient` (POSTed to the backend, see payload below) and the visible
+  // "TO ·" label are deliberately allowed to diverge: recipient always stays
+  // the plain EN "{Region} Studio" string from data-recipient (backend
+  // contract, never localized), while the visible label is read straight off
+  // this same studio fold's already-localized region text (the
+  // `.studio-info-top .label` div, rendered server-side via regionLabel() —
+  // see this view's header comment) — no separate data-attribute needed
+  // since that text already carries the right locale.
   const toLabel = document.getElementById('contact-to');
   let recipient = 'MDMC';
-  function setRecipient(value: string) {
+  function setRecipient(value: string, label: string) {
     recipient = value;
-    if (toLabel) toLabel.textContent = value;
+    if (toLabel) toLabel.textContent = label;
   }
 
   document.querySelectorAll('.studio-message').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      setRecipient((btn as HTMLElement).dataset.recipient || 'MDMC');
+      const el = btn as HTMLElement;
+      const value = el.dataset.recipient || 'MDMC';
+      const regionEl = el.closest('.studio-info')?.querySelector('.studio-info-top .label');
+      const label = regionEl ? `${regionEl.textContent} Studio` : value;
+      setRecipient(value, label);
       scrollToId('contact-form');
     });
   });
