@@ -1,5 +1,12 @@
 @font-face { font-family: "Söhne"; src: url("/fonts/sohne-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: "Söhne"; src: url("/fonts/sohne-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+/* The main woff2s are 233-glyph subsets WITHOUT the arrow glyphs the design
+   uses everywhere (→ ← ↓ ↗) — browsers were substituting system-font arrows.
+   These ~1KB supplements are cut from the full Söhne OTFs (which carry the
+   arrows; the old site loaded those directly) and, declared last with a
+   unicode-range, win glyph resolution for the arrow block only. */
+@font-face { font-family: "Söhne"; src: url("/fonts/sohne-arrows-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; unicode-range: U+2190-21FF; }
+@font-face { font-family: "Söhne"; src: url("/fonts/sohne-arrows-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; unicode-range: U+2190-21FF; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
