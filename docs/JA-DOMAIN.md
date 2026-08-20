@@ -107,6 +107,11 @@ curl -sI https://mdmc.co.jp/sitemap-index.xml | head -1           # 404
 curl -s https://mdmc.co.jp/work/ | grep hreflang                  # en→mdmc.co, ja→mdmc.co.jp
 curl -sI https://mdmc.co.jp/ja/work/ | head -2                    # 301 → /work/
 curl -sI https://mdmc.co.jp/work | head -2                        # 301 → /work/
+
+# Cache revalidation must pass through, never 502 (the Worker's redirect
+# backstop excludes 304 — regression check for the bug fixed in 4e36ba5):
+ET=$(curl -s -D - -o /dev/null https://mdmc.co.jp/favicon.svg | grep -i '^etag:' | tr -d '\r' | sed 's/^[Ee][Tt][Aa][Gg]: //')
+curl -s -o /dev/null -w '%{http_code}\n' -H "If-None-Match: $ET" https://mdmc.co.jp/favicon.svg   # 304
 ```
 
 ## 6. 301 consolidation: mdmc.co/ja/* → co.jp — REMAINING (user, after §5)
