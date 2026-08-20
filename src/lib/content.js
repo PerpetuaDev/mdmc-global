@@ -88,12 +88,12 @@ function galleryOf(slots) {
 // exists for a given field, so callers can `project.ja?.title ?? project.title`.
 function normalizeProjectJa(overlay) {
   if (!overlay) return null
-  const services = overlay.services != null ? splitList(overlay.services) : null
+  // Specialties are not localized: the disciplines relation is shared across
+  // locales, so ja pages render the EN discipline names (pickLocalized falls
+  // through). The retired free-text `services` overlay used to live here.
   return {
     title: overlay.title ?? null,
     description: overlay.description ?? null,
-    services,
-    specialties: services,
     story: storyOf(overlay),
     pullQuote: overlay.pull_quote ?? null,
     pullQuoteAttribution: overlay.pull_quote_attribution ?? null,
@@ -101,11 +101,10 @@ function normalizeProjectJa(overlay) {
 }
 
 function normalizeProject(item) {
-  // Disciplines (controlled-vocabulary relation, 2026-08-20) win over the
-  // legacy free-text `services` string; the split-string path stays as the
-  // fallback until every project is migrated and `services` is retired.
-  const disciplineNames = (item.disciplines ?? []).map((d) => d?.name).filter(Boolean)
-  const services = disciplineNames.length > 0 ? disciplineNames : splitList(item.services)
+  // Disciplines: controlled-vocabulary relation (2026-08-20). The free-text
+  // `services` string it replaced is deleted from the schema; the committed
+  // snapshot carries disciplines, so there is no string path left to split.
+  const services = (item.disciplines ?? []).map((d) => d?.name).filter(Boolean)
   return {
     documentId: item.documentId,
     title: item.title ?? '',
@@ -146,7 +145,6 @@ function normalizeArticleJa(overlay) {
     title: overlay.title ?? null,
     excerpt: overlay.excerpt ?? null,
     body: overlay.body != null ? blocksToParagraphs(overlay.body) : [],
-    tag: overlay.tag ?? null,
   }
 }
 
