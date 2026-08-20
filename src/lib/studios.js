@@ -51,11 +51,14 @@ export const STUDIOS = [
     id: 'jp',
     region: 'Japan',
     tz: 'Asia/Tokyo',
-    closedLine: '5-57-2 Kitanakadori, Naka Ward, Yokohama 231-0003',
+    closedLine: '5-57-2 Kitanakadori, Naka-ku, Yokohama 231-0003',
+    // Canonical EN address confirmed by the user 2026-08-20 (Nisankai is the
+    // venue name, unit J-2 — supersedes the old site's "3F" wording).
     addressLines: [
-      '5-57-2 Kitanakadori, Naka Ward',
-      'Yokohama, Kanagawa 231-0003',
-      'KITANAKA BRICK & WHITE BRICK south, 3F',
+      'Nisankai J-2,',
+      'Brick South KITANAKA BRICK & WHITE',
+      '5-57-2 Kitanakadori, Naka-ku',
+      'Yokohama, Kanagawa 231-0003, Japan',
     ],
     email: 'contact@mdmc.co',
     phone: null,

@@ -22,23 +22,14 @@
 // - 商号 (company name): i18n.jsx jp.about.fact.shogo.v — real, unchanged.
 // - 事業部 (division): i18n.jsx jp.about.fact.jigyobu.v — real, unchanged.
 // - 設立 (founded): i18n.jsx jp.about.fact.setsuritsu.v — real, unchanged.
-// - 代表者 (representative): i18n.jsx jp.about.fact.daihyo.v — real,
-//   transcribed as-is. Note: this legacy hardcoded row says 代表取締役
-//   ("Representative Director"), while the live Strapi `about-japan.
-//   signature_role` (consumed directly on this page, not from this module)
-//   says "CEO" — the two sources disagree on title; left as-is since this
-//   module only transcribes the old site's company-fact copy verbatim.
+// - 代表者 (representative): 代表取締役 ("Representative Director") —
+//   confirmed by the user 2026-08-20 (the CMS signature_role previously said
+//   "CEO"; representative director is correct).
 // - 資本金 (capital): i18n.jsx jp.about.fact.shihon.v — real, unchanged.
-// - 本社所在地 / 所在地 (HQ address): i18n.jsx jp.about.fact.jusho.v /
-//   jp.about.location.address.v — transcribed VERBATIM, including
-//   "KITANAKA BRICK&WHITE BRICK south ニサンカイ". Flagging, not
-//   correcting: pages.jsx's English contact block and src/lib/studios.js's
-//   JP addressLines both say "3F" for this building, while the old site's
-//   JA copy says "ニサンカイ" — "ニサンカイ" may be the venue's own name
-//   rather than a floor designation, but this is unconfirmed. The JA and EN
-//   sources disagree and it isn't this module's place to guess which one is
-//   right — left as the old site's exact JA string pending user
-//   confirmation.
+// - 本社所在地 / 所在地 (HQ address): canonical bilingual address confirmed
+//   by the user 2026-08-20 — Nisankai (ニサンカイ) is the venue's name, unit
+//   J-2; this supersedes both the old site's JA one-liner and the legacy EN
+//   "3F" wording (src/lib/studios.js carries the matching EN form).
 // - 業務内容 (services): i18n.jsx jp.about.fact.gyomu.v — real, unchanged.
 // - 交通 (access/transit): i18n.jsx jp.about.location.access.v — real,
 //   unchanged.
@@ -63,7 +54,7 @@ export const ABOUT_JP = {
     { dt: '資本金', dd: ['500万円'] },
     {
       dt: '本社所在地',
-      dd: ['〒231-0003', '神奈川県横浜市中区北仲通5丁目57-2', 'KITANAKA BRICK&WHITE BRICK south ニサンカイ'],
+      dd: ['〒231-0003 神奈川県横浜市中区北仲通5-57-2', 'KITANAKA BRICK & WHITE Brick South', 'ニサンカイ J-2'],
     },
     {
       dt: '業務内容',
@@ -79,7 +70,7 @@ export const ABOUT_JP = {
   access: [
     {
       title: '所在地',
-      lines: ['〒231-0003', '神奈川県横浜市中区北仲通5丁目57-2', 'KITANAKA BRICK&WHITE BRICK south ニサンカイ'],
+      lines: ['〒231-0003 神奈川県横浜市中区北仲通5-57-2', 'KITANAKA BRICK & WHITE Brick South', 'ニサンカイ J-2'],
     },
     {
       title: '交通',
