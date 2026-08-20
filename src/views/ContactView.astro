@@ -80,7 +80,11 @@ const headlineLines = t("contact.headline").split("\n");
             ? "grid-template-columns: minmax(0, 7fr) minmax(0, 4fr)"
             : "grid-template-columns: minmax(0, 4fr) minmax(0, 7fr)"}
         >
-          <div class="studio-image" style={imageFirst ? "" : "order: 2"} aria-hidden="true"></div>
+          {s.image ? (
+            <img class="studio-image" src={s.image} alt="" loading="lazy" decoding="async" style={imageFirst ? "" : "order: 2"} />
+          ) : (
+            <div class="studio-image" style={imageFirst ? "" : "order: 2"} aria-hidden="true"></div>
+          )}
           <div class="studio-info" style={imageFirst ? "" : "order: 1"}>
             <div class="studio-info-top">
               <div class="label">{regionLabel(s.region)}</div>
@@ -185,6 +189,9 @@ const headlineLines = t("contact.headline").split("\n");
     aspect-ratio: 16 / 10;
     background: var(--ph);
     overflow: hidden;
+    /* img-only properties; the placeholder <div> ignores them. */
+    object-fit: cover;
+    display: block;
   }
 
   .studio-info-top {
