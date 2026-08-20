@@ -6,3 +6,6 @@ node_modules/
 .claude/
 .superpowers/
 .astro/
+design-export/
+design-export.zip
+design-screenshots/
