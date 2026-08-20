@@ -15,15 +15,14 @@
 // the prototype always renders all three (`hint-placeholder-count="3"`).
 import Base from "../../layouts/Base.astro";
 import NewsCard from "../../components/NewsCard.astro";
-import { loadContent } from "../../lib/content.js";
+import { loadContent, ARTICLE_KIND_LABELS } from "../../lib/content.js";
 
 const { articles } = await loadContent();
 
-const KINDS = [
-  { value: "news", label: "News" },
-  { value: "article", label: "Article" },
-  { value: "case_study", label: "Case Study" },
-];
+// Derived from content.js's ARTICLE_KIND_LABELS (single source of truth for
+// the fixed kind enum) rather than a second hardcoded copy here — order and
+// labels are unchanged from before (news, article, case_study).
+const KINDS = Object.entries(ARTICLE_KIND_LABELS).map(([value, label]) => ({ value, label }));
 ---
 
 <Base title="News — MDMC" active="news" description="News and writing from MDMC.">

@@ -35,6 +35,14 @@ async function token() {
 // relation/media field explicitly instead of using the wildcard at all.
 const PROJECTS_POPULATE = 'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image'
 const ARTICLES_POPULATE = 'populate[cover]=true&populate[hero_image]=true&populate[project]=true'
+// Kept in lockstep with src/lib/content.js's ABOUT_POPULATE/ABOUT_JAPAN_POPULATE/
+// CAREER_POPULATE/JOBS_POPULATE. `offers` is deliberately not populated on
+// career — ignored this phase per the content-layer-v3 brief.
+const ABOUT_POPULATE =
+  'populate[hero_image]=true&populate[kv_1_image]=true&populate[kv_2_image]=true&populate[kv_3_image]=true&populate[kv_4_image]=true'
+const ABOUT_JAPAN_POPULATE = 'populate[hero_image]=true&populate[signature_portrait]=true'
+const CAREER_POPULATE = 'populate[hero_image]=true'
+const JOBS_POPULATE = 'populate[hero_image]=true'
 
 const ENDPOINTS = {
   projects_en: `/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=en`,
@@ -44,12 +52,12 @@ const ENDPOINTS = {
   members: '/members?populate=*&sort=order:asc',
   homepage_en: '/homepage?locale=en',
   homepage_ja: '/homepage?locale=ja',
-  about: '/about?populate=*',
-  about_japan: '/about-japan?populate=*',
-  career_en: '/career?populate=*&locale=en',
-  career_ja: '/career?populate=*&locale=ja',
-  jobs_en: '/jobs?populate=*&locale=en',
-  jobs_ja: '/jobs?populate=*&locale=ja',
+  about: `/about?${ABOUT_POPULATE}`,
+  about_japan: `/about-japan?${ABOUT_JAPAN_POPULATE}`,
+  career_en: `/career?${CAREER_POPULATE}&locale=en`,
+  career_ja: `/career?${CAREER_POPULATE}&locale=ja`,
+  jobs_en: `/jobs?${JOBS_POPULATE}&locale=en`,
+  jobs_ja: `/jobs?${JOBS_POPULATE}&locale=ja`,
 }
 
 const tok = await token()

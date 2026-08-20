@@ -171,6 +171,97 @@ function normalizeArticle(item, projects = []) {
   }
 }
 
+// `about` single type: headline/lede + up to 4 key-value sections
+// (kv_1..kv_4 title/body/image). A kv slot with no title is unauthored and
+// dropped — body/image alone shouldn't produce a heading-less section.
+function sectionsOf(item) {
+  const sections = []
+  for (let i = 1; i <= 4; i++) {
+    const title = item[`kv_${i}_title`]
+    if (!title) continue
+    sections.push({
+      title,
+      body: blocksToParagraphs(item[`kv_${i}_body`]),
+      image: mediaOf(item[`kv_${i}_image`]),
+    })
+  }
+  return sections
+}
+
+function normalizeAbout(item) {
+  if (!item) return null
+  return {
+    headline: item.headline ?? '',
+    lede: item.lede ?? '',
+    heroImage: mediaOf(item.hero_image),
+    sections: sectionsOf(item),
+  }
+}
+
+function normalizeAboutJapan(item) {
+  if (!item) return null
+  return {
+    heroImage: mediaOf(item.hero_image),
+    greetingTitle: item.greeting_title ?? '',
+    greetingBody: blocksToParagraphs(item.greeting_body),
+    signature: {
+      role: item.signature_role ?? '',
+      name: item.signature_name ?? '',
+      romaji: item.signature_romaji ?? '',
+      portrait: mediaOf(item.signature_portrait),
+    },
+  }
+}
+
+// `offers` (a repeatable component) is deliberately ignored this phase per
+// the brief — not populated on the fetch, not surfaced here.
+function normalizeCareer(item) {
+  if (!item) return null
+  return {
+    headline: item.headline ?? '',
+    intro: blocksToParagraphs(item.intro),
+    contactEmail: item.contact_email ?? null,
+    heroImage: mediaOf(item.hero_image),
+  }
+}
+
+// Confirmed live in the content snapshot (job kd13tzu1r1620jwmukdhbvw0):
+// Strapi's `type` enum values are already display strings ("Part-time"), not
+// the typical snake_case — so this maps known values to themselves and
+// prettifies anything unrecognized (future enum additions) rather than
+// falling back to a raw snake_case/kebab string.
+const JOB_TYPE_LABELS = {
+  'Full-time': 'Full-time',
+  'Part-time': 'Part-time',
+  Contract: 'Contract',
+  Internship: 'Internship',
+}
+
+function prettifyRaw(raw) {
+  if (!raw) return ''
+  return raw
+    .replace(/[_-]+/g, ' ')
+    .trim()
+    .replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase())
+}
+
+function normalizeJob(item) {
+  const type = item.type ?? ''
+  return {
+    documentId: item.documentId,
+    title: item.title ?? '',
+    excerpt: item.excerpt ?? '',
+    body: blocksToParagraphs(item.body),
+    location: item.location ?? '',
+    locationLabel: item.location ?? '',
+    type,
+    typeLabel: JOB_TYPE_LABELS[type] ?? prettifyRaw(type),
+    locationType: item.location_type ?? '',
+    applyEmail: item.apply_email ?? '',
+    heroImage: mediaOf(item.hero_image),
+  }
+}
+
 // Fetches projects + articles (en and ja locales), falling back per endpoint
 // to the matching section of the last-known-good snapshot when the live
 // fetch fails or is unauthorized (articles/jobs 403 without a token — that's
@@ -187,14 +278,25 @@ function normalizeArticle(item, projects = []) {
 // back regardless of populate, so nothing else is lost by dropping `*`.
 const PROJECTS_POPULATE = 'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image'
 const ARTICLES_POPULATE = 'populate[cover]=true&populate[hero_image]=true&populate[project]=true'
+const ABOUT_POPULATE =
+  'populate[hero_image]=true&populate[kv_1_image]=true&populate[kv_2_image]=true&populate[kv_3_image]=true&populate[kv_4_image]=true'
+const ABOUT_JAPAN_POPULATE = 'populate[hero_image]=true&populate[signature_portrait]=true'
+// `offers` is intentionally NOT populated here — ignored this phase per the brief.
+const CAREER_POPULATE = 'populate[hero_image]=true'
+const JOBS_POPULATE = 'populate[hero_image]=true'
 
 async function _load() {
-  const [projectsEn, projectsJa, articlesEn, articlesJa] = await Promise.all([
-    fetchJson(`/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=en`),
-    fetchJson(`/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=ja`),
-    fetchJson(`/articles?${ARTICLES_POPULATE}&sort=date:desc&locale=en`),
-    fetchJson(`/articles?${ARTICLES_POPULATE}&sort=date:desc&locale=ja`),
-  ])
+  const [projectsEn, projectsJa, articlesEn, articlesJa, aboutRaw, aboutJapanRaw, careerRaw, jobsRaw] =
+    await Promise.all([
+      fetchJson(`/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=en`),
+      fetchJson(`/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=ja`),
+      fetchJson(`/articles?${ARTICLES_POPULATE}&sort=date:desc&locale=en`),
+      fetchJson(`/articles?${ARTICLES_POPULATE}&sort=date:desc&locale=ja`),
+      fetchJson(`/about?${ABOUT_POPULATE}`),
+      fetchJson(`/about-japan?${ABOUT_JAPAN_POPULATE}`),
+      fetchJson(`/career?${CAREER_POPULATE}&locale=en`),
+      fetchJson(`/jobs?${JOBS_POPULATE}&locale=en`),
+    ])
 
   const rawProjectsEn = projectsEn ?? snapshot.projects_en ?? []
   const rawProjectsJa = projectsJa ?? snapshot.projects_ja ?? []
@@ -207,7 +309,13 @@ async function _load() {
   const projects = assignSlugs(mergedProjects.map(normalizeProject))
   const articles = assignSlugs(mergedArticles.map((item) => normalizeArticle(item, projects)))
 
-  return { projects, articles }
+  const about = normalizeAbout(aboutRaw ?? snapshot.about ?? null)
+  const aboutJapan = normalizeAboutJapan(aboutJapanRaw ?? snapshot.about_japan ?? null)
+  const career = normalizeCareer(careerRaw ?? snapshot.career_en ?? null)
+  const rawJobs = jobsRaw ?? snapshot.jobs_en ?? []
+  const jobs = assignSlugs(rawJobs.map(normalizeJob))
+
+  return { projects, articles, about, aboutJapan, career, jobs }
 }
 
 // Every page's frontmatter calls loadContent() independently, and each call
@@ -222,5 +330,15 @@ export function loadContent() {
 }
 
 // Exported for unit testing the pure normalization logic in isolation from
-// fetch/fallback (test/content.test.js).
-export { normalizeProject, normalizeArticle }
+// fetch/fallback (test/content.test.js). ARTICLE_KIND_LABELS is also
+// consumed by src/pages/news/index.astro so its KINDS filter list derives
+// from the same source of truth instead of a second hardcoded copy.
+export {
+  normalizeProject,
+  normalizeArticle,
+  normalizeAbout,
+  normalizeAboutJapan,
+  normalizeCareer,
+  normalizeJob,
+  ARTICLE_KIND_LABELS,
+}

@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeProject, normalizeArticle } from '../src/lib/content.js'
+import {
+  normalizeProject,
+  normalizeArticle,
+  normalizeAbout,
+  normalizeAboutJapan,
+  normalizeCareer,
+  normalizeJob,
+  ARTICLE_KIND_LABELS,
+} from '../src/lib/content.js'
+import { assignSlugs } from '../src/lib/normalize.js'
 
 describe('normalizeProject', () => {
   const withStory = {
@@ -152,5 +161,153 @@ describe('normalizeArticle', () => {
     expect(out.projectSlug).toBeNull()
     expect(out.heroImage).toEqual({ url: 'https://x/cover.jpg', alt: '' })
     expect(out.body).toEqual([])
+  })
+})
+
+describe('ARTICLE_KIND_LABELS', () => {
+  it('is importable and provides the three fixed article kinds', () => {
+    expect(ARTICLE_KIND_LABELS).toEqual({
+      news: 'News',
+      article: 'Article',
+      case_study: 'Case Study',
+    })
+  })
+})
+
+describe('normalizeAbout', () => {
+  it('builds sections only from kv_N pairs that have a title, mapping body via blocksToParagraphs', () => {
+    const raw = {
+      headline: 'We are in it for good work.',
+      lede: 'MDMC is a small team.',
+      hero_image: { url: 'https://x/about-hero.jpg', alternativeText: 'About hero' },
+      kv_1_title: 'What we do',
+      kv_1_body: 'Branding.\nDigital product design.',
+      kv_1_image: { url: 'https://x/kv1.jpg', alternativeText: null },
+      kv_2_title: 'How we work',
+      kv_2_body: 'Two-week loops.',
+      kv_2_image: null,
+      kv_3_title: '',
+      kv_3_body: 'Should not appear.',
+      kv_4_title: null,
+      kv_4_body: 'Should not appear either.',
+    }
+    const out = normalizeAbout(raw)
+    expect(out.headline).toBe('We are in it for good work.')
+    expect(out.lede).toBe('MDMC is a small team.')
+    expect(out.heroImage).toEqual({ url: 'https://x/about-hero.jpg', alt: 'About hero' })
+    expect(out.sections).toHaveLength(2)
+    expect(out.sections[0]).toEqual({
+      title: 'What we do',
+      body: ['Branding.', 'Digital product design.'],
+      image: { url: 'https://x/kv1.jpg', alt: '' },
+    })
+    expect(out.sections[1]).toEqual({
+      title: 'How we work',
+      body: ['Two-week loops.'],
+      image: null,
+    })
+  })
+
+  it('returns null when the single-type entry is absent', () => {
+    expect(normalizeAbout(null)).toBeNull()
+  })
+})
+
+describe('normalizeAboutJapan', () => {
+  it('maps hero image, greeting fields, and the signature block', () => {
+    const raw = {
+      hero_image: { url: 'https://x/aj-hero.jpg', alternativeText: null },
+      greeting_title: '長く、誠実に。',
+      greeting_body: 'このたびは、ありがとうございます。\n\n何卒よろしくお願い申し上げます。',
+      signature_role: 'CEO',
+      signature_name: 'フィンレイソン・リアム',
+      signature_romaji: 'Liam Finlayson',
+      signature_portrait: { url: 'https://x/portrait.png', alternativeText: null },
+    }
+    const out = normalizeAboutJapan(raw)
+    expect(out.heroImage).toEqual({ url: 'https://x/aj-hero.jpg', alt: '' })
+    expect(out.greetingTitle).toBe('長く、誠実に。')
+    expect(out.greetingBody).toEqual(['このたびは、ありがとうございます。', '何卒よろしくお願い申し上げます。'])
+    expect(out.signature).toEqual({
+      role: 'CEO',
+      name: 'フィンレイソン・リアム',
+      romaji: 'Liam Finlayson',
+      portrait: { url: 'https://x/portrait.png', alt: '' },
+    })
+  })
+
+  it('returns null when the single-type entry is absent', () => {
+    expect(normalizeAboutJapan(null)).toBeNull()
+  })
+})
+
+describe('normalizeCareer', () => {
+  it('maps headline, intro paragraphs, contactEmail, and heroImage', () => {
+    const raw = {
+      headline: 'Join a talented, international team',
+      intro: "We're always looking to hire great people.",
+      contact_email: 'careers@mdmc.co',
+      hero_image: { url: 'https://x/career-hero.jpg', alternativeText: 'Career hero' },
+      offers: [{ id: 1 }],
+    }
+    const out = normalizeCareer(raw)
+    expect(out.headline).toBe('Join a talented, international team')
+    expect(out.intro).toEqual(["We're always looking to hire great people."])
+    expect(out.contactEmail).toBe('careers@mdmc.co')
+    expect(out.heroImage).toEqual({ url: 'https://x/career-hero.jpg', alt: 'Career hero' })
+    expect(out.offers).toBeUndefined()
+  })
+
+  it('degrades contactEmail to null and returns null for an absent entry', () => {
+    const out = normalizeCareer({ headline: 'H', intro: 'I' })
+    expect(out.contactEmail).toBeNull()
+    expect(normalizeCareer(null)).toBeNull()
+  })
+})
+
+describe('normalizeJob', () => {
+  // Real enum values confirmed from the content snapshot's one published job
+  // (kd13tzu1r1620jwmukdhbvw0): `type` is already a display string
+  // ("Part-time"), not Strapi's typical snake_case — the label map keys off
+  // that literal value, with an unknown value falling back to a prettified
+  // raw string.
+  const raw = {
+    documentId: 'kd13tzu1r1620jwmukdhbvw0',
+    title: 'Bilingual Administrator',
+    location: 'Yokohama',
+    type: 'Part-time',
+    location_type: 'Onsite',
+    excerpt: 'Keep the Yokohama studio running.',
+    body: 'MDMC Japan is looking for a part-time bilingual administrator.\n\nDay to day, that means handling correspondence.',
+    apply_email: 'recruit@mdmc.co',
+    hero_image: { url: 'https://x/job-hero.jpg', alternativeText: null },
+  }
+
+  it('maps labels (typeLabel from the real enum value) and all pass-through fields', () => {
+    const out = normalizeJob(raw)
+    expect(out.documentId).toBe('kd13tzu1r1620jwmukdhbvw0')
+    expect(out.title).toBe('Bilingual Administrator')
+    expect(out.excerpt).toBe('Keep the Yokohama studio running.')
+    expect(out.body).toEqual([
+      'MDMC Japan is looking for a part-time bilingual administrator.',
+      'Day to day, that means handling correspondence.',
+    ])
+    expect(out.location).toBe('Yokohama')
+    expect(out.locationLabel).toBe('Yokohama')
+    expect(out.type).toBe('Part-time')
+    expect(out.typeLabel).toBe('Part-time')
+    expect(out.locationType).toBe('Onsite')
+    expect(out.applyEmail).toBe('recruit@mdmc.co')
+    expect(out.heroImage).toEqual({ url: 'https://x/job-hero.jpg', alt: '' })
+  })
+
+  it('prettifies an unrecognized type value rather than crashing', () => {
+    const out = normalizeJob({ ...raw, type: 'weekend_casual' })
+    expect(out.typeLabel).toBe('Weekend Casual')
+  })
+
+  it('assignSlugs gives the job a routable slug from its title', () => {
+    const [out] = assignSlugs([normalizeJob(raw)])
+    expect(out.slug).toBe('bilingual-administrator')
   })
 })
