@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { makeT, localePath, counterpartPath, LOCALES, STRINGS, ORIGINS, linkHref, tMisses } from '../src/lib/i18n.js'
+import { makeT, localePath, counterpartPath, LOCALES, STRINGS, ORIGINS, linkHref, tMisses, pickLocalized } from '../src/lib/i18n.js'
 
 describe('makeT', () => {
   it('returns locale strings and falls back to en, then the key', () => {
@@ -37,6 +37,27 @@ describe('linkHref', () => {
     expect(linkHref('ja', 'ja', '/work/', live)).toBe('https://mdmc.co.jp/work/')
     expect(linkHref('ja', 'en', '/work/', live)).toBe('https://mdmc.co/work/')
     expect(linkHref('en', 'en', '/work/', live)).toBe('/work/')
+  })
+})
+
+describe('pickLocalized', () => {
+  const withOverlay = { title: 'EN Title', description: 'EN Desc', ja: { title: 'JA Title' } }
+  const withoutOverlay = { title: 'EN Only', description: 'EN Only Desc' }
+  const emptyOverlay = { title: 'EN Fallback', ja: {} }
+
+  it('en always reads the top-level field, ja overlay or not', () => {
+    expect(pickLocalized('en', withOverlay, 'title')).toBe('EN Title')
+    expect(pickLocalized('en', withoutOverlay, 'title')).toBe('EN Only')
+  })
+  it('ja reads the overlay field when present', () => {
+    expect(pickLocalized('ja', withOverlay, 'title')).toBe('JA Title')
+  })
+  it('ja falls back to the top-level field when the overlay field is missing', () => {
+    expect(pickLocalized('ja', withOverlay, 'description')).toBe('EN Desc')
+    expect(pickLocalized('ja', emptyOverlay, 'title')).toBe('EN Fallback')
+  })
+  it('ja falls back to the top-level field when there is no overlay at all', () => {
+    expect(pickLocalized('ja', withoutOverlay, 'title')).toBe('EN Only')
   })
 })
 

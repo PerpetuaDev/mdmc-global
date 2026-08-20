@@ -14,6 +14,7 @@
 // element is markup-only for now. Task 5 wires its click behavior and
 // swaps the label between "View project details ↓" / "View gallery ↓";
 // this renders the gallery-view default label and no handler.
+import { makeT, pickLocalized } from "../lib/i18n.js";
 
 interface Props {
   project: {
@@ -22,16 +23,20 @@ interface Props {
     specialties: string[];
   };
   hasStory: boolean;
+  locale?: "en" | "ja";
 }
 
-const { project, hasStory } = Astro.props as Props;
+const { project, hasStory, locale = "en" } = Astro.props as Props;
+const t = makeT(locale);
+const title = pickLocalized(locale, project, "title");
+const description = pickLocalized(locale, project, "description");
 const specialties = project.specialties ?? [];
 const showMetaRow = specialties.length > 0 || hasStory;
 ---
 
 <section class="gutter project-header">
-  <h1 class="project-title">{project.title}</h1>
-  {project.description && <p class="project-description">{project.description}</p>}
+  <h1 class="project-title">{title}</h1>
+  {description && <p class="project-description">{description}</p>}
   {showMetaRow && (
     <div class="project-meta">
       {specialties.length > 0 && (
@@ -46,7 +51,7 @@ const showMetaRow = specialties.length > 0 || hasStory;
       )}
       {hasStory && (
         <button type="button" class="cta view-toggle" data-view-toggle>
-          <span data-view-toggle-label>View project details</span> <span class="arrow" aria-hidden="true">↓</span>
+          <span data-view-toggle-label>{t("project.viewDetails")}</span> <span class="arrow" aria-hidden="true">↓</span>
         </button>
       )}
     </div>

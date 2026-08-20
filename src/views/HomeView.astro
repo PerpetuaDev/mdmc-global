@@ -1,0 +1,239 @@
+---
+// Home view — pure template, extracted from src/pages/index.astro (Phase-5
+// Task 3). Data loading (loadContent) stays in the page wrapper; this
+// component receives `projects` + the build-time `redirectMap` for the
+// legacy-redirect shim as props and derives everything else (heroSlides,
+// first) from `projects`.
+//
+// See src/pages/index.astro's original header comment for provenance notes
+// (design/handoff/design/MDMC Site.dc.html lines 111-146; hero window = 4
+// newest projects, 6000ms auto-advance, workCols = 2, thumbRatio = 16 / 9).
+import WorkCard from "../components/WorkCard.astro";
+import { makeT, pickLocalized } from "../lib/i18n.js";
+
+interface Props {
+  locale?: "en" | "ja";
+  projects: any[];
+  redirectMap: Record<string, Record<string, string>>;
+}
+
+const { locale = "en", projects, redirectMap } = Astro.props as Props;
+const t = makeT(locale);
+const heroSlides = projects.slice(0, 4);
+const first = heroSlides[0];
+
+// home.manifesto.1/2 store their line breaks as literal '\n'; split into
+// segments rendered around literal <br> tags below (see i18n.js). Each
+// segment goes through a `<Fragment set:html>` rather than a plain `{}`
+// text expression: the dict values are plain EN prose text (an apostrophe
+// in "who'll", a raw "&" manually re-escaped to "&amp;" here since set:html
+// skips Astro's own escaping), and a `{}` expression would HTML-escape the
+// apostrophe to `&#39;`, which the prototype's literal (unescaped) markup
+// never did. The <br> tags stay literal JSX elements (not part of any
+// set:html blob) so they still pick up Astro's scoped-style attribute like
+// every other element on this page.
+const escAmp = (s: string) => s.replace(/&/g, "&amp;");
+const manifesto1 = t("home.manifesto.1").split("\n").map(escAmp);
+const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
+
+// Legacy hash-URL redirect shim: the `<script is:inline
+// define:vars={{ redirectMap }}>` immediately below — see
+// src/pages/index.astro's comment above <HomeView /> for the full
+// explanation (canonical impl in src/lib/legacy-redirects.js, and why that
+// doc comment lives one level up rather than here).
+---
+
+<script is:inline define:vars={{ redirectMap }}>
+    if (location.hash) {
+      const legacyRedirect = (hash, map) => {
+        const h = hash.replace(/^#\/?/, '')
+        if (!h) return null
+        const parts = h.split('/')
+        const section = parts[0]
+        const id = parts[1]
+        if (section === 'work' || section === 'news' || section === 'careers') {
+          if (id) {
+            const slug = map[section] && map[section][id]
+            return slug ? `/${section}/${slug}/` : `/${section}/`
+          }
+          return `/${section}/`
+        }
+        if (['about', 'contact'].includes(section)) return `/${section}/`
+        return null
+      }
+      const target = legacyRedirect(location.hash, redirectMap)
+      if (target) location.replace(target)
+    }
+  </script>
+
+<main style="animation: pageIn .6s var(--ease)">
+  <section style="padding: 40px var(--gutter-r) 0 var(--gutter-l)">
+    <div class="hero-frame">
+      {heroSlides.map((p, i) => (
+        <a
+          href={`/work/${p.slug}/`}
+          data-slide
+          data-title={pickLocalized(locale, p, "title")}
+          data-href={`/work/${p.slug}/`}
+          aria-label={`Open ${pickLocalized(locale, p, "title")}`}
+          aria-hidden={i === 0 ? "false" : "true"}
+          tabindex="-1"
+          class="hero-slide"
+          style={`opacity: ${i === 0 ? "1" : "0"}; pointer-events: ${i === 0 ? "auto" : "none"}`}
+        >
+          {p.heroImage ? (
+            <img src={p.heroImage.url} alt={p.heroImage.alt || pickLocalized(locale, p, "title")} />
+          ) : (
+            <div class="hero-placeholder" aria-hidden="true"></div>
+          )}
+        </a>
+      ))}
+
+      <div class="hero-overlay">
+        <a
+          href={first ? `/work/${first.slug}/` : "#"}
+          data-hero-name
+          style="pointer-events: auto; font-size: 20px; color: #000"
+        >{first ? pickLocalized(locale, first, "title") : undefined}</a>
+        <div role="group" aria-label="Browse featured projects" style="pointer-events: auto; display: inline-flex; align-items: center; gap: 12px; transform: translateY(5px)">
+          <button type="button" data-hero-prev aria-label="Previous slide" class="hero-arrow hero-arrow-prev">←</button>
+          <span aria-hidden="true" style="width: 2px; height: 18px; background: var(--faint); transform: translateY(1.5px)"></span>
+          <button type="button" data-hero-next aria-label="Next slide" class="hero-arrow hero-arrow-next">→</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding: 143px var(--gutter-r) 168px calc(var(--gutter-l) + 150px); font-size: 32px; line-height: 1.4; letter-spacing: -0.005em">
+    <div style="max-width: 880px">
+      <p><Fragment set:html={manifesto1[0]} /> <br><Fragment set:html={manifesto1[1]} /></p>
+      <p style="margin-top: 1.5em"><Fragment set:html={manifesto2[0]} /> <br><Fragment set:html={manifesto2[1]} /> <br><Fragment set:html={manifesto2[2]} /></p>
+    </div>
+  </section>
+
+  <section style="padding: 0 var(--gutter-r) 160px var(--gutter-l)">
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 26px; row-gap: 64px">
+      {projects.map((p) => <WorkCard project={p} locale={locale} />)}
+    </div>
+  </section>
+</main>
+<style>
+  .hero-frame {
+    position: relative;
+    width: 100%;
+    /* Fold rule: the gap below the image (to the viewport bottom) must equal
+       the gap above it (logo bottom → image top). 100svh is scaled by the
+       .zoom wrapper, so /--page-zoom restores the real viewport; 266.7px =
+       image top (181.1: header 64 + logo row + 36, plus this section's 40
+       top padding) + the mirrored 85.6 logo gap, in CSS px. The hero script
+       re-measures on load/resize so the equality stays exact if header
+       metrics ever drift. */
+    height: calc(100svh / var(--page-zoom) - 266.7px);
+    min-height: 720px;
+    background: var(--ph);
+    overflow: hidden;
+  }
+
+  .hero-slide {
+    position: absolute;
+    inset: 0;
+    display: block;
+    transition: opacity 0.8s ease;
+    background: var(--ph);
+  }
+
+  .hero-slide img,
+  .hero-placeholder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    left: 32px;
+    right: 32px;
+    bottom: 24px;
+    z-index: 2;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 32px;
+    pointer-events: none;
+  }
+
+  .hero-arrow {
+    font-size: 18px;
+    line-height: 1;
+    padding: 8px 4px;
+    font-weight: 400;
+    transition: transform 0.25s var(--ease);
+  }
+  .hero-arrow-prev:hover {
+    transform: translateX(-4px);
+  }
+  .hero-arrow-next:hover {
+    transform: translateX(4px);
+  }
+</style>
+<script>
+  const slides = [...document.querySelectorAll('[data-slide]')]
+  const name = document.querySelector('[data-hero-name]')
+  let i = 0
+  function show(n) {
+    if (!slides.length) return
+    i = (n + slides.length) % slides.length
+    slides.forEach((s, j) => {
+      const active = j === i
+      s.style.opacity = active ? '1' : '0'
+      s.style.pointerEvents = active ? 'auto' : 'none'
+      s.setAttribute('aria-hidden', active ? 'false' : 'true')
+    })
+    if (name) {
+      name.textContent = slides[i].dataset.title ?? ''
+      name.href = slides[i].dataset.href ?? '#'
+    }
+  }
+  document.querySelector('[data-hero-prev]')?.addEventListener('click', () => show(i - 1))
+  document.querySelector('[data-hero-next]')?.addEventListener('click', () => show(i + 1))
+  const auto = !matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (auto && slides.length > 1) setInterval(() => show(i + 1), 6000)
+  if (slides.length) show(0)
+
+  // Fold rule: gap below the image (to viewport bottom) === gap above it
+  // (logo bottom -> image top). The CSS calc already lands within a pixel;
+  // this re-derives the height from real layout so the equality is exact at
+  // any viewport, browser, or future header change. Measured via the
+  // offsetTop chain, NOT getBoundingClientRect: rects include the pageIn
+  // entrance transform (main starts at translateY(12px)), which skewed
+  // load-time measurements; offset positions ignore transforms. The chain is
+  // all in CSS space, so innerHeight (physical) is divided by the effective
+  // zoom once. min-height still floors it.
+  const frame = document.querySelector('.hero-frame')
+  const logo = document.querySelector('header img[alt="MDMC"]')
+  function pageTopCss(el) {
+    let y = 0
+    while (el) { y += el.offsetTop; el = el.offsetParent }
+    return y
+  }
+  function sizeHero() {
+    if (!frame || !logo) return
+    frame.style.height = ''
+    const zoomEl = document.querySelector('.zoom')
+    const zoom = zoomEl ? parseFloat(getComputedStyle(zoomEl).zoom) || 1 : 1
+    const logoBottom = pageTopCss(logo) + logo.offsetHeight
+    const frameTop = pageTopCss(frame)
+    const gapTop = frameTop - logoBottom
+    const target = window.innerHeight / zoom - gapTop - frameTop
+    if (target > 0) frame.style.height = `${target}px`
+  }
+  sizeHero()
+  addEventListener('resize', sizeHero)
+  // The webfont applies after this script runs and can change the header's
+  // row height, so observe the header: any geometry change — font swap,
+  // logo load, future header edits — re-derives the hero height.
+  const header = document.querySelector('header')
+  if (header && 'ResizeObserver' in window) new ResizeObserver(sizeHero).observe(header)
+</script>

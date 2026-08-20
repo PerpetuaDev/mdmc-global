@@ -207,6 +207,15 @@ export function tMisses() {
   return out
 }
 
+// Content-field localization: picks a `.ja` overlay field (see
+// normalize.js's mergeLocales/normalizeProjectJa) when one exists, falling
+// back to the top-level (en) field otherwise — for en callers this is
+// always a pass-through to `item[field]`, so it's safe to introduce ahead of
+// any ja page actually consuming it (byte-stability unaffected).
+export function pickLocalized(locale, item, field) {
+  return locale === 'ja' ? (item.ja?.[field] ?? item[field]) : item[field]
+}
+
 // path always starts with '/'. '/ja' is never doubled onto an already-'/ja'
 // path (localePath is meant to take an EN-shaped path in, not a ja one).
 export function localePath(locale, path) {

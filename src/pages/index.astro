@@ -1,24 +1,18 @@
 ---
-// Home — transcribed from design/handoff/design/MDMC Site.dc.html lines
-// 111-146 (hero slideshow -> statement -> work grid). The prototype's
-// runtime (dc script ~line 805, 880-927) confirms: hero window = 4 newest
-// projects, 6000ms auto-advance, workCols = 2, thumbRatio = 16 / 9.
-//
-// README lists a News strip for Home, but the prototype's actual home
-// <main> (lines 111-146) is hero + statement + grid only, with no News
-// section — matching the prototype here per source-of-truth precedence;
-// flagging the README/prototype discrepancy at review.
+// Home — thin wrapper: loads content, builds the legacy-redirect map, and
+// renders HomeView inside Base. See HomeView.astro for the template itself
+// (Phase-5 Task 3 extraction) and its header comment for prototype
+// provenance notes.
 import Base from "../layouts/Base.astro";
-import WorkCard from "../components/WorkCard.astro";
+import HomeView from "../views/HomeView.astro";
 import { loadContent } from "../lib/content.js";
 
 const { projects, articles, jobs } = await loadContent();
-const heroSlides = projects.slice(0, 4);
-const first = heroSlides[0];
 
-// documentId -> slug maps for the legacy hash-redirect shim below, one per
-// old-site section (work=projects, news=articles, careers=jobs). Built at
-// build time so the inline script only ever inlines VALUES via define:vars.
+// documentId -> slug maps for the legacy hash-redirect shim (see
+// HomeView.astro), one per old-site section (work=projects, news=articles,
+// careers=jobs). Built at build time so the inline script only ever inlines
+// VALUES via define:vars.
 const redirectMap = {
   work: Object.fromEntries(projects.map((p) => [p.documentId, p.slug])),
   news: Object.fromEntries(articles.map((a) => [a.documentId, a.slug])),
@@ -29,206 +23,17 @@ const redirectMap = {
 <Base title="MDMC" active="home">
   <!--
     Legacy hash-URL redirect shim — CANONICAL implementation + tests live in
-    src/lib/legacy-redirects.js (legacyRedirect). define:vars only serializes
-    VALUES into the inline script, so it can't import that module; this is a
-    duplicate of legacyRedirect's body, kept in sync by hand. Runs first (no
-    is:inline JS above it) so a legacy visitor is replaced to the new route
-    before any hero/slideshow work below runs.
+    src/lib/legacy-redirects.js (legacyRedirect). The actual inline script
+    (a hand-kept duplicate of legacyRedirect's body — define:vars only
+    serializes VALUES, so it can't import that module) lives in HomeView.astro
+    and runs first there, before any hero/slideshow work. This doc comment
+    stays here, one level up: HomeView is a plain component (not a route
+    under src/pages), and Astro's compiler only strips top-level HTML
+    comments in page files like this one — inside HomeView.astro itself an
+    HTML comment would render into the output HTML verbatim, which this
+    page's build never did before this extraction (verified against the
+    pre-extraction build). See HomeView.astro's frontmatter for a pointer
+    back to this note.
   -->
-  <script is:inline define:vars={{ redirectMap }}>
-    if (location.hash) {
-      const legacyRedirect = (hash, map) => {
-        const h = hash.replace(/^#\/?/, '')
-        if (!h) return null
-        const parts = h.split('/')
-        const section = parts[0]
-        const id = parts[1]
-        if (section === 'work' || section === 'news' || section === 'careers') {
-          if (id) {
-            const slug = map[section] && map[section][id]
-            return slug ? `/${section}/${slug}/` : `/${section}/`
-          }
-          return `/${section}/`
-        }
-        if (['about', 'contact'].includes(section)) return `/${section}/`
-        return null
-      }
-      const target = legacyRedirect(location.hash, redirectMap)
-      if (target) location.replace(target)
-    }
-  </script>
-
-  <main style="animation: pageIn .6s var(--ease)">
-    <section style="padding: 40px var(--gutter-r) 0 var(--gutter-l)">
-      <div class="hero-frame">
-        {heroSlides.map((p, i) => (
-          <a
-            href={`/work/${p.slug}/`}
-            data-slide
-            data-title={p.title}
-            data-href={`/work/${p.slug}/`}
-            aria-label={`Open ${p.title}`}
-            aria-hidden={i === 0 ? "false" : "true"}
-            tabindex="-1"
-            class="hero-slide"
-            style={`opacity: ${i === 0 ? "1" : "0"}; pointer-events: ${i === 0 ? "auto" : "none"}`}
-          >
-            {p.heroImage ? (
-              <img src={p.heroImage.url} alt={p.heroImage.alt || p.title} />
-            ) : (
-              <div class="hero-placeholder" aria-hidden="true"></div>
-            )}
-          </a>
-        ))}
-
-        <div class="hero-overlay">
-          <a
-            href={first ? `/work/${first.slug}/` : "#"}
-            data-hero-name
-            style="pointer-events: auto; font-size: 20px; color: #000"
-          >{first?.title}</a>
-          <div role="group" aria-label="Browse featured projects" style="pointer-events: auto; display: inline-flex; align-items: center; gap: 12px; transform: translateY(5px)">
-            <button type="button" data-hero-prev aria-label="Previous slide" class="hero-arrow hero-arrow-prev">←</button>
-            <span aria-hidden="true" style="width: 2px; height: 18px; background: var(--faint); transform: translateY(1.5px)"></span>
-            <button type="button" data-hero-next aria-label="Next slide" class="hero-arrow hero-arrow-next">→</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section style="padding: 143px var(--gutter-r) 168px calc(var(--gutter-l) + 150px); font-size: 32px; line-height: 1.4; letter-spacing: -0.005em">
-      <div style="max-width: 880px">
-        <p>We're MDMC—an integrated design &amp; <br>digital strategy agency.</p>
-        <p style="margin-top: 1.5em">We help great products find the people <br>who'll love them, and help good, honest <br>businesses stand out from the noise.</p>
-      </div>
-    </section>
-
-    <section style="padding: 0 var(--gutter-r) 160px var(--gutter-l)">
-      <div style="display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 26px; row-gap: 64px">
-        {projects.map((p) => <WorkCard project={p} />)}
-      </div>
-    </section>
-  </main>
+  <HomeView locale="en" projects={projects} redirectMap={redirectMap} />
 </Base>
-
-<style>
-  .hero-frame {
-    position: relative;
-    width: 100%;
-    /* Fold rule: the gap below the image (to the viewport bottom) must equal
-       the gap above it (logo bottom → image top). 100svh is scaled by the
-       .zoom wrapper, so /--page-zoom restores the real viewport; 266.7px =
-       image top (181.1: header 64 + logo row + 36, plus this section's 40
-       top padding) + the mirrored 85.6 logo gap, in CSS px. The hero script
-       re-measures on load/resize so the equality stays exact if header
-       metrics ever drift. */
-    height: calc(100svh / var(--page-zoom) - 266.7px);
-    min-height: 720px;
-    background: var(--ph);
-    overflow: hidden;
-  }
-
-  .hero-slide {
-    position: absolute;
-    inset: 0;
-    display: block;
-    transition: opacity 0.8s ease;
-    background: var(--ph);
-  }
-
-  .hero-slide img,
-  .hero-placeholder {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .hero-overlay {
-    position: absolute;
-    left: 32px;
-    right: 32px;
-    bottom: 24px;
-    z-index: 2;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 32px;
-    pointer-events: none;
-  }
-
-  .hero-arrow {
-    font-size: 18px;
-    line-height: 1;
-    padding: 8px 4px;
-    font-weight: 400;
-    transition: transform 0.25s var(--ease);
-  }
-  .hero-arrow-prev:hover {
-    transform: translateX(-4px);
-  }
-  .hero-arrow-next:hover {
-    transform: translateX(4px);
-  }
-</style>
-
-<script>
-  const slides = [...document.querySelectorAll('[data-slide]')]
-  const name = document.querySelector('[data-hero-name]')
-  let i = 0
-  function show(n) {
-    if (!slides.length) return
-    i = (n + slides.length) % slides.length
-    slides.forEach((s, j) => {
-      const active = j === i
-      s.style.opacity = active ? '1' : '0'
-      s.style.pointerEvents = active ? 'auto' : 'none'
-      s.setAttribute('aria-hidden', active ? 'false' : 'true')
-    })
-    if (name) {
-      name.textContent = slides[i].dataset.title ?? ''
-      name.href = slides[i].dataset.href ?? '#'
-    }
-  }
-  document.querySelector('[data-hero-prev]')?.addEventListener('click', () => show(i - 1))
-  document.querySelector('[data-hero-next]')?.addEventListener('click', () => show(i + 1))
-  const auto = !matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (auto && slides.length > 1) setInterval(() => show(i + 1), 6000)
-  if (slides.length) show(0)
-
-  // Fold rule: gap below the image (to viewport bottom) === gap above it
-  // (logo bottom -> image top). The CSS calc already lands within a pixel;
-  // this re-derives the height from real layout so the equality is exact at
-  // any viewport, browser, or future header change. Measured via the
-  // offsetTop chain, NOT getBoundingClientRect: rects include the pageIn
-  // entrance transform (main starts at translateY(12px)), which skewed
-  // load-time measurements; offset positions ignore transforms. The chain is
-  // all in CSS space, so innerHeight (physical) is divided by the effective
-  // zoom once. min-height still floors it.
-  const frame = document.querySelector('.hero-frame')
-  const logo = document.querySelector('header img[alt="MDMC"]')
-  function pageTopCss(el) {
-    let y = 0
-    while (el) { y += el.offsetTop; el = el.offsetParent }
-    return y
-  }
-  function sizeHero() {
-    if (!frame || !logo) return
-    frame.style.height = ''
-    const zoomEl = document.querySelector('.zoom')
-    const zoom = zoomEl ? parseFloat(getComputedStyle(zoomEl).zoom) || 1 : 1
-    const logoBottom = pageTopCss(logo) + logo.offsetHeight
-    const frameTop = pageTopCss(frame)
-    const gapTop = frameTop - logoBottom
-    const target = window.innerHeight / zoom - gapTop - frameTop
-    if (target > 0) frame.style.height = `${target}px`
-  }
-  sizeHero()
-  addEventListener('resize', sizeHero)
-  // The webfont applies after this script runs and can change the header's
-  // row height, so observe the header: any geometry change — font swap,
-  // logo load, future header edits — re-derives the hero height.
-  const header = document.querySelector('header')
-  if (header && 'ResizeObserver' in window) new ResizeObserver(sizeHero).observe(header)
-</script>

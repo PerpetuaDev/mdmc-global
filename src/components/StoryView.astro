@@ -48,6 +48,7 @@
 // criteria and would need plumbing (current index + total project count)
 // this component isn't given.
 import PullQuote from './PullQuote.astro';
+import { makeT, pickLocalized } from '../lib/i18n.js';
 
 interface GallerySlot {
   url: string;
@@ -76,6 +77,7 @@ interface Props {
   pullQuote: string | null;
   pullQuoteAttribution: string | null;
   next: NextProject | null;
+  locale?: "en" | "ja";
 }
 
 const {
@@ -85,7 +87,9 @@ const {
   pullQuote = null,
   pullQuoteAttribution = null,
   next = null,
+  locale = "en",
 } = Astro.props as Props;
+const t = makeT(locale);
 
 // Same fallback rule as GalleryStack: the real gallery when non-empty, else
 // a single synthetic hero-kind slot from heroImage, else nothing.
@@ -113,10 +117,10 @@ const FRAME_CLASS: Record<GallerySlot['kind'], string> = {
 // Only sections with at least one authored paragraph render, in this fixed
 // overview/challenge/approach/outcome order (prototype 597-618).
 const sections = [
-  { key: 'overview', label: 'Overview', paragraphs: story?.overview ?? [] },
-  { key: 'challenge', label: 'Challenge', paragraphs: story?.challenge ?? [] },
-  { key: 'approach', label: 'Approach', paragraphs: story?.approach ?? [] },
-  { key: 'outcome', label: 'Outcome', paragraphs: story?.outcome ?? [] },
+  { key: 'overview', label: t('project.section.overview'), paragraphs: story?.overview ?? [] },
+  { key: 'challenge', label: t('project.section.challenge'), paragraphs: story?.challenge ?? [] },
+  { key: 'approach', label: t('project.section.approach'), paragraphs: story?.approach ?? [] },
+  { key: 'outcome', label: t('project.section.outcome'), paragraphs: story?.outcome ?? [] },
 ].filter((section) => section.paragraphs.length > 0);
 ---
 
@@ -148,14 +152,14 @@ const sections = [
 {next && (
   <a href={`/work/${next.slug}/`} class="next-project">
     <div class="next-project-head">
-      <span class="label">Next project</span>
+      <span class="label">{t('project.next')}</span>
     </div>
     <div class="next-project-frame">
       {next.heroImage && <img src={next.heroImage.url} alt={next.heroImage.alt} />}
     </div>
     <div class="next-project-foot">
-      <span class="next-project-title">{next.title}</span>
-      <span class="next-project-cta">View project <span class="arrow" aria-hidden="true">→</span></span>
+      <span class="next-project-title">{pickLocalized(locale, next, 'title')}</span>
+      <span class="next-project-cta">{t('home.work.view')} <span class="arrow" aria-hidden="true">→</span></span>
     </div>
   </a>
 )}

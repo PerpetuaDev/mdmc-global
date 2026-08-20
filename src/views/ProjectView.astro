@@ -1,0 +1,187 @@
+---
+// Project detail view — pure template, extracted from
+// src/pages/work/[slug].astro (Phase-5 Task 3). getStaticPaths/data loading
+// stays in the page wrapper; this component receives `project` + `next` as
+// props.
+//
+// See src/pages/work/[slug].astro's original header comment for provenance
+// notes (design/handoff/design/MDMC Site.dc.html lines 486-643, README §6/§7)
+// — `data-view-pane="gallery"` / `data-view-pane="story"` are sibling panes;
+// the story pane (and its toggle, rendered by ProjectHeader.astro) only
+// exists in the DOM when `hasStory` is true — no live project has story
+// content today, so `panes.story` is null on every current page and the
+// toggle script below no-ops entirely. That toggle script's own runtime
+// labels ("View gallery" / "View project details") are left as literal JS
+// (not `t()`) — they never render on any live page today, and templating
+// them would require `define:vars`, which would inject variable
+// declarations into the script output and break EN byte-stability.
+import ProjectHeader from "../components/ProjectHeader.astro";
+import GalleryStack from "../components/GalleryStack.astro";
+import StoryView from "../components/StoryView.astro";
+
+interface Props {
+  locale?: "en" | "ja";
+  project: any;
+  next: any;
+}
+
+const { locale = "en", project, next } = Astro.props as Props;
+const hasStory = Boolean(project.story);
+---
+
+<main style="animation: pageIn .6s var(--ease)">
+  <ProjectHeader project={project} hasStory={hasStory} locale={locale} />
+  <div data-view-pane="gallery">
+    <GalleryStack
+      gallery={project.gallery}
+      heroImage={project.heroImage}
+      pullQuote={project.pullQuote}
+      pullQuoteAttribution={project.pullQuoteAttribution}
+    />
+  </div>
+  {hasStory && (
+    <div data-view-pane="story" hidden>
+      <StoryView
+        story={project.story}
+        gallery={project.gallery}
+        heroImage={project.heroImage}
+        pullQuote={project.pullQuote}
+        pullQuoteAttribution={project.pullQuoteAttribution}
+        next={next}
+        locale={locale}
+      />
+    </div>
+  )}
+
+    <script is:inline>
+      // Gallery <-> Case Study toggle (README §7 / task brief step 2).
+      // `is:inline` (rather than Astro's default bundled module script) so
+      // this runs synchronously at its position in the document instead of
+      // being deferred until after the whole page parses — the panes above
+      // are already in the DOM by the time the parser reaches this tag, and
+      // running sooner shrinks (without eliminating — this is a static
+      // build, there's no server-side awareness of `?view=` to render the
+      // right pane up front) the flash when a page is loaded directly with
+      // `?view=story`.
+      (function () {
+        var panes = {
+          gallery: document.querySelector('[data-view-pane="gallery"]'),
+          story: document.querySelector('[data-view-pane="story"]'),
+        };
+        // No story content on this project (or on any live project today)
+        // -> no story pane in the DOM -> nothing to wire. The toggle button
+        // doesn't exist in this case either (ProjectHeader only renders it
+        // when hasStory), so there's nothing left dangling.
+        if (!panes.story) return;
+
+        var toggle = document.querySelector('[data-view-toggle]');
+        var label = toggle && toggle.querySelector('[data-view-toggle-label]');
+
+        function reducedMotion() {
+          return matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+
+        function labelFor(v) {
+          return v === 'story' ? 'View gallery' : 'View project details';
+        }
+
+        var view = new URLSearchParams(location.search).get('view') === 'story' ? 'story' : 'gallery';
+        // Tracks the in-flight fade's setTimeout id, if any, so a second
+        // click inside the .32s fade window can cancel it (see render()).
+        var fadeTimer = null;
+
+        function clearFade(pane) {
+          pane.style.opacity = '';
+          pane.style.transition = '';
+        }
+
+        // Shows the pane for the current `view`, hides the other, and
+        // updates the toggle label. `instant` skips the pageIn entrance
+        // animation (used for the initial load and whenever reduced-motion
+        // is on). Always clears any stale inline opacity/transition off the
+        // pane it's revealing — it may carry a leftover fade-out from a
+        // click that got superseded before its timer fired (see render()).
+        function swap(instant) {
+          var showing = panes[view];
+          var hiding = panes[view === 'story' ? 'gallery' : 'story'];
+          hiding.hidden = true;
+          showing.hidden = false;
+          showing.style.animation = instant ? 'none' : 'pageIn .5s var(--ease)';
+          clearFade(showing);
+          if (label) label.textContent = labelFor(view);
+        }
+
+        // We use replaceState, never pushState: the toggle switches a view
+        // mode, not a navigation step. Back/forward moving between gallery
+        // and story is not a requirement here, and pushState would add a
+        // history entry per click, which would be surprising back-button
+        // behavior for what's visually a same-page toggle.
+        function persistUrl() {
+          var url = view === 'story' ? '?view=story' : location.pathname;
+          history.replaceState(null, '', url);
+        }
+
+        // Click handler: fade the current pane out (.32s), swap, fade the
+        // new one in (pageIn .5s) — reduced-motion (or the initial load,
+        // via swap(true) below) skips straight to the end state with no
+        // timers and no scrolling.
+        function render() {
+          // Cancel a fade still in flight from an earlier click before
+          // starting a new one. Left uncancelled, that earlier timer would
+          // still fire later and swap panes against whatever `view` is by
+          // then — using a pane reference it captured when *it* was
+          // scheduled, which a second click can have made stale. Concretely:
+          // click A starts fading pane X out; click B (before A's timer
+          // fires) starts fading pane Y out instead, but never touches X's
+          // leftover `opacity: 0` — so X sits invisible, even though it may
+          // be the pane B's timer is about to reveal, until A's uncancelled
+          // timer happens to clean it up. Cancelling here means only the
+          // most recent click's timer ever runs.
+          if (fadeTimer !== null) {
+            clearTimeout(fadeTimer);
+            fadeTimer = null;
+          }
+          // A cancelled fade may have left either pane mid-transition with
+          // a stale inline opacity — clear both rather than tracking which
+          // one a superseded click was fading.
+          clearFade(panes.gallery);
+          clearFade(panes.story);
+
+          if (reducedMotion()) {
+            swap(true);
+            persistUrl();
+            return;
+          }
+          var hiding = panes[view === 'story' ? 'gallery' : 'story'];
+          hiding.style.transition = 'opacity .32s ease';
+          hiding.style.opacity = '0';
+          fadeTimer = setTimeout(function () {
+            fadeTimer = null;
+            // Re-derive the pane we just faded out from the current `view`
+            // rather than trusting the `hiding` reference closed over above
+            // — `view` can only change by going through render() again,
+            // which would already have cancelled this timer, so this always
+            // resolves to the same pane `hiding` does here. Reading it
+            // fresh means this callback never depends on a snapshot that
+            // could, under a future refactor, drift from the pane the fade
+            // actually ran on.
+            var justHidden = panes[view === 'story' ? 'gallery' : 'story'];
+            swap(false);
+            clearFade(justHidden);
+          }, 320);
+          persistUrl();
+        }
+
+        // Initial state: honor `?view=` instantly (no fade, no entrance
+        // animation, no URL rewrite needed since it already matches).
+        swap(true);
+
+        if (toggle) {
+          toggle.addEventListener('click', function () {
+            view = view === 'story' ? 'gallery' : 'story';
+            render();
+          });
+        }
+      })();
+    </script>
+</main>
