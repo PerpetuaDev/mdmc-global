@@ -461,7 +461,10 @@ import { STUDIOS } from "../../lib/studios.js";
           const confirmLine = document.createElement('p');
           confirmLine.className = 'contact-confirm';
           confirmLine.textContent = "Thank you — we'll be in touch.";
+          confirmLine.setAttribute('role', 'status');
+          confirmLine.tabIndex = -1;
           form.replaceWith(confirmLine);
+          confirmLine.focus();
         } else {
           showError('Something went wrong — please try again.');
           try {
