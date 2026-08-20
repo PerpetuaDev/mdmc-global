@@ -58,6 +58,7 @@ const defaultLocale = "en";
     <a
       href="/about/"
       data-mega-trigger="about"
+      data-about-link
       class:list={["nav-link", { "is-active": active === "about" }]}
     >About</a>
     <a
@@ -115,7 +116,7 @@ const defaultLocale = "en";
           <div style="flex: 0 0 335px" class="label">About</div>
         </div>
         <ul style="list-style: none">
-          <li style="margin-top: 10px"><a href="/about/" class="mega-link" style="font-size: 20px">About</a></li>
+          <li style="margin-top: 10px"><a href="/about/" data-about-link class="mega-link" style="font-size: 20px">About</a></li>
           <li style="margin-top: 10px"><a href="/careers/" class="mega-link" style="font-size: 20px">Careers</a></li>
         </ul>
       </div>
@@ -306,6 +307,14 @@ const defaultLocale = "en";
     });
     header.querySelectorAll('[data-locale]').forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.locale === locale);
+    });
+
+    // Both pages (/about/ and /ja/about/) stay directly reachable regardless
+    // of stored locale — this only repoints the nav link + About-panel link
+    // so browsing follows the visitor's chosen locale, no redirects.
+    const aboutHref = locale === 'ja' ? '/ja/about/' : '/about/';
+    header.querySelectorAll('[data-about-link]').forEach((a) => {
+      a.setAttribute('href', aboutHref);
     });
   }
 

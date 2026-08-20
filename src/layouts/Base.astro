@@ -8,15 +8,16 @@ interface Props {
   title: string;
   description?: string;
   active?: "home" | "work" | "news" | "about" | "contact";
+  lang?: string;
 }
 
 const defaultDescription = "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
-const { title, description = defaultDescription, active } = Astro.props;
+const { title, description = defaultDescription, active, lang = "en" } = Astro.props;
 const { projects, articles } = await loadContent();
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang={lang}>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
