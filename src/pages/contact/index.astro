@@ -334,10 +334,12 @@ import { STUDIOS } from "../../lib/studios.js";
   });
 
   // Live clocks, scoped to `main [data-clock]` so this page's own three
-  // studio clocks tick independently of Footer.astro's identical
-  // [data-clock] spans — Footer renders as a sibling outside this page's
-  // <main> (see Base.astro), with its own separate interval. One shared
-  // interval for this page's three clocks, same tick pattern as Footer.
+  // studio clocks tick from this one shared interval only. Footer.astro
+  // renders its own identical [data-clock] spans as a sibling outside
+  // this page's <main> (see Base.astro) and runs its own separate
+  // interval — scoped to `[data-footer] [data-clock]` on its side — so
+  // the two intervals each own a disjoint set of nodes and never both
+  // write the same clock. Same tick pattern as Footer, just scoped.
   const clocks = document.querySelectorAll('main [data-clock]');
   function tick() {
     const blink = new Date().getSeconds() % 2 === 0;

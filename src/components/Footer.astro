@@ -276,7 +276,11 @@ import { STUDIOS } from "../lib/studios.js";
     });
   });
 
-  const clocks = document.querySelectorAll('[data-clock]');
+  // Scoped to this footer's own subtree ([data-footer], set on the root
+  // <footer> above) — other pages (e.g. /contact/) render their own
+  // [data-clock] spans inside <main>, with their own independent tick
+  // interval, and must not be picked up by this one (or vice versa).
+  const clocks = document.querySelectorAll('[data-footer] [data-clock]');
   function tick() {
     const blink = new Date().getSeconds() % 2 === 0;
     clocks.forEach((el) => {
