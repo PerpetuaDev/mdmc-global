@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { mapPath } from '../workers/ja-proxy/worker.js'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { mapPath, handleRequest } from '../workers/ja-proxy/worker.js'
 
 describe('ja-proxy mapPath', () => {
   it('maps HTML routes onto the ja tree', () => {
@@ -33,5 +33,69 @@ describe('ja-proxy mapPath', () => {
     expect(mapPath('/robots.txt')).toEqual({ kind: 'robots' })
     expect(mapPath('/sitemap-index.xml')).toEqual({ kind: 'none' })
     expect(mapPath('/sitemap-0.xml')).toEqual({ kind: 'none' })
+  })
+})
+
+describe('ja-proxy handleRequest', () => {
+  let fetchMock
+
+  beforeEach(() => {
+    fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('passes through a 200 from the origin', async () => {
+    fetchMock.mockResolvedValue(new Response('hello', { status: 200 }))
+    const res = await handleRequest(new Request('https://mdmc.co.jp/about/'))
+    expect(res.status).toBe(200)
+    expect(await res.text()).toBe('hello')
+  })
+
+  it('passes through a 304 Not Modified rather than 502ing it', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 304 }))
+    const res = await handleRequest(new Request('https://mdmc.co.jp/about/'))
+    expect(res.status).toBe(304)
+  })
+
+  it('fails loud (502) on a real 301-with-Location from the origin', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(null, { status: 301, headers: { location: 'https://mdmc.co/about/' } }),
+    )
+    const res = await handleRequest(new Request('https://mdmc.co.jp/about/'))
+    expect(res.status).toBe(502)
+  })
+
+  it('serves robots.txt inline with the right content-type and no origin fetch', async () => {
+    const res = await handleRequest(new Request('https://mdmc.co.jp/robots.txt'))
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+    expect(await res.text()).toContain('User-agent: *')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('404s the sitemap index without hitting the origin', async () => {
+    const res = await handleRequest(new Request('https://mdmc.co.jp/sitemap-index.xml'))
+    expect(res.status).toBe(404)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('redirects a stray /ja prefix on co.jp to the bare path', async () => {
+    const res = await handleRequest(new Request('https://mdmc.co.jp/ja/foo'))
+    expect(res.status).toBe(301)
+    expect(res.headers.get('location')).toBe('https://mdmc.co.jp/foo')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('fetches the origin with the ja-proxy marker header and manual redirect', async () => {
+    fetchMock.mockResolvedValue(new Response('ok', { status: 200 }))
+    await handleRequest(new Request('https://mdmc.co.jp/about/'))
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const [reqArg, initArg] = fetchMock.mock.calls[0]
+    expect(reqArg.headers.get('x-mdmc-ja-proxy')).toBe('1')
+    expect(initArg).toEqual({ redirect: 'manual' })
   })
 })

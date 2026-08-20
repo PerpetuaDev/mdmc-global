@@ -36,34 +36,51 @@ export function mapPath(pathname) {
   return { kind: 'html', to: '/ja' + (pathname === '/' ? '/' : pathname) }
 }
 
-export default {
-  async fetch(request) {
-    const url = new URL(request.url)
-    const mapped = mapPath(url.pathname)
+// Exported (alongside the default { fetch } export Cloudflare invokes) so
+// tests can call the handler directly with a stubbed global fetch, without
+// needing a Miniflare/Workers runtime.
+export async function handleRequest(request) {
+  const url = new URL(request.url)
+  const mapped = mapPath(url.pathname)
 
-    switch (mapped.kind) {
-      case 'robots':
-        return new Response(ROBOTS, {
-          headers: { 'content-type': 'text/plain; charset=utf-8' },
-        })
-      case 'none':
-        return new Response('Not found', { status: 404 })
-      case 'redirect':
-        return Response.redirect(`${url.origin}${mapped.to}${url.search}`, 301)
-      default: {
-        const originRequest = new Request(`${ORIGIN}${mapped.to}${url.search}`, request)
-        // Marker for the mdmc.co/ja/* → co.jp redirect rule to exclude the
-        // Worker's own fetches (docs/JA-DOMAIN.md §6).
-        originRequest.headers.set('x-mdmc-ja-proxy', '1')
-        // mapPath normalizes every path the origin would redirect, so a 3xx
-        // here means misconfiguration (e.g. the §6 rule matching this fetch)
-        // — fail loud rather than bounce visitors around a loop.
-        const response = await fetch(originRequest, { redirect: 'manual' })
-        if (response.status >= 300 && response.status < 400) {
-          return new Response('ja-proxy: unexpected origin redirect', { status: 502 })
-        }
-        return response
+  switch (mapped.kind) {
+    case 'robots':
+      return new Response(ROBOTS, {
+        headers: { 'content-type': 'text/plain; charset=utf-8' },
+      })
+    case 'none':
+      return new Response('Not found', { status: 404 })
+    case 'redirect':
+      return Response.redirect(`${url.origin}${mapped.to}${url.search}`, 301)
+    default: {
+      const originRequest = new Request(`${ORIGIN}${mapped.to}${url.search}`, request)
+      // Marker for the mdmc.co/ja/* → co.jp redirect rule to exclude the
+      // Worker's own fetches (docs/JA-DOMAIN.md §6).
+      originRequest.headers.set('x-mdmc-ja-proxy', '1')
+      // mapPath normalizes every path the origin would redirect, so a
+      // *followable* 3xx here (one with a Location) means misconfiguration
+      // (e.g. the §6 rule matching this fetch) — fail loud rather than
+      // bounce visitors around a loop.
+      //
+      // 304 Not Modified is excluded even though it's in the 3xx range: we
+      // forward the visitor's conditional headers (If-None-Match /
+      // If-Modified-Since) onto the origin request above, so a revalidating
+      // repeat visitor legitimately gets a Location-less 304 back — that's
+      // a normal passthrough response, not an unexpected redirect.
+      const response = await fetch(originRequest, { redirect: 'manual' })
+      const isUnexpectedRedirect =
+        response.status >= 300 &&
+        response.status < 400 &&
+        response.status !== 304 &&
+        response.headers.has('location')
+      if (isUnexpectedRedirect) {
+        return new Response('ja-proxy: unexpected origin redirect', { status: 502 })
       }
+      return response
     }
-  },
+  }
+}
+
+export default {
+  fetch: (request) => handleRequest(request),
 }

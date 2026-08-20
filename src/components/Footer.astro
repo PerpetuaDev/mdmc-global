@@ -356,8 +356,15 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
   function normalizeRegion(v) {
     return v === 'au' || v === 'jp' ? v : 'nz';
   }
+  // Mirrors Header.astro's fallback: with nothing in storage yet, fall back
+  // to the ACTUAL locale of the page being viewed (read off the header's
+  // data-page-locale attribute, present on every page) rather than
+  // hardcoding 'en' — a first-ever visit landing straight on a /ja/ page
+  // must show 日本語 in the footer, not English.
+  const headerEl = document.querySelector('[data-page-locale]');
+  const pageLocale = headerEl && headerEl.dataset.pageLocale === 'ja' ? 'ja' : 'en';
   function normalizeLocale(v) {
-    if (!v) return 'en';
+    if (!v) return pageLocale;
     return String(v).toLowerCase().startsWith('ja') ? 'ja' : 'en';
   }
   function readStore(key) {
