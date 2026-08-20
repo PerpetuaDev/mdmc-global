@@ -75,10 +75,14 @@ const first = heroSlides[0];
   .hero-frame {
     position: relative;
     width: 100%;
-    /* 100svh is scaled by the .zoom wrapper — /--page-zoom restores the real
-       viewport so the hero fills the first screen (prototype's 200px chrome
-       deduction kept in CSS space). */
-    height: calc(100svh / var(--page-zoom) - 200px);
+    /* Fold rule: the gap below the image (to the viewport bottom) must equal
+       the gap above it (logo bottom → image top). 100svh is scaled by the
+       .zoom wrapper, so /--page-zoom restores the real viewport; 266.7px =
+       image top (181.1: header 64 + logo row + 36, plus this section's 40
+       top padding) + the mirrored 85.6 logo gap, in CSS px. The hero script
+       re-measures on load/resize so the equality stays exact if header
+       metrics ever drift. */
+    height: calc(100svh / var(--page-zoom) - 266.7px);
     min-height: 720px;
     background: var(--ph);
     overflow: hidden;
@@ -152,4 +156,39 @@ const first = heroSlides[0];
   const auto = !matchMedia('(prefers-reduced-motion: reduce)').matches
   if (auto && slides.length > 1) setInterval(() => show(i + 1), 6000)
   if (slides.length) show(0)
+
+  // Fold rule: gap below the image (to viewport bottom) === gap above it
+  // (logo bottom -> image top). The CSS calc already lands within a pixel;
+  // this re-derives the height from real layout so the equality is exact at
+  // any viewport, browser, or future header change. Measured via the
+  // offsetTop chain, NOT getBoundingClientRect: rects include the pageIn
+  // entrance transform (main starts at translateY(12px)), which skewed
+  // load-time measurements; offset positions ignore transforms. The chain is
+  // all in CSS space, so innerHeight (physical) is divided by the effective
+  // zoom once. min-height still floors it.
+  const frame = document.querySelector('.hero-frame')
+  const logo = document.querySelector('header img[alt="MDMC"]')
+  function pageTopCss(el) {
+    let y = 0
+    while (el) { y += el.offsetTop; el = el.offsetParent }
+    return y
+  }
+  function sizeHero() {
+    if (!frame || !logo) return
+    frame.style.height = ''
+    const zoomEl = document.querySelector('.zoom')
+    const zoom = zoomEl ? parseFloat(getComputedStyle(zoomEl).zoom) || 1 : 1
+    const logoBottom = pageTopCss(logo) + logo.offsetHeight
+    const frameTop = pageTopCss(frame)
+    const gapTop = frameTop - logoBottom
+    const target = window.innerHeight / zoom - gapTop - frameTop
+    if (target > 0) frame.style.height = `${target}px`
+  }
+  sizeHero()
+  addEventListener('resize', sizeHero)
+  // The webfont applies after this script runs and can change the header's
+  // row height, so observe the header: any geometry change — font swap,
+  // logo load, future header edits — re-derives the hero height.
+  const header = document.querySelector('header')
+  if (header && 'ResizeObserver' in window) new ResizeObserver(sizeHero).observe(header)
 </script>
