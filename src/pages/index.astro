@@ -75,7 +75,10 @@ const first = heroSlides[0];
   .hero-frame {
     position: relative;
     width: 100%;
-    height: calc(100svh - 200px);
+    /* 100svh is scaled by the .zoom wrapper — /--page-zoom restores the real
+       viewport so the hero fills the first screen (prototype's 200px chrome
+       deduction kept in CSS space). */
+    height: calc(100svh / var(--page-zoom) - 200px);
     min-height: 720px;
     background: var(--ph);
     overflow: hidden;

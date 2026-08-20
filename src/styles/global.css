@@ -28,5 +28,13 @@ input, textarea { font: inherit; }
 .cta:hover { border-bottom-color: currentColor; }
 .arrow { font-weight: 400; }
 @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@media (min-width: 1024px) { .zoom { zoom: 0.85; } }
+/* CSS zoom scales viewport units inside the wrapper (100svh renders at
+   zoom × viewport — measured in Chrome and Firefox), so any viewport-height
+   sizing inside .zoom must divide by --page-zoom to hit the real viewport.
+   Same compensation the pre-redesign site used. */
+:root { --page-zoom: 1; }
+@media (min-width: 1024px) {
+  :root { --page-zoom: 0.85; }
+  .zoom { zoom: 0.85; }
+}
 @media (prefers-reduced-motion: reduce) { main, .filter-list { animation: none !important; } }
