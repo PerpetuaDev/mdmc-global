@@ -39,7 +39,7 @@ const ARTICLES_POPULATE = 'populate[cover]=true&populate[hero_image]=true&popula
 // CAREER_POPULATE/JOBS_POPULATE. `offers` is deliberately not populated on
 // career — ignored this phase per the content-layer-v3 brief.
 const ABOUT_POPULATE =
-  'populate[hero_image]=true&populate[kv_1_image]=true&populate[kv_2_image]=true&populate[kv_3_image]=true&populate[kv_4_image]=true'
+  'populate[hero_image]=true'
 const ABOUT_JAPAN_POPULATE = 'populate[hero_image]=true&populate[signature_portrait]=true'
 const CAREER_POPULATE = 'populate[hero_image]=true'
 const JOBS_POPULATE = 'populate[hero_image]=true'

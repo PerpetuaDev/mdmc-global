@@ -182,7 +182,9 @@ function sectionsOf(item) {
     sections.push({
       title,
       body: blocksToParagraphs(item[`kv_${i}_body`]),
-      image: mediaOf(item[`kv_${i}_image`]),
+      // kv images intentionally not mapped: the redesign's About sections are
+      // text-only (prototype) — the old site rendered them, the new one never
+      // has. Fields still exist in the CMS until the post-cutover cleanup.
     })
   }
   return sections
@@ -279,7 +281,7 @@ function normalizeJob(item) {
 const PROJECTS_POPULATE = 'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image'
 const ARTICLES_POPULATE = 'populate[cover]=true&populate[hero_image]=true&populate[project]=true'
 const ABOUT_POPULATE =
-  'populate[hero_image]=true&populate[kv_1_image]=true&populate[kv_2_image]=true&populate[kv_3_image]=true&populate[kv_4_image]=true'
+  'populate[hero_image]=true'
 const ABOUT_JAPAN_POPULATE = 'populate[hero_image]=true&populate[signature_portrait]=true'
 // `offers` is intentionally NOT populated here — ignored this phase per the brief.
 const CAREER_POPULATE = 'populate[hero_image]=true'

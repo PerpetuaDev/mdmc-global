@@ -196,15 +196,15 @@ describe('normalizeAbout', () => {
     expect(out.lede).toBe('MDMC is a small team.')
     expect(out.heroImage).toEqual({ url: 'https://x/about-hero.jpg', alt: 'About hero' })
     expect(out.sections).toHaveLength(2)
+    // kv images are intentionally not mapped (About sections are text-only
+    // in the redesign); the raw field above proves they're safely ignored.
     expect(out.sections[0]).toEqual({
       title: 'What we do',
       body: ['Branding.', 'Digital product design.'],
-      image: { url: 'https://x/kv1.jpg', alt: '' },
     })
     expect(out.sections[1]).toEqual({
       title: 'How we work',
       body: ['Two-week loops.'],
-      image: null,
     })
   })
 
