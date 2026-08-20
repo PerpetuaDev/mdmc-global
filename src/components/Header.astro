@@ -34,11 +34,16 @@ const href = (path: string) => linkHref(locale, locale, path);
 const workItems = projects.slice(0, 4);
 const newsItems = articles.slice(0, 4);
 
-const regions = [
-  { code: "nz", label: "New Zealand" },
-  { code: "au", label: "Australia" },
-  { code: "jp", label: "Japan" },
+// Localized labels; ja leads with the local (Japan) studio, same principle
+// as studiosForLocale. The client script keeps these exact labels via the
+// data-region-labels attribute below (it's a bundled script, no server vars).
+const regionRows = [
+  { code: "nz", label: t("work.region.New Zealand") },
+  { code: "au", label: t("work.region.Australia") },
+  { code: "jp", label: t("work.region.Japan") },
 ];
+const regions = locale === "ja" ? [regionRows[2], regionRows[0], regionRows[1]] : regionRows;
+const regionLabelsJson = JSON.stringify(Object.fromEntries(regionRows.map((r) => [r.code, r.label])));
 // Language row labels never translate (the English row always reads
 // "English", even on a ja page) — lang.en/lang.ja happen to hold identical
 // values in both dicts, so t() is just a convenient lookup here.
@@ -60,13 +65,13 @@ const defaultLocale = locale;
   data-page-locale={locale}
   style="position: relative; z-index: 100; background: #fff; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; padding: 64px var(--gutter-r) 36px var(--gutter-l); font-size: 20px"
 >
-  <a href={href("/")} aria-label="MDMC home" style="display: flex; align-items: center; gap: 14px; justify-self: start">
+  <a href={href("/")} aria-label={t("a11y.homeLink")} style="display: flex; align-items: center; gap: 14px; justify-self: start">
     {/* width/height attrs reserve the box pre-decode; the data-URI src makes
         the pixels part of the document so nothing flashes on navigation. */}
     <img src={logoDataUri} alt="MDMC" width="400" height="94" style="height: 22px; width: auto; aspect-ratio: 400 / 94">
   </a>
 
-  <nav aria-label="Primary" style="justify-self: start; display: flex; gap: 72px; margin-left: 225px">
+  <nav aria-label={t("a11y.primaryNav")} style="justify-self: start; display: flex; gap: 72px; margin-left: 225px">
     <a
       href={href("/work/")}
       data-mega-trigger="work"
@@ -99,7 +104,7 @@ const defaultLocale = locale;
       class="locale-trigger"
       style="padding: 6px 0; font-size: 16px; color: #000; white-space: nowrap; display: inline-flex; align-items: baseline; gap: 10px"
     >
-      <span data-locale-label>New Zealand</span>
+      <span data-locale-label data-region-labels={regionLabelsJson}>{t("work.region.New Zealand")}</span>
       <span data-locale-code style="font-size: 10px; letter-spacing: 0.14em; color: var(--muted); position: relative; top: -1px">EN</span>
     </button>
   </div>
@@ -280,7 +285,13 @@ const defaultLocale = locale;
   // for now this only persists the choice and updates this component's UI.
   const REGION_KEY = 'mdmc.region';
   const LOCALE_KEY = 'mdmc.locale';
-  const REGION_LABELS = { nz: 'New Zealand', au: 'Australia', jp: 'Japan' };
+  // Localized region names ride in on data-region-labels (see the
+  // [data-locale-label] span) — EN literals stay as the no-JS-attr fallback.
+  let REGION_LABELS: Record<string, string> = { nz: 'New Zealand', au: 'Australia', jp: 'Japan' };
+  try {
+    const src = document.querySelector('[data-locale-label]') as HTMLElement | null;
+    if (src?.dataset.regionLabels) REGION_LABELS = { ...REGION_LABELS, ...JSON.parse(src.dataset.regionLabels) };
+  } catch { /* keep EN fallback */ }
 
   // localStorage can throw (Safari private mode, storage disabled by
   // policy, etc.) — these guards keep the locale UI working in-memory for

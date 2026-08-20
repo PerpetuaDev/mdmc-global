@@ -114,7 +114,13 @@ ET=$(curl -s -D - -o /dev/null https://mdmc.co.jp/favicon.svg | grep -i '^etag:'
 curl -s -o /dev/null -w '%{http_code}\n' -H "If-None-Match: $ET" https://mdmc.co.jp/favicon.svg   # 304
 ```
 
-## 6. 301 consolidation: mdmc.co/ja/* → co.jp — REMAINING (user, after §5)
+## 6. 301 consolidation: mdmc.co/ja/* → co.jp — DONE (2026-08-20)
+
+Applied via the rulesets API exactly as specified below, after the merge
+deployed and both zones were purged. Verified live: `/ja/work/?utm=x` →
+301 `https://mdmc.co.jp/work/?utm=x` (query preserved), bare `/ja` → 301
+`https://mdmc.co.jp/`, co.jp still 200s throughout (Worker fetches excluded
+by the header guard — no loop, no 502), EN tree unaffected.
 
 Purpose: consolidate visitors and search engines from the legacy
 `mdmc.co/ja/*` URLs onto the ja domain. (Distinct from the Worker's own

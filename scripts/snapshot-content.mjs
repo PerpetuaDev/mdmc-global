@@ -34,7 +34,7 @@ async function token() {
 // this Strapi Cloud instance (confirmed live) — so these list every
 // relation/media field explicitly instead of using the wildcard at all.
 const PROJECTS_POPULATE =
-  'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image&populate[disciplines][fields][0]=name'
+  'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image&populate[disciplines][fields][0]=name&populate[disciplines][fields][1]=name_ja'
 const ARTICLES_POPULATE = 'populate[cover]=true&populate[hero_image]=true&populate[project]=true'
 // Kept in lockstep with src/lib/content.js's ABOUT_POPULATE/ABOUT_JAPAN_POPULATE/
 // CAREER_POPULATE/JOBS_POPULATE. `offers` is deliberately not populated on

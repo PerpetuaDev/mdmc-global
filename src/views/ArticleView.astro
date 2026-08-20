@@ -26,8 +26,8 @@ const excerpt = pickLocalized(locale, article, "excerpt");
 <main style="animation: pageIn .6s var(--ease)">
   <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l)">
     <div class="label" style="margin-bottom: 24px">
-      {article.kindLabel}
-      {article.dateLabel && <><span class="meta-dot" aria-hidden="true">·</span>{article.dateLabel}</>}
+      {locale === "ja" ? (article.kindLabelJa ?? article.kindLabel) : article.kindLabel}
+      {article.dateLabel && <><span class="meta-dot" aria-hidden="true">·</span>{locale === "ja" ? (article.dateLabelJa ?? article.dateLabel) : article.dateLabel}</>}
     </div>
     <h1 class="article-title">{title}</h1>
     <div class="hero-container">

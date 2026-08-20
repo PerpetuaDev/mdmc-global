@@ -9,7 +9,7 @@
 // (design/handoff/design/MDMC Site.dc.html lines 111-146; hero window = 4
 // newest projects, 6000ms auto-advance, workCols = 2, thumbRatio = 16 / 9).
 import WorkCard from "../components/WorkCard.astro";
-import { makeT, pickLocalized, linkHref } from "../lib/i18n.js";
+import { makeT, pickLocalized, linkHref, interpolate } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -75,7 +75,7 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
           data-slide
           data-title={pickLocalized(locale, p, "title")}
           data-href={linkHref(locale, locale, `/work/${p.slug}/`)}
-          aria-label={`Open ${pickLocalized(locale, p, "title")}`}
+          aria-label={interpolate(t("a11y.openProject"), { title: pickLocalized(locale, p, "title") })}
           aria-hidden={i === 0 ? "false" : "true"}
           tabindex="-1"
           class="hero-slide"
@@ -95,10 +95,10 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
           data-hero-name
           style="pointer-events: auto; font-size: 20px; color: #000"
         >{first ? pickLocalized(locale, first, "title") : undefined}</a>
-        <div role="group" aria-label="Browse featured projects" style="pointer-events: auto; display: inline-flex; align-items: center; gap: 12px; transform: translateY(5px)">
-          <button type="button" data-hero-prev aria-label="Previous slide" class="hero-arrow hero-arrow-prev">←</button>
+        <div role="group" aria-label={t("a11y.browseProjects")} style="pointer-events: auto; display: inline-flex; align-items: center; gap: 12px; transform: translateY(5px)">
+          <button type="button" data-hero-prev aria-label={t("a11y.prevSlide")} class="hero-arrow hero-arrow-prev">←</button>
           <span aria-hidden="true" style="width: 2px; height: 18px; background: var(--faint); transform: translateY(1.5px)"></span>
-          <button type="button" data-hero-next aria-label="Next slide" class="hero-arrow hero-arrow-next">→</button>
+          <button type="button" data-hero-next aria-label={t("a11y.nextSlide")} class="hero-arrow hero-arrow-next">→</button>
         </div>
       </div>
     </div>

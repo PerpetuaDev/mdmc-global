@@ -68,6 +68,15 @@ describe('normalizeProject', () => {
     expect(out.pullQuoteAttribution).toBe('CEO')
   })
 
+  it('specialtiesJa reads name_ja with per-entry EN fallback', () => {
+    const out = normalizeProject({
+      ...withStory,
+      disciplines: [{ name: 'Naming', name_ja: 'ネーミング' }, { name: 'Brand Identity' }],
+    })
+    expect(out.specialties).toEqual(['Naming', 'Brand Identity'])
+    expect(out.specialtiesJa).toEqual(['ネーミング', 'Brand Identity'])
+  })
+
   it('drops null/empty discipline entries and yields [] when the relation is empty or absent', () => {
     const out = normalizeProject({
       ...withStory,
@@ -169,6 +178,23 @@ describe('normalizeArticle', () => {
     expect(out.projectSlug).toBeNull()
     expect(out.heroImage).toEqual({ url: 'https://x/cover.jpg', alt: '' })
     expect(out.body).toEqual([])
+  })
+})
+
+describe('ja label fields (PLACEHOLDER JA, pending native review)', () => {
+  it('normalizeArticle carries kindLabelJa and a 年月日 dateLabelJa', () => {
+    const out = normalizeArticle({ documentId: 'a9', title: 'X', date: '2026-07-15', kind: 'case_study' }, [])
+    expect(out.kindLabelJa).toBe('ケーススタディ')
+    expect(out.dateLabelJa).toBe('2026年7月15日')
+    expect(normalizeArticle({ documentId: 'a10', title: 'Y' }, []).dateLabelJa).toBe('')
+  })
+  it('normalizeJob maps type and location enums to ja labels with EN fallback', () => {
+    const out = normalizeJob({ documentId: 'j2', title: 'Role', type: 'Part-time', location: 'Yokohama' })
+    expect(out.typeLabelJa).toBe('パートタイム')
+    expect(out.locationLabelJa).toBe('横浜')
+    const unknown = normalizeJob({ documentId: 'j3', title: 'R', type: 'Seasonal', location: 'Osaka' })
+    expect(unknown.typeLabelJa).toBe('Seasonal')
+    expect(unknown.locationLabelJa).toBe('Osaka')
   })
 })
 

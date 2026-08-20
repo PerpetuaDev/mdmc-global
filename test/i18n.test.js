@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { makeT, localePath, counterpartPath, LOCALES, STRINGS, ORIGINS, linkHref, tMisses, pickLocalized } from '../src/lib/i18n.js'
+import { makeT, localePath, counterpartPath, LOCALES, STRINGS, ORIGINS, linkHref, tMisses, pickLocalized, interpolate } from '../src/lib/i18n.js'
 
 describe('makeT', () => {
   it('returns locale strings and falls back to en, then the key', () => {
@@ -133,6 +133,14 @@ describe('tMisses', () => {
     t('totally.unknown.key')
     const misses = tMisses()
     expect(misses.ja).not.toContain('totally.unknown.key')
+  })
+})
+
+describe('interpolate', () => {
+  it('fills {slot} tokens and leaves unmatched slots literal', () => {
+    expect(interpolate('{region}の現地時間', { region: '日本' })).toBe('日本の現地時間')
+    expect(interpolate('Toggle {region} studio details', { region: 'Japan' })).toBe('Toggle Japan studio details')
+    expect(interpolate('Open {title}', {})).toBe('Open {title}')
   })
 })
 

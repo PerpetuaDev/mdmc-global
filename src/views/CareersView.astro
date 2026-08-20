@@ -36,7 +36,7 @@ const t = makeT(locale);
     </h1>
     <div style="margin-top: 80px; width: 100%; aspect-ratio: 1853 / 812; background: var(--ph); overflow: hidden">
       {heroImage ? (
-        <img src={heroImage.url} alt={heroImage.alt || "MDMC careers"} style="width: 100%; height: 100%; object-fit: cover" />
+        <img src={heroImage.url} alt={heroImage.alt || `MDMC ${t("careers.title")}`} style="width: 100%; height: 100%; object-fit: cover" />
       ) : (
         <div aria-hidden="true" style="width: 100%; height: 100%; background: var(--ph)"></div>
       )}
@@ -70,13 +70,13 @@ const t = makeT(locale);
             <div>
               <div class="label" style="font-size: 11px">{t("careers.meta.studio")}</div>
               <div style="margin-top: 6px; font-size: 17px">
-                {job.locationLabel}
+                {locale === "ja" ? (job.locationLabelJa ?? job.locationLabel) : job.locationLabel}
               </div>
             </div>
             <div>
               <div class="label" style="font-size: 11px">{t("careers.meta.type")}</div>
               <div style="margin-top: 6px; font-size: 17px">
-                {job.typeLabel}
+                {locale === "ja" ? (job.typeLabelJa ?? job.typeLabel) : job.typeLabel}
               </div>
             </div>
             <span aria-hidden="true" style="justify-self: end; font-family: 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; font-size: 20px">→</span>

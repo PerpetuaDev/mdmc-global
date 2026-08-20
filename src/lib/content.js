@@ -104,7 +104,11 @@ function normalizeProject(item) {
   // Disciplines: controlled-vocabulary relation (2026-08-20). The free-text
   // `services` string it replaced is deleted from the schema; the committed
   // snapshot carries disciplines, so there is no string path left to split.
-  const services = (item.disciplines ?? []).map((d) => d?.name).filter(Boolean)
+  // specialtiesJa reads each discipline's name_ja label, falling back per
+  // entry to the EN name so a half-labeled vocabulary still renders fully.
+  const disciplines = (item.disciplines ?? []).filter((d) => d?.name)
+  const services = disciplines.map((d) => d.name)
+  const servicesJa = disciplines.map((d) => d.name_ja || d.name)
   return {
     documentId: item.documentId,
     title: item.title ?? '',
@@ -115,6 +119,7 @@ function normalizeProject(item) {
     regions: splitList(item.region),
     services,
     specialties: services,
+    specialtiesJa: servicesJa,
     darkHero: item.dark_hero ?? false,
     thumbnail: mediaOf(item.thumbnail),
     heroImage: mediaOf(item.hero_image),
@@ -127,6 +132,17 @@ function normalizeProject(item) {
 }
 
 const ARTICLE_KIND_LABELS = { news: 'News', article: 'Article', case_study: 'Case Study' }
+// PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) — same
+// status as i18n.js's PLACEHOLDER JA block.
+const ARTICLE_KIND_LABELS_JA = { news: 'ニュース', article: '記事', case_study: 'ケーススタディ' }
+
+// 2026年8月16日 — parsed straight off the YYYY-MM-DD string, so it can't
+// drift by timezone at all (mirrors dateLabelOf's UTC pinning).
+function dateLabelJaOf(date) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(date ?? '')
+  if (!m) return ''
+  return `${m[1]}年${Number(m[2])}月${Number(m[3])}日`
+}
 
 function dateLabelOf(date) {
   if (!date) return ''
@@ -162,9 +178,11 @@ function normalizeArticle(item, projects = []) {
     title: item.title ?? '',
     date: item.date ?? '',
     dateLabel: dateLabelOf(item.date),
+    dateLabelJa: dateLabelJaOf(item.date),
     excerpt: item.excerpt ?? '',
     kind,
     kindLabel: ARTICLE_KIND_LABELS[kind] ?? 'News',
+    kindLabelJa: ARTICLE_KIND_LABELS_JA[kind] ?? 'ニュース',
     projectSlug,
     cover: mediaOf(item.cover),
     heroImage: mediaOf(item.hero_image) ?? mediaOf(item.cover),
@@ -249,6 +267,22 @@ function prettifyRaw(raw) {
     .replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase())
 }
 
+// PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review). Keys
+// are the job schema's enum values verbatim; unknown values fall back to the
+// EN label.
+const JOB_TYPE_LABELS_JA = {
+  'Full-time': 'フルタイム',
+  'Part-time': 'パートタイム',
+  Contract: '契約社員',
+  Internship: 'インターン',
+}
+const JOB_LOCATION_LABELS_JA = {
+  Christchurch: 'クライストチャーチ',
+  'North Sydney': 'ノースシドニー',
+  Yokohama: '横浜',
+  'Any location': '勤務地不問',
+}
+
 function normalizeJob(item) {
   const type = item.type ?? ''
   return {
@@ -258,8 +292,10 @@ function normalizeJob(item) {
     body: blocksToParagraphs(item.body),
     location: item.location ?? '',
     locationLabel: item.location ?? '',
+    locationLabelJa: JOB_LOCATION_LABELS_JA[item.location ?? ''] ?? item.location ?? '',
     type,
     typeLabel: JOB_TYPE_LABELS[type] ?? prettifyRaw(type),
+    typeLabelJa: JOB_TYPE_LABELS_JA[type] ?? JOB_TYPE_LABELS[type] ?? prettifyRaw(type),
     locationType: item.location_type ?? '',
     applyEmail: item.apply_email ?? '',
     heroImage: mediaOf(item.hero_image),
@@ -281,7 +317,7 @@ function normalizeJob(item) {
 // wildcard. Scalar/richtext fields (title, date, kind, overview, etc.) come
 // back regardless of populate, so nothing else is lost by dropping `*`.
 const PROJECTS_POPULATE =
-  'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image&populate[disciplines][fields][0]=name'
+  'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image&populate[disciplines][fields][0]=name&populate[disciplines][fields][1]=name_ja'
 const ARTICLES_POPULATE = 'populate[cover]=true&populate[hero_image]=true&populate[project]=true'
 const ABOUT_POPULATE =
   'populate[hero_image]=true'
@@ -346,4 +382,5 @@ export {
   normalizeCareer,
   normalizeJob,
   ARTICLE_KIND_LABELS,
+  ARTICLE_KIND_LABELS_JA,
 }
