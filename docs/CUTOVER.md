@@ -54,6 +54,11 @@ the push to `main` is what triggers it — the `on: push: branches: [main]`
 trigger is live as of the `redesign/astro` merge, since that same commit is
 what swaps `deploy.yml` from the old React build to the Astro build.)
 
+The run may take a few seconds to register after the push — if `gh run watch`
+exits instantly or shows an old run, re-run the command and confirm the run's
+head SHA matches your merge commit using:
+`gh run list --workflow 'Deploy to GitHub Pages' --branch main --limit 1 --json headSha`
+
 ---
 
 ## 3. Post-deploy verification
@@ -65,6 +70,14 @@ curl -sI https://mdmc.co/ | head -5
 Expect `HTTP/2 200` (or `HTTP/1.1 200 OK` depending on how curl negotiates)
 served via Cloudflare — look for a `cf-ray` or `server: cloudflare` header
 confirming the proxy is in front, not GitHub Pages directly.
+
+**Cache stale-window note:** GitHub Pages serves with `Cache-Control: max-age=600`.
+After the deploy completes, recently-visited browsers may hold the old `index.html`
+for up to 10 minutes — and it references hashed bundles the new deploy deleted,
+so those visitors can see a broken page until expiry. Purge the Cloudflare cache
+(Dashboard → Caching → Configuration → Purge Everything) immediately after
+the deploy succeeds. A stale check is not a failed deploy — if you hit staleness,
+hard-refresh before diagnosing anything else.
 
 Spot-check in a real browser:
 - `https://mdmc.co/work/` — Region/Specialty filters open and narrow the grid
@@ -198,9 +211,9 @@ Strapi Cloud → your project → Settings → Webhooks → Create new webhook:
 - **Name:** `Rebuild site`
 - **URL:** the Worker URL from 4a
 - **Headers:** `X-Relay-Secret: <the RELAY_SECRET value from 4a>`
-- **Trigger events:** Entry → `Publish`, `Unpublish`, `Update` (check all
-  three — an unpublish should pull a project/article back off the live
-  site same as a publish should add it)
+- **Trigger events:** Entry → `Publish`, `Unpublish` (with draft and publish,
+  entry.update fires on every draft save → a rebuild per keystroke; publish/unpublish
+  cover all live-content changes since editing published content requires re-publishing)
 
 Save, then use Strapi's "Trigger" test button on the new webhook — the
 Worker should return `200 OK` and, within a minute or two, a new "Deploy to
@@ -255,6 +268,9 @@ undoing everything the redesign branch introduced in one commit.
 Pushing the revert redeploys automatically the same way the original merge
 did (`deploy.yml`'s `push: branches: [main]` trigger) — the old React SPA
 build is back live in about the same ~1 minute the forward deploy took.
+
+Purge the Cloudflare cache again (Dashboard → Caching → Configuration → Purge Everything)
+so the rollback reaches visitors without the same ~10-minute staleness window.
 
 **Nothing else needs undoing.** The Strapi schema changes made across Phases
 2–3 (article `kind` enum + project relation, project case-study fields,
