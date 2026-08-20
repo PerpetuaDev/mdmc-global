@@ -3,6 +3,12 @@
 // Transcribed from design/handoff/design/MDMC Site.dc.html lines 30-107.
 // Content is fetched once by Base.astro via loadContent() and passed down as
 // props — this component never fetches on its own.
+// The wordmark is inlined as a data URI (6KB, 400px = 4x its display size):
+// as a fetched image it painted a frame late on every navigation — the box
+// was reserved (no layout shift) but the pixels flashed in. Inlining ships
+// it with the HTML, so it paints with first render. Vite's ?inline resolves
+// this to a data: string at build time.
+import logoDataUri from "../assets/mdmc-logo.png?inline";
 
 interface ContentItem {
   slug: string;
@@ -41,10 +47,9 @@ const defaultLocale = "en";
   style="position: relative; z-index: 100; background: #fff; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; padding: 64px var(--gutter-r) 36px var(--gutter-l); font-size: 20px"
 >
   <a href="/" aria-label="MDMC home" style="display: flex; align-items: center; gap: 14px; justify-self: start">
-    {/* width/height attrs reserve the box before the PNG decodes — with
-        width:auto the logo occupied 0px for a frame on every navigation,
-        shifting the whole nav row (it keys off this grid column). */}
-    <img src="/mdmc.png" alt="MDMC" width="1000" height="235" style="height: 22px; width: auto; aspect-ratio: 1000 / 235">
+    {/* width/height attrs reserve the box pre-decode; the data-URI src makes
+        the pixels part of the document so nothing flashes on navigation. */}
+    <img src={logoDataUri} alt="MDMC" width="400" height="94" style="height: 22px; width: auto; aspect-ratio: 400 / 94">
   </a>
 
   <nav aria-label="Primary" style="justify-self: start; display: flex; gap: 72px; margin-left: 225px">
