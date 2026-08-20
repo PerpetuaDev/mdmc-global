@@ -28,7 +28,7 @@ const ogImage = article.heroImage?.url;
     <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l)">
       <div class="label" style="margin-bottom: 24px">
         {article.kindLabel}
-        {article.dateLabel && <> ・ {article.dateLabel}</>}
+        {article.dateLabel && <><span class="meta-dot" aria-hidden="true">·</span>{article.dateLabel}</>}
       </div>
       <h1 class="article-title">{article.title}</h1>
       <div class="hero-container">

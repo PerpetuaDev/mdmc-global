@@ -30,7 +30,7 @@ const { article } = Astro.props as Props;
   </div>
   <div class="label news-card-meta">
     {article.kindLabel}
-    {article.dateLabel && <> ・ {article.dateLabel}</>}
+    {article.dateLabel && <><span class="meta-dot" aria-hidden="true">·</span>{article.dateLabel}</>}
   </div>
   <h3 class="news-card-title">{article.title}</h3>
 </a>

@@ -31,6 +31,10 @@ input, textarea { font: inherit; }
 }
 .gutter { padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
 .label { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+/* Meta-line separator: Söhne's own interpunct (U+00B7) with double-space air
+   on each side — replaces the katakana ・ in EN contexts, which Söhne lacks
+   and which therefore rendered from the JP fallback fonts. JP copy keeps ・. */
+.meta-dot { margin: 0 0.5em; }
 .cta { display: inline-flex; align-items: center; gap: 8px; font-size: 20px; padding: 6px 0; border-bottom: 1px solid transparent; transition: border-color .2s ease; }
 .cta:hover { border-bottom-color: currentColor; }
 .arrow { font-weight: 400; }

@@ -106,7 +106,7 @@ import { STUDIOS } from "../../lib/studios.js";
     <section id="contact-form" class="form-section">
       <div class="form-header">
         <h2 class="label">Send a message</h2>
-        <div class="label" id="contact-to">To ・ MDMC</div>
+        <div class="label">To<span class="meta-dot" aria-hidden="true">·</span><span id="contact-to">MDMC</span></div>
       </div>
 
       <form id="contact-form-el">
@@ -322,7 +322,7 @@ import { STUDIOS } from "../../lib/studios.js";
   let recipient = 'MDMC';
   function setRecipient(value: string) {
     recipient = value;
-    if (toLabel) toLabel.textContent = `To ・ ${value}`;
+    if (toLabel) toLabel.textContent = value;
   }
 
   document.querySelectorAll('.studio-message').forEach((btn) => {
