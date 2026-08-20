@@ -33,12 +33,12 @@
 //   jp.about.location.address.v — transcribed VERBATIM, including
 //   "KITANAKA BRICK&WHITE BRICK south ニサンカイ". Flagging, not
 //   correcting: pages.jsx's English contact block and src/lib/studios.js's
-//   JP addressLines both say "3F" for this building, which reads like it
-//   might just be a floor number — but "ニサンカイ" may instead be the
-//   venue's own proper name (there's a "ニサンカイ" brochure/photo set
-//   under that name), not a garbled "3階". The JA and EN sources disagree
-//   and it isn't this module's place to guess which one is right — left as
-//   the old site's exact JA string pending user confirmation.
+//   JP addressLines both say "3F" for this building, while the old site's
+//   JA copy says "ニサンカイ" — "ニサンカイ" may be the venue's own name
+//   rather than a floor designation, but this is unconfirmed. The JA and EN
+//   sources disagree and it isn't this module's place to guess which one is
+//   right — left as the old site's exact JA string pending user
+//   confirmation.
 // - 業務内容 (services): i18n.jsx jp.about.fact.gyomu.v — real, unchanged.
 // - 交通 (access/transit): i18n.jsx jp.about.location.access.v — real,
 //   unchanged.
