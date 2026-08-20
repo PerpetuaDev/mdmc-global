@@ -68,6 +68,20 @@ describe('normalizeProject', () => {
     expect(out.pullQuoteAttribution).toBe('CEO')
   })
 
+  it('prefers discipline relation names over the legacy services string', () => {
+    const out = normalizeProject({
+      ...withStory,
+      disciplines: [{ name: 'Brand Identity' }, { name: 'Collateral Design' }, null, { name: '' }],
+    })
+    expect(out.services).toEqual(['Brand Identity', 'Collateral Design'])
+    expect(out.specialties).toEqual(['Brand Identity', 'Collateral Design'])
+  })
+
+  it('falls back to splitting services when disciplines is absent or empty', () => {
+    expect(normalizeProject({ ...withStory, disciplines: [] }).specialties).toEqual(['Web Design', 'Strategy'])
+    expect(normalizeProject(withStory).specialties).toEqual(['Web Design', 'Strategy'])
+  })
+
   it('yields gallery: [], story: null, and pullQuote: null when those fields are absent', () => {
     const out = normalizeProject(bare)
     expect(out.regions).toEqual(['USA'])

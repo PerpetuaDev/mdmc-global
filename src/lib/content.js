@@ -101,7 +101,11 @@ function normalizeProjectJa(overlay) {
 }
 
 function normalizeProject(item) {
-  const services = splitList(item.services)
+  // Disciplines (controlled-vocabulary relation, 2026-08-20) win over the
+  // legacy free-text `services` string; the split-string path stays as the
+  // fallback until every project is migrated and `services` is retired.
+  const disciplineNames = (item.disciplines ?? []).map((d) => d?.name).filter(Boolean)
+  const services = disciplineNames.length > 0 ? disciplineNames : splitList(item.services)
   return {
     documentId: item.documentId,
     title: item.title ?? '',
@@ -278,7 +282,8 @@ function normalizeJob(item) {
 // relation/media field the normalizers actually read, explicitly, with no
 // wildcard. Scalar/richtext fields (title, date, kind, overview, etc.) come
 // back regardless of populate, so nothing else is lost by dropping `*`.
-const PROJECTS_POPULATE = 'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image'
+const PROJECTS_POPULATE =
+  'populate[thumbnail]=true&populate[hero_image]=true&populate[gallery][populate]=image&populate[disciplines][fields][0]=name'
 const ARTICLES_POPULATE = 'populate[cover]=true&populate[hero_image]=true&populate[project]=true'
 const ABOUT_POPULATE =
   'populate[hero_image]=true'
