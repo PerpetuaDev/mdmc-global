@@ -1,0 +1,106 @@
+---
+// Cloudflare Turnstile widget box. Ported from the old React implementation
+// (git show main:src/turnstile.jsx) into a vanilla Astro component: one
+// inline script lazy-loads api.js (script tag content is deduped by Astro
+// across every instance of this component on a page), then renders an
+// explicit widget into every [data-turnstile] box found, tracking widget
+// ids per `name` so multiple boxes (e.g. contact + apply on the same page)
+// work independently.
+//
+// Contract (binding for Tasks 6-7, the forms):
+// - `document` CustomEvent `mdmc:turnstile`, detail: { name, token }
+//   - token is the challenge token on `callback`
+//   - token is null on `expired-callback` / `error-callback`, and also if
+//     api.js itself fails to load (offline, blocked) — the form must not
+//     hang waiting on a callback that will never come
+// - `window.mdmcTurnstileReset(name)` resets that box's widget so a new,
+//   single-use token can be minted after a failed submit. No-op (does not
+//   throw) if called before the widget for `name` has rendered.
+//
+// The public sitekey is for mdmc.co (Managed mode); matching secret is
+// TURNSTILE_SECRET_KEY on the Strapi side.
+interface Props {
+  name: string;
+}
+const { name } = Astro.props;
+---
+
+<div class="turnstile-box" data-turnstile={name}></div>
+
+<style>
+  .turnstile-box {
+    min-height: 65px;
+  }
+</style>
+
+<script>
+  const SITE_KEY = '0x4AAAAAADx-FIVqP87bxM04';
+  const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+
+  // Module-scope state. Astro dedupes identical inline <script> content
+  // across repeated uses of this component on one page, so this module
+  // body still only runs once per page load even with several boxes.
+  let scriptPromise = null;
+
+  function loadScript() {
+    if (window.turnstile) return Promise.resolve();
+    if (!scriptPromise) {
+      scriptPromise = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = SCRIPT_SRC;
+        s.async = true;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('turnstile script failed to load'));
+        document.head.appendChild(s);
+      });
+    }
+    return scriptPromise;
+  }
+
+  const widgetIds = {};
+
+  function dispatch(name, token) {
+    document.dispatchEvent(new CustomEvent('mdmc:turnstile', { detail: { name, token } }));
+  }
+
+  function renderAll() {
+    document.querySelectorAll('[data-turnstile]').forEach((box) => {
+      // Guard against double-render (e.g. this handler firing more than
+      // once, or the same box somehow visited twice).
+      if (box.dataset.turnstileRendered === '1') return;
+      const boxName = box.dataset.turnstile;
+      if (!boxName) return;
+      box.dataset.turnstileRendered = '1';
+
+      const widgetId = window.turnstile.render(box, {
+        sitekey: SITE_KEY,
+        theme: 'light',
+        size: 'flexible',
+        callback: (token) => dispatch(boxName, token),
+        'expired-callback': () => dispatch(boxName, null),
+        'error-callback': () => dispatch(boxName, null),
+      });
+      widgetIds[boxName] = widgetId;
+    });
+  }
+
+  loadScript()
+    .then(renderAll)
+    .catch(() => {
+      // api.js blocked or offline: report every box as tokenless so a form
+      // can fail the submit instead of hanging forever on a widget that
+      // will never mount. Do not throw.
+      document.querySelectorAll('[data-turnstile]').forEach((box) => {
+        const boxName = box.dataset.turnstile;
+        if (boxName) dispatch(boxName, null);
+      });
+    });
+
+  window.mdmcTurnstileReset = function (name) {
+    const widgetId = widgetIds[name];
+    // No-op if the widget for this name hasn't rendered yet.
+    if (widgetId != null && window.turnstile) {
+      window.turnstile.reset(widgetId);
+    }
+  };
+</script>
