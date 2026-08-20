@@ -1,0 +1,98 @@
+---
+// Careers page — transcribed from design/handoff/design/MDMC Site.dc.html
+// lines 305–331 (the `isCareers` main): statement headline (career.headline) →
+// hero (career.heroImage or grey) → CAREERS label-grid intro (career.intro
+// paragraphs) → OPEN POSITIONS section: `.label` header, hairline-ruled rows,
+// grid `minmax(0,420px) 200px 160px 1fr` vertically centered — job title,
+// STUDIO/{job.location} pair, TYPE/{job.typeLabel} pair, → far right — each
+// row links `/careers/<slug>/`; 88px below: CTA "Think you belong here
+// anyway? Write to us →" as `mailto:{career.contactEmail ?? 'careers@mdmc.co'}`;
+// 64px bottom padding. Zero jobs → OPEN POSITIONS header renders with no rows.
+import Base from "../../layouts/Base.astro";
+import { loadContent } from "../../lib/content.js";
+
+const { career, jobs } = await loadContent();
+
+// Fallback for null career: headline → "Careers"
+const headline = career?.headline ?? "Careers";
+const intro = career?.intro ?? [];
+const heroImage = career?.heroImage;
+const contactEmail = career?.contactEmail ?? "careers@mdmc.co";
+---
+
+<Base title="Careers — MDMC" description={intro[0] || undefined}>
+  <main style="animation: pageIn .6s var(--ease)">
+    {/* Statement headline + full-width hero */}
+    <section style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
+      <h1 style="font-size: clamp(48px, 5.6vw, 88px); font-weight: 500; letter-spacing: -0.025em; line-height: 1.02; text-wrap: balance; max-width: 1100px">
+        {headline}
+      </h1>
+      <div style="margin-top: 80px; width: 100%; aspect-ratio: 1853 / 812; background: var(--ph); overflow: hidden">
+        {heroImage ? (
+          <img src={heroImage.url} alt={heroImage.alt || "MDMC careers"} style="width: 100%; height: 100%; object-fit: cover" />
+        ) : (
+          <div aria-hidden="true" style="width: 100%; height: 100%; background: var(--ph)"></div>
+        )}
+      </div>
+    </section>
+
+    {/* Careers intro section with label grid */}
+    {intro.length > 0 && (
+      <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l); display: grid; grid-template-columns: 240px minmax(0, 720px); gap: 48px">
+        <h2 class="label" style="padding-top: 10px">Careers</h2>
+        <div>
+          {intro.map((para) => (
+            <p style="font-size: 26px; line-height: 1.45; letter-spacing: -0.01em; margin: 0">
+              {para}
+            </p>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* Open positions section */}
+    <section style="padding: 144px var(--gutter-r) 64px var(--gutter-l)">
+      <h2 class="label" style="margin-bottom: 40px">Open positions</h2>
+      <ul style="list-style: none; margin: 0; padding: 0">
+        {jobs.map((job) => (
+          <li>
+            <a href={`/careers/${job.slug}/`} style="display: grid; grid-template-columns: minmax(0, 420px) 200px 160px 1fr; gap: 48px; align-items: center; padding: 28px 0; border-top: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); text-decoration: none; color: inherit; transition: opacity 0.2s ease">
+              <h3 style="font-size: 24px; font-weight: 500; letter-spacing: -0.005em; margin: 0">
+                {job.title}
+              </h3>
+              <div>
+                <div class="label">Studio</div>
+                <div style="margin-top: 6px; font-size: 17px">
+                  {job.locationLabel}
+                </div>
+              </div>
+              <div>
+                <div class="label">Type</div>
+                <div style="margin-top: 6px; font-size: 17px">
+                  {job.typeLabel}
+                </div>
+              </div>
+              <span aria-hidden="true" style="justify-self: end; font-family: 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; font-size: 20px">→</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      {/* CTA to contact */}
+      <a href={`mailto:${contactEmail}`} style="margin-top: 88px; display: inline-flex; align-items: center; gap: 8px; font-size: 20px; padding: 6px 0; border-bottom: 1px solid transparent; text-decoration: none; color: inherit; transition: border-color 0.2s ease">
+        Think you belong here anyway? Write to us
+        <span style="font-family: 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400">→</span>
+      </a>
+    </section>
+  </main>
+</Base>
+
+<style>
+  a[href^="/careers/"]:hover {
+    opacity: 0.6;
+  }
+
+  a[href^="mailto:"]:hover {
+    border-bottom-color: currentColor;
+  }
+</style>
