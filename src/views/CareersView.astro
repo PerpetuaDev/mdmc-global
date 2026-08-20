@@ -1,0 +1,103 @@
+---
+// Careers view — pure template, extracted from src/pages/careers/index.astro
+// (Phase-5 Task 4). Data loading (loadContent) stays in the page wrapper;
+// this component receives `headline`, `intro`, `heroImage`, `contactEmail`,
+// and `jobs` as props.
+//
+// See src/pages/careers/index.astro's original header comment for provenance
+// notes (design/handoff/design/MDMC Site.dc.html lines 305-331).
+//
+// `career` (headline/intro/heroImage) is fetched EN-only by content.js (no
+// `.ja` overlay exists — see content.js's _load, which never requests
+// `/career?...&locale=ja`), so ja pages render the same English headline/
+// intro/hero as en — a deliberate, documented EN fallback, not a bug. Same
+// for `jobs` (normalizeJob has no `.ja` overlay either): job titles/locale/
+// type render in English on ja pages too.
+import { makeT } from "../lib/i18n.js";
+
+interface Props {
+  locale?: "en" | "ja";
+  headline: string;
+  intro: string[];
+  heroImage: { url: string; alt: string } | null;
+  contactEmail: string;
+  jobs: any[];
+}
+
+const { locale = "en", headline, intro, heroImage, contactEmail, jobs } = Astro.props as Props;
+const t = makeT(locale);
+---
+
+<main style="animation: pageIn .6s var(--ease)">
+  {/* Statement headline + full-width hero */}
+  <section style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
+    <h1 style="font-size: clamp(48px, 5.6vw, 88px); font-weight: 500; letter-spacing: -0.025em; line-height: 1.02; text-wrap: balance; max-width: 1100px">
+      {headline}
+    </h1>
+    <div style="margin-top: 80px; width: 100%; aspect-ratio: 1853 / 812; background: var(--ph); overflow: hidden">
+      {heroImage ? (
+        <img src={heroImage.url} alt={heroImage.alt || "MDMC careers"} style="width: 100%; height: 100%; object-fit: cover" />
+      ) : (
+        <div aria-hidden="true" style="width: 100%; height: 100%; background: var(--ph)"></div>
+      )}
+    </div>
+  </section>
+
+  {/* Careers intro section with label grid */}
+  {intro.length > 0 && (
+    <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l); display: grid; grid-template-columns: 240px minmax(0, 720px); gap: 48px">
+      <h2 class="label" style="padding-top: 10px">{t("careers.title")}</h2>
+      <div>
+        {intro.map((para) => (
+          <p style="font-size: 26px; line-height: 1.45; letter-spacing: -0.01em; margin: 0">
+            {para}
+          </p>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {/* Open positions section */}
+  <section style="padding: 144px var(--gutter-r) 64px var(--gutter-l)">
+    <h2 class="label" style="margin-bottom: 40px">{t("careers.openPositions")}</h2>
+    <ul style="list-style: none; margin: 0; padding: 0">
+      {jobs.map((job) => (
+        <li>
+          <a href={`/careers/${job.slug}/`} style="display: grid; grid-template-columns: minmax(0, 420px) 200px 160px 1fr; gap: 48px; align-items: center; padding: 28px 0; border-top: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); text-decoration: none; color: inherit; transition: opacity 0.2s ease">
+            <h3 style="font-size: 24px; font-weight: 500; letter-spacing: -0.005em; margin: 0">
+              {job.title}
+            </h3>
+            <div>
+              <div class="label" style="font-size: 11px">{t("careers.meta.studio")}</div>
+              <div style="margin-top: 6px; font-size: 17px">
+                {job.locationLabel}
+              </div>
+            </div>
+            <div>
+              <div class="label" style="font-size: 11px">{t("careers.meta.type")}</div>
+              <div style="margin-top: 6px; font-size: 17px">
+                {job.typeLabel}
+              </div>
+            </div>
+            <span aria-hidden="true" style="justify-self: end; font-family: 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; font-size: 20px">→</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    {/* CTA to contact */}
+    <a href={`mailto:${contactEmail}`} style="margin-top: 88px; display: inline-flex; align-items: center; gap: 8px; font-size: 20px; padding: 6px 0; border-bottom: 1px solid transparent; text-decoration: none; color: inherit; transition: border-color 0.2s ease">{t("careers.speculativeCta")}
+      <span style="font-family: 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400">→</span>
+    </a>
+  </section>
+</main>
+
+<style>
+  a[href^="/careers/"]:hover {
+    opacity: 0.6;
+  }
+
+  a[href^="mailto:"]:hover {
+    border-bottom-color: currentColor;
+  }
+</style>

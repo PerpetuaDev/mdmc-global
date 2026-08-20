@@ -1,0 +1,21 @@
+---
+// Careers page (ja) — identical to src/pages/careers/index.astro except
+// locale="ja" passed to both Base and CareersView (Phase-5 Task 4). `career`
+// and `jobs` have no `.ja` overlay (see CareersView.astro's header comment)
+// — a deliberate, documented EN fallback. See careers/index.astro for the
+// full header comment — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import CareersView from "../../../views/CareersView.astro";
+import { loadContent } from "../../../lib/content.js";
+
+const { career, jobs } = await loadContent();
+
+const headline = career?.headline ?? "Careers";
+const intro = career?.intro ?? [];
+const heroImage = career?.heroImage;
+const contactEmail = career?.contactEmail ?? "careers@mdmc.co";
+---
+
+<Base title="Careers — MDMC" description={intro[0] || undefined} locale="ja">
+  <CareersView locale="ja" headline={headline} intro={intro} heroImage={heroImage} contactEmail={contactEmail} jobs={jobs} />
+</Base>

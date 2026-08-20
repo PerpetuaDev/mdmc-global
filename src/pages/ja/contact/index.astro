@@ -1,0 +1,18 @@
+---
+// Contact page (ja) — identical to src/pages/contact/index.astro except
+// locale="ja" passed to both Base and ContactView (Phase-5 Task 4). See
+// contact/index.astro for the full header comment (provenance notes,
+// payload contract) — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import ContactView from "../../../views/ContactView.astro";
+import { STUDIOS } from "../../../lib/studios.js";
+---
+
+<Base
+  title="Contact — MDMC"
+  active="contact"
+  description="Tell us what you're working on — MDMC works from New Zealand, Australia and Japan."
+  locale="ja"
+>
+  <ContactView locale="ja" studios={STUDIOS} />
+</Base>

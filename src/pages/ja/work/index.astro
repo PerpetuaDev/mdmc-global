@@ -1,0 +1,15 @@
+---
+// Work index (ja) — identical to src/pages/work/index.astro except
+// locale="ja" passed to both Base and WorkIndexView (Phase-5 Task 4). See
+// work/index.astro for the full header comment (data loading, provenance
+// notes) — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import WorkIndexView from "../../../views/WorkIndexView.astro";
+import { loadContent } from "../../../lib/content.js";
+
+const { projects } = await loadContent();
+---
+
+<Base title="Work — MDMC" active="work" description="Selected work by MDMC — an integrated design & digital strategy agency." locale="ja">
+  <WorkIndexView locale="ja" projects={projects} />
+</Base>

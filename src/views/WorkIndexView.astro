@@ -8,7 +8,7 @@
 // notes (design/handoff/design/MDMC Site.dc.html lines 153-190) and the
 // measurement note about trigger-row/filter-item spacing.
 import WorkCard from "../components/WorkCard.astro";
-import { makeT } from "../lib/i18n.js";
+import { makeT, STRINGS } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -17,6 +17,25 @@ interface Props {
 
 const { locale = "en", projects } = Astro.props as Props;
 const t = makeT(locale);
+
+// Region chip labels: t('work.region.' + value) when the dict actually has
+// that key for this locale, else the raw CMS value untouched. Deliberately
+// NOT just `t('work.region.' + r)` — makeT() falls back to the EN string for
+// any key present in STRINGS.en (so an unmapped region would silently render
+// its EN dict counterpart, e.g. a future region added to STRINGS.en only),
+// but a region string that isn't in the dict AT ALL (live CMS data with no
+// matching key, same category as Task 3's "leave literal" call for
+// specialties) must stay exactly as CMS returned it, not fall through to a
+// key lookup that returns the raw dict KEY string. hasOwnProperty against
+// the resolved locale's own dict (falling back to en's dict shape, same
+// dicts used by makeT) is the correct existence check for that.
+const regionLabel = (r: string) => {
+  const dict = STRINGS[locale] || STRINGS.en;
+  const key = `work.region.${r}`;
+  return Object.prototype.hasOwnProperty.call(dict, key) || Object.prototype.hasOwnProperty.call(STRINGS.en, key)
+    ? t(key)
+    : r;
+};
 
 const regions = [...new Set(projects.flatMap((p) => p.regions))].sort();
 const specialties = [...new Set(projects.flatMap((p) => p.specialties))].sort();
@@ -58,7 +77,7 @@ const specialties = [...new Set(projects.flatMap((p) => p.specialties))].sort();
       >
         {regions.map((r) => (
           <button type="button" class="filter-item" data-filter-item="region" data-value={r} aria-pressed="false">
-            <span class="filter-circle" aria-hidden="true"></span>{r}
+            <span class="filter-circle" aria-hidden="true"></span>{regionLabel(r)}
           </button>
         ))}
       </div>

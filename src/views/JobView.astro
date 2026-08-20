@@ -1,0 +1,399 @@
+---
+// Job posting view — pure template, extracted from
+// src/pages/careers/[slug].astro (Phase-5 Task 4). Data loading
+// (getStaticPaths, loadContent) stays in the page wrapper; this component
+// receives `job` as a prop.
+//
+// See src/pages/careers/[slug].astro's original header comment for
+// provenance notes (design/handoff/design/MDMC Site.dc.html lines 648-702)
+// and the apply payload contract (binding, backend unchanged).
+//
+// `job` has no `.ja` overlay (normalizeJob in content.js never fetches a ja
+// locale for /jobs — see content.js's _load) — a deliberate, documented EN
+// fallback: job.title/body/location/typeLabel render in English on ja pages
+// too, same as CareersView's headline/intro/jobs list.
+//
+// The apply-form script's own runtime literals ('Thank you — we'll be in
+// touch.' / 'Something went wrong — please try again.') are left as literal
+// JS strings, NOT routed through t(): form.thankYou/form.error exist in
+// STRINGS.en but have no ja translation in STRINGS.ja (see i18n.js), so
+// makeT('ja') already falls back to the exact same EN string t() would
+// return — templating the script (which would require define:vars, a real
+// byte change per Task 3's finding #4) buys zero behavior difference today.
+// If a native ja translation is ever added for these two keys, this script
+// should switch to reading them via a data-attribute (as this page's own
+// static labels below do), not via define:vars.
+import TurnstileBox from "../components/TurnstileBox.astro";
+import { makeT } from "../lib/i18n.js";
+
+interface Props {
+  locale?: "en" | "ja";
+  job: {
+    slug: string;
+    documentId: string;
+    title: string;
+    excerpt: string;
+    body: string[];
+    location: string;
+    typeLabel: string;
+    locationLabel?: string;
+    applyEmail: string;
+    heroImage: { url: string; alt: string } | null;
+  };
+}
+
+const { locale = "en", job } = Astro.props as Props;
+const t = makeT(locale);
+---
+
+<main style="animation: pageIn .6s var(--ease)">
+  <section style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
+    <div class="label">
+      {job.location}
+      {job.typeLabel && <><span class="meta-dot" aria-hidden="true">·</span>{job.typeLabel}</>}
+    </div>
+    <h1 class="job-title">{job.title}</h1>
+    <div class="hero-container">
+      {job.heroImage ? (
+        <img src={job.heroImage.url} alt={job.heroImage.alt || job.title} />
+      ) : (
+        <div class="hero-placeholder" aria-hidden="true"></div>
+      )}
+    </div>
+  </section>
+
+  <section class="role-section">
+    <h3 class="label" style="padding-top: 8px">{t("careers.job.about")}</h3>
+    <div class="role-body">
+      {job.body.map((para) => (
+        <p>{para}</p>
+      ))}
+    </div>
+  </section>
+
+  <section style="padding: 0 var(--gutter-r) 160px var(--gutter-l)">
+    <div class="apply-header">
+      <h2 class="label">{t("careers.job.apply")}</h2>
+      <div class="label">{t("careers.job.readByHuman")}</div>
+    </div>
+
+    <form id="apply-form" data-job-id={job.documentId}>
+      <div class="form-row form-row-top" style="align-items: baseline">
+        <label for="af-name" class="label">{t("contact.form.name")}</label>
+        <input id="af-name" name="name" type="text" required />
+      </div>
+      <div class="form-row" style="align-items: baseline">
+        <label for="af-email" class="label">{t("contact.form.email")}</label>
+        <input id="af-email" name="email" type="email" required />
+      </div>
+      <div class="form-row" style="align-items: baseline">
+        <label for="af-portfolio" class="label">{t("careers.form.portfolioLinkedin")}</label>
+        <input id="af-portfolio" name="portfolio" type="url" placeholder="https://" />
+      </div>
+      <div class="form-row">
+        <label for="af-message" class="label" style="padding-top: 6px">{t("careers.form.aboutYou")}</label>
+        <textarea id="af-message" name="message" rows="4"></textarea>
+      </div>
+      <div class="form-row" style="align-items: baseline">
+        <label for="af-files" class="label">{t("careers.form.upload")}</label>
+        <div>
+          <button type="button" id="af-files-btn" class="cta">
+            {t("careers.form.uploadBtn")} <span class="arrow" aria-hidden="true">→</span>
+          </button>
+          <input
+            type="file"
+            id="af-files"
+            name="files"
+            multiple
+            accept=".pdf,.doc,.docx"
+            style="display: none"
+          />
+          <div id="af-files-hint" class="file-hint">{t("careers.form.uploadHint")}</div>
+        </div>
+      </div>
+
+      <div class="turnstile-row">
+        <TurnstileBox name="apply" language={locale === "ja" ? "ja" : undefined} />
+      </div>
+
+      <p id="apply-error" class="apply-error" role="alert" hidden></p>
+
+      <div style="padding-top: 40px">
+        <button type="submit" id="apply-submit" class="cta" disabled>
+          {t("careers.form.send")} <span class="arrow" aria-hidden="true">→</span>
+        </button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<style>
+  .job-title {
+    font-size: clamp(40px, 4.4vw, 64px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    text-wrap: balance;
+    max-width: 900px;
+    margin-top: 24px;
+  }
+
+  .hero-container {
+    margin-top: 64px;
+    width: 100%;
+    aspect-ratio: 1853 / 812;
+    background: var(--ph);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .hero-container img,
+  .hero-placeholder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .role-section {
+    padding: 0 var(--gutter-r) 0 var(--gutter-l);
+    display: grid;
+    grid-template-columns: 240px minmax(0, 720px);
+    gap: 48px;
+    margin-top: 120px;
+    margin-bottom: 120px;
+  }
+
+  .role-body {
+    font-size: 22px;
+    line-height: 1.5;
+  }
+
+  .role-body p + p {
+    margin-top: 1.2em;
+  }
+
+  .apply-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 48px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .form-row-top {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .form-row input,
+  .form-row textarea {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    font-size: 20px;
+    letter-spacing: -0.005em;
+    padding: 0;
+    border-radius: 0;
+    outline: none;
+  }
+
+  .form-row textarea {
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .file-hint {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  .turnstile-row {
+    margin-top: 32px;
+    max-width: 400px;
+  }
+
+  .apply-error {
+    margin-top: 16px;
+    font-size: 16px;
+  }
+
+  #apply-submit:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .apply-confirm {
+    font-size: 20px;
+    padding: 28px 0;
+    border-top: 1px solid var(--hairline);
+  }
+</style>
+
+<script>
+  // Application form: tracks the 'apply' Turnstile token from the shared
+  // mdmc:turnstile CustomEvent, submits multipart FormData to the legacy
+  // /api/apply endpoint, and never lets a submission attempt throw
+  // uncaught. Reset (window.mdmcTurnstileReset) does NOT dispatch a fresh
+  // null event by contract, so this script nulls its own stored token
+  // whenever it calls reset.
+  const APPLY_URL = 'https://upbeat-approval-82a9e54c20.strapiapp.com/api/apply';
+
+  const form = document.getElementById('apply-form') as HTMLFormElement | null;
+
+  if (form) {
+    let token: string | null = null;
+    // Cloudflare's default refresh-expired:'auto' means a fresh mdmc:turnstile
+    // token event can fire while a submission is already in flight (plausible
+    // with multi-MB file uploads). isSubmitting gates the UI so that event
+    // can update `token` but can never re-enable the button mid-POST — the
+    // enable/disable state is only (re)applied once the flag clears.
+    let isSubmitting = false;
+
+    const submitBtn = document.getElementById('apply-submit') as HTMLButtonElement | null;
+    const errorEl = document.getElementById('apply-error') as HTMLElement | null;
+    const filesInput = document.getElementById('af-files') as HTMLInputElement | null;
+    const filesBtn = document.getElementById('af-files-btn') as HTMLButtonElement | null;
+    const filesHint = document.getElementById('af-files-hint') as HTMLElement | null;
+    const defaultHint = filesHint ? filesHint.textContent : '';
+
+    function setSubmitEnabled(enabled: boolean) {
+      if (submitBtn) submitBtn.disabled = !enabled;
+    }
+
+    // Single source of truth for the button's enabled state: enabled only
+    // when a token is held AND no submission is currently in flight.
+    function syncSubmitState() {
+      setSubmitEnabled(!isSubmitting && Boolean(token));
+    }
+
+    function clearError() {
+      if (errorEl) {
+        errorEl.hidden = true;
+        errorEl.textContent = '';
+      }
+    }
+
+    function showError(message: string) {
+      if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.hidden = false;
+      }
+    }
+
+    setSubmitEnabled(false);
+
+    document.addEventListener('mdmc:turnstile', (e) => {
+      try {
+        const detail = (e as CustomEvent).detail || {};
+        if (detail.name !== 'apply') return;
+        // Always record the latest token, even mid-flight — but only ever
+        // reflect it into the button's disabled state via syncSubmitState,
+        // which itself refuses to enable while isSubmitting is true.
+        token = detail.token || null;
+        if (token) clearError();
+        syncSubmitState();
+      } catch {
+        // Never let a listener throw.
+      }
+    });
+
+    if (filesBtn && filesInput) {
+      filesBtn.addEventListener('click', () => filesInput.click());
+      filesInput.addEventListener('change', () => {
+        try {
+          const files = filesInput.files;
+          if (!filesHint) return;
+          filesHint.textContent =
+            files && files.length > 0
+              ? `${files.length} file${files.length === 1 ? '' : 's'} selected`
+              : defaultHint || '';
+        } catch {
+          // Ignore — hint text is cosmetic only.
+        }
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        if (!token || !submitBtn || submitBtn.disabled || isSubmitting) return;
+        isSubmitting = true;
+        setSubmitEnabled(false);
+        clearError();
+
+        const nameEl = document.getElementById('af-name') as HTMLInputElement | null;
+        const emailEl = document.getElementById('af-email') as HTMLInputElement | null;
+        const portfolioEl = document.getElementById('af-portfolio') as HTMLInputElement | null;
+        const messageEl = document.getElementById('af-message') as HTMLTextAreaElement | null;
+
+        const fd = new FormData();
+        fd.append('name', (nameEl?.value || '').trim());
+        fd.append('email', (emailEl?.value || '').trim());
+        const portfolio = (portfolioEl?.value || '').trim();
+        if (portfolio) fd.append('portfolio', portfolio);
+        const message = (messageEl?.value || '').trim();
+        if (message) fd.append('message', message);
+        fd.append('jobId', form.dataset.jobId || '');
+        fd.append('turnstileToken', token);
+
+        const files = filesInput ? filesInput.files : null;
+        if (files) {
+          for (let i = 0; i < files.length; i++) {
+            fd.append('files', files[i], files[i].name);
+          }
+        }
+
+        let ok = false;
+        try {
+          const res = await fetch(APPLY_URL, { method: 'POST', body: fd });
+          ok = res.ok;
+        } catch {
+          ok = false;
+        }
+
+        isSubmitting = false;
+
+        if (ok) {
+          const confirmLine = document.createElement('p');
+          confirmLine.className = 'apply-confirm';
+          confirmLine.textContent = "Thank you — we'll be in touch.";
+          confirmLine.setAttribute('role', 'status');
+          confirmLine.tabIndex = -1;
+          form.replaceWith(confirmLine);
+          confirmLine.focus();
+        } else {
+          showError('Something went wrong — please try again.');
+          try {
+            (window as any).mdmcTurnstileReset?.('apply');
+          } catch {
+            // Reset is best-effort.
+          }
+          token = null;
+          syncSubmitState();
+        }
+      } catch {
+        // Absolute last resort: no path through this handler may throw.
+        isSubmitting = false;
+        showError('Something went wrong — please try again.');
+        try {
+          (window as any).mdmcTurnstileReset?.('apply');
+        } catch {
+          // Reset is best-effort.
+        }
+        token = null;
+        syncSubmitState();
+      }
+    });
+  }
+</script>
