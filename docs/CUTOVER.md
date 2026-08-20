@@ -31,6 +31,13 @@ Confirm all three before touching `main`:
       is covered by the sweep in Task 4), 1 job. The site is built to
       degrade gracefully on all of this — nothing 404s or breaks — so this
       is a "yes, we know" checkbox, not a blocker.
+- [ ] **mdmc.co.jp zone active + Worker answering.** The branch ships with
+      `ORIGINS.ja` flipped to `https://mdmc.co.jp`, so every ja link,
+      canonical and hreflang on the deployed site will point at the ja
+      domain. Merging while that domain is dead points them at an
+      unresolvable host. Gate: `curl -s https://mdmc.co.jp/robots.txt`
+      returns the Worker's inline rules (works pre-merge — no origin
+      needed). See `docs/JA-DOMAIN.md` §5.
 
 ---
 
