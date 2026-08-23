@@ -71,8 +71,10 @@ const description = lede ? lede.substring(0, 160) : undefined;
         {STUDIOS.map((studio) => (
           <div>
             <div style="width: 100%; aspect-ratio: 4 / 3; background: var(--ph); overflow: hidden">
+              {/* studio.image is a self-hosted path string (see studios.js);
+                  decorative — the region label + address below carry the info. */}
               {studio.image ? (
-                <img src={studio.image.url} alt={studio.image.alt || studio.region} style="width: 100%; height: 100%; object-fit: cover" />
+                <img src={studio.image} alt="" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover" />
               ) : (
                 <div aria-hidden="true" style="width: 100%; height: 100%; background: var(--ph)"></div>
               )}
