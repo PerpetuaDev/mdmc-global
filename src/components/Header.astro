@@ -52,12 +52,17 @@ const languages = [
   { code: "ja", label: t("lang.ja"), href: linkHref(locale, "ja", enPath) },
 ];
 
-// Server-rendered defaults — localStorage (region/locale persistence) only
-// exists client-side, so first paint always shows nz per spec; locale's
-// initial active row reflects the actual page locale (client script then
-// overrides both from stored preference, same as it always has for region).
-const defaultRegion = "nz";
+// Server-rendered defaults. Region is a stored client preference; its
+// DEFAULT follows the page locale (Japan first on ja — same local-studio
+// principle as studiosForLocale) and the client script may override it from
+// localStorage. Locale is NOT a preference at all: the URL (domain/path) is
+// the single source of truth, so the language UI always renders the page's
+// own locale — a stored language could only ever contradict the page it's
+// shown on (that was a live bug: a stale mdmc.locale=ja painted EN pages as
+// "New Zealand JA" with 日本語 marked active).
+const defaultRegion = locale === "ja" ? "jp" : "nz";
 const defaultLocale = locale;
+const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.label ?? regionRows[0].label;
 ---
 
 <header
@@ -104,8 +109,8 @@ const defaultLocale = locale;
       class="locale-trigger"
       style="padding: 6px 0; font-size: 16px; color: #000; white-space: nowrap; display: inline-flex; align-items: baseline; gap: 10px"
     >
-      <span data-locale-label data-region-labels={regionLabelsJson}>{t("work.region.New Zealand")}</span>
-      <span data-locale-code style="font-size: 10px; letter-spacing: 0.14em; color: var(--muted); position: relative; top: -1px">EN</span>
+      <span data-locale-label data-region-labels={regionLabelsJson}>{defaultRegionLabel}</span>
+      <span data-locale-code style="font-size: 10px; letter-spacing: 0.14em; color: var(--muted); position: relative; top: -1px">{defaultLocale.toUpperCase()}</span>
     </button>
   </div>
 
@@ -280,11 +285,12 @@ const defaultLocale = locale;
     else hide();
   });
 
-  // Locale/region persistence — clicks write localStorage and refresh the
-  // trigger label + active states. Full JA routing arrives in a later phase;
-  // for now this only persists the choice and updates this component's UI.
+  // Region persistence — clicks write localStorage and refresh the trigger
+  // label + active states. Language is deliberately NOT persisted: the URL
+  // (domain/path) is the single source of truth for locale, so the language
+  // UI below always renders the page's own locale. Language rows are plain
+  // cross-domain links — the destination page renders its own state.
   const REGION_KEY = 'mdmc.region';
-  const LOCALE_KEY = 'mdmc.locale';
   // Localized region names ride in on data-region-labels (see the
   // [data-locale-label] span) — EN literals stay as the no-JS-attr fallback.
   let REGION_LABELS: Record<string, string> = { nz: 'New Zealand', au: 'Australia', jp: 'Japan' };
@@ -311,40 +317,38 @@ const defaultLocale = locale;
     }
   }
 
-  function normalizeRegion(v) {
-    return v === 'au' || v === 'jp' ? v : 'nz';
-  }
-  // Migrates whatever the old (pre-Astro) site left in mdmc.locale — any
-  // value that isn't recognizably Japanese collapses to 'en'. With nothing
-  // stored yet, fall back to the ACTUAL locale of the page being viewed
-  // (data-page-locale, set server-side from the `locale` prop) rather than
-  // hardcoding 'en' — a first-ever visit landing straight on a /ja/ page
-  // must show the locale panel's 日本語 row as active, not English.
   const pageLocale = header.dataset.pageLocale === 'ja' ? 'ja' : 'en';
-  function normalizeLocale(v) {
-    if (!v) return pageLocale;
-    return String(v).toLowerCase().startsWith('ja') ? 'ja' : 'en';
+  // With nothing stored, the region default follows the page locale (Japan
+  // first on ja) — mirrors the server-rendered default.
+  const defaultRegion = pageLocale === 'ja' ? 'jp' : 'nz';
+  function normalizeRegion(v) {
+    return v === 'nz' || v === 'au' || v === 'jp' ? v : defaultRegion;
   }
+  // One-time hygiene: nothing reads mdmc.locale any more (see comment
+  // above) — clear stale values so old visits can't confuse anyone reading
+  // storage by hand either.
+  try { localStorage.removeItem('mdmc.locale'); } catch { /* fine */ }
 
   // In-memory fallback so clicks still update the UI within this page view
   // even when readStore/writeStore can't touch localStorage at all.
   let memRegion = normalizeRegion(readStore(REGION_KEY));
-  let memLocale = normalizeLocale(readStore(LOCALE_KEY));
 
   function renderLocaleUI() {
     const region = normalizeRegion(readStore(REGION_KEY) ?? memRegion);
-    const locale = normalizeLocale(readStore(LOCALE_KEY) ?? memLocale);
 
     const labelEl = header.querySelector('[data-locale-label]');
-    const codeEl = header.querySelector('[data-locale-code]');
     if (labelEl) labelEl.textContent = REGION_LABELS[region];
-    if (codeEl) codeEl.textContent = locale.toUpperCase();
+    // The locale code + active language row are server-rendered from the
+    // page's own locale and never change client-side; re-assert them anyway
+    // so a stale bfcache/localStorage state can never win.
+    const codeEl = header.querySelector('[data-locale-code]');
+    if (codeEl) codeEl.textContent = pageLocale.toUpperCase();
 
     header.querySelectorAll('[data-region]').forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.region === region);
     });
     header.querySelectorAll('[data-locale]').forEach((btn) => {
-      btn.classList.toggle('is-active', btn.dataset.locale === locale);
+      btn.classList.toggle('is-active', btn.dataset.locale === pageLocale);
     });
   }
 
@@ -356,15 +360,5 @@ const defaultLocale = locale;
       hide();
     });
   });
-  // Language rows are real links now (real navigation, per-locale pages) —
-  // the click handler only needs to persist the choice before the browser
-  // follows the href; it must not preventDefault or otherwise block
-  // navigation.
-  header.querySelectorAll('[data-locale-link]').forEach((a) => {
-    a.addEventListener('click', () => {
-      writeStore(LOCALE_KEY, a.dataset.locale);
-    });
-  });
-
   renderLocaleUI();
 </script>
