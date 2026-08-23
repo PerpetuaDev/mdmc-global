@@ -82,7 +82,9 @@ const signature = aboutJapan?.signature ?? { role: "", name: "", romaji: "", por
     <section style="padding: 96px var(--gutter-r) 160px var(--gutter-l)">
       <h2 style="font-size: clamp(36px, 4vw, 56px); font-weight: 500; letter-spacing: -0.01em; margin-bottom: 56px">アクセス</h2>
       <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 48px; align-items: start">
-        <div aria-hidden="true" style="width: 100%; aspect-ratio: 4 / 3; background: var(--ph); overflow: hidden; position: relative"></div>
+        {/* 横浜スタジオ（Nisankai）の写真 — decorative, the access facts beside
+            it carry the information (same self-hosted asset the footer uses). */}
+        <img src="/images/studios/jp.webp" alt="" loading="lazy" decoding="async" style="width: 100%; aspect-ratio: 4 / 3; background: var(--ph); overflow: hidden; object-fit: cover; display: block" />
         <div style="display: grid; gap: 32px">
           {ABOUT_JP.access.map((block) => (
             <div style="border-top: 1px solid var(--hairline); padding-top: 20px">
