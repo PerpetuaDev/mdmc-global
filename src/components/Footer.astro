@@ -25,6 +25,10 @@ const links = makeLinks(site, locale);
 const regionLabel = (region: string) => t(`work.region.${region}`);
 // Local studio leads by REGION: co.jp renders JP first, mdmc.co canonical.
 const STUDIOS = studiosForSite(site);
+// Japanese pages show the JP studio's Japanese-format address (the only
+// studio that has one; NZ/AU stay Latin on every locale).
+const closedLineOf = (s: any) => (locale === "ja" ? (s.closedLineJa ?? s.closedLine) : s.closedLine);
+const addressLinesOf = (s: any) => (locale === "ja" ? (s.addressLinesJa ?? s.addressLines) : s.addressLines);
 // The bottom-bar script needs localized region names but is a bundled
 // <script> (no server vars) — carried via a data attribute on the button.
 const regionLabelsJson = JSON.stringify({
@@ -88,7 +92,7 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
                   class="studio-closed"
                   aria-expanded="false"
                   aria-label={interpolate(t("a11y.toggleStudio"), { region: regionLabel(s.region) })}
-                >{s.closedLine}</button>
+                >{closedLineOf(s)}</button>
               </div>
 
               <div class="studio-panel-wrap">
@@ -104,10 +108,10 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
                       <span data-clock={s.tz} class="studio-clock" aria-label={interpolate(t("a11y.localTime"), { region: regionLabel(s.region) })}></span>
                     </div>
                     <div>
-                      {s.addressLines.map((line, li) => (
+                      {addressLinesOf(s).map((line, li) => (
                         <>
                           {line}
-                          {li < s.addressLines.length - 1 && <br />}
+                          {li < addressLinesOf(s).length - 1 && <br />}
                         </>
                       ))}
                     </div>
@@ -137,7 +141,7 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
 
   <div class="footer-bottom">
     <span class="footer-bottom-left">
-      <span>© 2026 MDMC Group Inc.</span>
+      <span>{site === "cojp" ? t("footer.copyJp") : t("footer.copy")}</span>
       <a href="#" class="footer-link">{t("footer.privacyTerms")}</a>
     </span>
     <span class="footer-bottom-right">

@@ -77,5 +77,15 @@ export const STUDIOS = [
     email: 'contact@mdmc.co',
     phone: null,
     image: '/images/studios/jp.webp',
+    // Japanese-format address (user-confirmed 2026-08-20, same source as
+    // the JA About page). Only the JP studio has one — NZ/AU postal
+    // addresses stay in Latin script on every locale, standard practice
+    // for foreign addresses (and what the old site did).
+    closedLineJa: '〒231-0003 神奈川県横浜市中区北仲通5-57-2',
+    addressLinesJa: [
+      '〒231-0003 神奈川県横浜市中区北仲通5-57-2',
+      'KITANAKA BRICK & WHITE Brick South',
+      'ニサンカイ J-2',
+    ],
   },
 ]

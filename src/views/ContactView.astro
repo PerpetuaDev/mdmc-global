@@ -90,11 +90,13 @@ const headlineLines = t("contact.headline").split("\n");
               <div class="label">{regionLabel(s.region)}</div>
               <span data-clock={s.tz} class="studio-clock" aria-label={interpolate(t("a11y.localTime"), { region: regionLabel(s.region) })}></span>
             </div>
+            {/* ja pages show the JP studio's Japanese-format address (the
+                only studio with one; NZ/AU stay Latin on every locale). */}
             <div class="studio-address">
-              {s.addressLines.map((line, li) => (
+              {(locale === "ja" ? (s.addressLinesJa ?? s.addressLines) : s.addressLines).map((line, li, arr) => (
                 <>
                   {line}
-                  {li < s.addressLines.length - 1 && <br />}
+                  {li < arr.length - 1 && <br />}
                 </>
               ))}
             </div>
