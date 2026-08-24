@@ -13,10 +13,11 @@
 // intro/hero as en — a deliberate, documented EN fallback, not a bug. Same
 // for `jobs` (normalizeJob has no `.ja` overlay either): job titles/locale/
 // type render in English on ja pages too.
-import { makeT, linkHref } from "../lib/i18n.js";
+import { makeT, makeLinks } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
+  site?: "co" | "cojp";
   headline: string;
   intro: string[];
   heroImage: { url: string; alt: string } | null;
@@ -24,7 +25,8 @@ interface Props {
   jobs: any[];
 }
 
-const { locale = "en", headline, intro, heroImage, contactEmail, jobs } = Astro.props as Props;
+const { locale = "en", site = "co", headline, intro, heroImage, contactEmail, jobs } = Astro.props as Props;
+const links = makeLinks(site, locale);
 const t = makeT(locale);
 ---
 
@@ -63,7 +65,7 @@ const t = makeT(locale);
     <ul style="list-style: none; margin: 0; padding: 0">
       {jobs.map((job) => (
         <li>
-          <a href={linkHref(locale, locale, `/careers/${job.slug}/`)} style="display: grid; grid-template-columns: minmax(0, 420px) 200px 160px 1fr; gap: 48px; align-items: center; padding: 28px 0; border-top: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); text-decoration: none; color: inherit; transition: opacity 0.2s ease">
+          <a href={links.internal(`/careers/${job.slug}/`)} style="display: grid; grid-template-columns: minmax(0, 420px) 200px 160px 1fr; gap: 48px; align-items: center; padding: 28px 0; border-top: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); text-decoration: none; color: inherit; transition: opacity 0.2s ease">
             <h3 style="font-size: 24px; font-weight: 500; letter-spacing: -0.005em; margin: 0">
               {job.title}
             </h3>

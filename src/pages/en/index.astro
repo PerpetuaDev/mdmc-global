@@ -1,0 +1,27 @@
+---
+// Home — mdmc.co.jp/en tree (English on the Japan domain), served by the
+// Worker at co.jp/en, canonical → mdmc.co. Identical to src/pages/
+// index.astro except site="cojp" passed to both Base and HomeView
+// (language-region matrix, 2026-08-21). See index.astro for the full header
+// comment (data loading, legacy-redirect map, provenance notes) — unchanged
+// here.
+import Base from "../../layouts/Base.astro";
+import HomeView from "../../views/HomeView.astro";
+import { loadContent } from "../../lib/content.js";
+
+const { projects, articles, jobs } = await loadContent();
+
+const redirectMap = {
+  work: Object.fromEntries(projects.map((p) => [p.documentId, p.slug])),
+  news: Object.fromEntries(articles.map((a) => [a.documentId, a.slug])),
+  careers: Object.fromEntries(jobs.map((j) => [j.documentId, j.slug])),
+};
+---
+
+<Base title="MDMC" active="home" locale="en" site="cojp">
+  <!--
+    Legacy hash-URL redirect shim — see src/pages/index.astro's identical
+    comment for the full explanation; unchanged here, just site="cojp".
+  -->
+  <HomeView locale="en" site="cojp" projects={projects} redirectMap={redirectMap} />
+</Base>

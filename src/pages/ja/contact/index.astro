@@ -5,7 +5,7 @@
 // payload contract) — unchanged here.
 import Base from "../../../layouts/Base.astro";
 import ContactView from "../../../views/ContactView.astro";
-import { studiosForLocale } from "../../../lib/studios.js";
+import { studiosForSite } from "../../../lib/studios.js";
 ---
 
 {/* title/description are PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
@@ -15,5 +15,7 @@ import { studiosForLocale } from "../../../lib/studios.js";
   description="いま取り組んでいることをお聞かせください。MDMCはニュージーランド・オーストラリア・日本の3拠点で活動しています。"
   locale="ja"
 >
-  <ContactView locale="ja" studios={studiosForLocale("ja")} />
+  {/* studios in mdmc.co's canonical order — this is the co (NZ/AU) region's
+      Japanese-language page, and studio order follows region, not language. */}
+  <ContactView locale="ja" studios={studiosForSite("co")} />
 </Base>

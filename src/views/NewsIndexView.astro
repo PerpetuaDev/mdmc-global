@@ -10,11 +10,12 @@ import { makeT, pickLocalized } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
+  site?: "co" | "cojp";
   articles: any[];
   kinds: { value: string; label: string }[];
 }
 
-const { locale = "en", articles, kinds } = Astro.props as Props;
+const { locale = "en", site = "co", articles, kinds } = Astro.props as Props;
 const t = makeT(locale);
 ---
 
@@ -51,7 +52,7 @@ const t = makeT(locale);
     <div class="news-grid">
       {articles.map((a) => (
         <div data-news-card data-kind={a.kind}>
-          <NewsCard article={a} locale={locale} />
+          <NewsCard article={a} locale={locale} site={site} />
         </div>
       ))}
     </div>

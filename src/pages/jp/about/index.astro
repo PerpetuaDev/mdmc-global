@@ -1,0 +1,16 @@
+---
+// About JP — mdmc.co.jp (root) tree: built at origin /jp and served by the
+// Worker at the co.jp root. Identical to src/pages/ja/about/index.astro
+// except site="cojp" passed to both Base and AboutJpView (language-region
+// matrix, 2026-08-21). See AboutJpView.astro for the template itself and
+// its header comment for provenance notes.
+import Base from "../../../layouts/Base.astro";
+import AboutJpView from "../../../views/AboutJpView.astro";
+import { loadContent } from "../../../lib/content.js";
+
+const { aboutJapan } = await loadContent();
+---
+
+<Base title="会社概要 — MDMC" active="about" locale="ja" site="cojp" description="MDMCはニュージーランド・オーストラリア・日本の3拠点で活動するデザイン&デジタル戦略ファームです。横浜スタジオの会社概要とアクセスのご案内。">
+  <AboutJpView locale="ja" site="cojp" aboutJapan={aboutJapan} />
+</Base>

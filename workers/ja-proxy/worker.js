@@ -1,8 +1,9 @@
-// mdmc.co.jp → mdmc.co/ja proxy.
-// Runs on the mdmc.co.jp zone (route: mdmc.co.jp/*). HTML routes are fetched
-// from the ja tree on the canonical origin; assets (anything with a file
-// extension) are fetched verbatim, since the ja pages reference the same
-// /_astro/ and /fonts/ URLs as the en tree.
+// mdmc.co.jp proxy (2026-08-21 matrix model — see the language-region-matrix
+// plan doc). Runs on the mdmc.co.jp zone (route: mdmc.co.jp/*).
+//   co.jp/<path>     → origin /jp/<path>  (Japanese, co.jp's default)
+//   co.jp/en/<path>  → origin /en/<path>  (English on the Japan domain)
+// Assets (anything with a file extension) are fetched verbatim, since every
+// tree references the same /_astro/ and /fonts/ URLs.
 
 const ORIGIN = 'https://mdmc.co'
 
@@ -23,9 +24,16 @@ export function mapPath(pathname) {
   if (pathname === '/sitemap-index.xml' || /^\/sitemap-\d+\.xml$/.test(pathname)) {
     return { kind: 'none' }
   }
-  // A /ja prefix on co.jp would double up — send visitors to the bare path.
+  // Origin-tree prefixes that must not appear on co.jp itself: /ja belongs
+  // to mdmc.co's Japanese surface and /jp is where THIS host's root tree is
+  // built — either one on co.jp would double up. Send visitors to the bare
+  // path (which maps back to the /jp tree below).
   if (pathname === '/ja' || pathname === '/ja/' || pathname.startsWith('/ja/')) {
     const bare = pathname.replace(/^\/ja\/?/, '/')
+    return { kind: 'redirect', to: bare }
+  }
+  if (pathname === '/jp' || pathname === '/jp/' || pathname.startsWith('/jp/')) {
+    const bare = pathname.replace(/^\/jp\/?/, '/')
     return { kind: 'redirect', to: bare }
   }
   const lastSegment = pathname.slice(pathname.lastIndexOf('/') + 1)
@@ -33,7 +41,12 @@ export function mapPath(pathname) {
   // Directory-style URLs: normalize to the trailing slash GitHub Pages
   // serves, so the origin's host-revealing 301 never reaches the visitor.
   if (!pathname.endsWith('/')) return { kind: 'redirect', to: pathname + '/' }
-  return { kind: 'html', to: '/ja' + (pathname === '/' ? '/' : pathname) }
+  // English on the Japan domain: /en/* is built at the origin under the same
+  // prefix, so it passes through unchanged.
+  if (pathname === '/en/' || pathname.startsWith('/en/')) {
+    return { kind: 'html', to: pathname }
+  }
+  return { kind: 'html', to: '/jp' + (pathname === '/' ? '/' : pathname) }
 }
 
 // Exported (alongside the default { fetch } export Cloudflare invokes) so

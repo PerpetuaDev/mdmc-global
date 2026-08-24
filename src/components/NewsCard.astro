@@ -10,7 +10,7 @@
 // addition): default "en" keeps every existing call site byte-identical;
 // title now resolves through pickLocalized so ja pages read the `.ja`
 // overlay title when one exists.
-import { pickLocalized, linkHref } from "../lib/i18n.js";
+import { pickLocalized, makeLinks } from "../lib/i18n.js";
 
 interface Props {
   article: {
@@ -24,14 +24,16 @@ interface Props {
     heroImage: { url: string; alt: string } | null;
   };
   locale?: "en" | "ja";
+  site?: "co" | "cojp";
 }
 
-const { article, locale = "en" } = Astro.props as Props;
+const { article, locale = "en", site = "co" } = Astro.props as Props;
+const links = makeLinks(site, locale);
 const kindLabel = locale === "ja" ? (article.kindLabelJa ?? article.kindLabel) : article.kindLabel;
 const dateLabel = locale === "ja" ? (article.dateLabelJa ?? article.dateLabel) : article.dateLabel;
 ---
 
-<a href={linkHref(locale, locale, `/news/${article.slug}/`)} class="news-card">
+<a href={links.internal(`/news/${article.slug}/`)} class="news-card">
   <div class="news-card-image">
     {article.heroImage ? (
       <img src={article.heroImage.url} alt={article.heroImage.alt || pickLocalized(locale, article, "title")} />

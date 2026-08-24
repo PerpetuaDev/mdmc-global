@@ -1,0 +1,23 @@
+---
+// Careers page — mdmc.co.jp/en tree (English on the Japan domain), served
+// by the Worker at co.jp/en, canonical → mdmc.co. Identical to src/pages/
+// careers/index.astro except site="cojp" passed to both Base and
+// CareersView (language-region matrix, 2026-08-21). See careers/index.astro
+// for the full header comment — unchanged here.
+//
+// Fallback for null career: headline → "Careers"
+import Base from "../../../layouts/Base.astro";
+import CareersView from "../../../views/CareersView.astro";
+import { loadContent } from "../../../lib/content.js";
+
+const { career, jobs } = await loadContent();
+
+const headline = career?.headline ?? "Careers";
+const intro = career?.intro ?? [];
+const heroImage = career?.heroImage;
+const contactEmail = career?.contactEmail ?? "careers@mdmc.co";
+---
+
+<Base title="Careers — MDMC" description={intro[0] || undefined} locale="en" site="cojp">
+  <CareersView locale="en" site="cojp" headline={headline} intro={intro} heroImage={heroImage} contactEmail={contactEmail} jobs={jobs} />
+</Base>

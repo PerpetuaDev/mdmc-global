@@ -327,14 +327,49 @@ export function counterpartPath(locale, path) {
   return localePath('ja', path)
 }
 
-export const ORIGINS = { en: 'https://mdmc.co', ja: 'https://mdmc.co.jp' }
+// ---------------------------------------------------------------------------
+// Region × language link model (2026-08-21, see the language-region-matrix
+// plan doc). Region picks the domain (site), language picks the copy; the
+// two are independent, so links are built from a (site, lang) context.
+// ---------------------------------------------------------------------------
 
-// `path` is always the EN-shaped path ('/work/', '/'), regardless of
-// fromLocale/toLocale — same convention as localePath/counterpartPath above.
-export function linkHref(fromLocale, toLocale, path, origins = ORIGINS) {
-  if (origins.ja == null) return localePath(toLocale, path)
-  if (toLocale === 'ja') return origins.ja + path
-  // toLocale === 'en'
-  if (fromLocale === 'ja') return origins.en + path
-  return path
+export const SITES = { co: 'https://mdmc.co', cojp: 'https://mdmc.co.jp' }
+
+// Path prefix of a (site, lang) tree ON ITS OWN PUBLIC SURFACE: what the
+// visitor's URL bar shows in front of the EN-shaped path.
+export function sitePrefix(site, lang) {
+  if (site === 'cojp') return lang === 'en' ? '/en' : ''
+  return lang === 'ja' ? '/ja' : ''
+}
+
+// Path prefix where the tree is BUILT at the origin (GitHub Pages). Differs
+// from sitePrefix only for co.jp's Japanese tree, which the Worker serves at
+// the co.jp root but is built under /jp.
+export function originPrefix(site, lang) {
+  if (site === 'cojp') return lang === 'en' ? '/en' : '/jp'
+  return lang === 'ja' ? '/ja' : ''
+}
+
+function withPrefix(prefix, path) {
+  if (!prefix) return path
+  return path === '/' ? `${prefix}/` : `${prefix}${path}`
+}
+
+// Link builder for one rendering context. Every method takes the EN-shaped
+// path ('/', '/work/…'). internal/toLang are same-domain relative; toSite is
+// the only place cross-domain absolutes are ever built (region switches).
+export function makeLinks(site, lang) {
+  return {
+    internal: (path) => withPrefix(sitePrefix(site, lang), path),
+    toLang: (lang2, path) => withPrefix(sitePrefix(site, lang2), path),
+    toSite: (site2, path, lang2 = lang) => SITES[site2] + withPrefix(sitePrefix(site2, lang2), path),
+  }
+}
+
+// EN-shaped path of a page from its origin pathname + rendering context.
+export function enPathOf(site, lang, pathname) {
+  const prefix = originPrefix(site, lang)
+  if (!prefix) return pathname
+  const stripped = pathname.slice(prefix.length)
+  return stripped === '' ? '/' : stripped
 }

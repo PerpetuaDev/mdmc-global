@@ -8,15 +8,17 @@
 // notes (design/handoff/design/MDMC Site.dc.html lines 365-390). Zero live
 // articles today, so this view never actually renders in a build — verified
 // by hand-checking markup/logic only (see task-4 report).
-import { makeT, pickLocalized, linkHref } from "../lib/i18n.js";
+import { makeT, pickLocalized, makeLinks } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
+  site?: "co" | "cojp";
   article: any;
   linkedProject: any;
 }
 
-const { locale = "en", article, linkedProject } = Astro.props as Props;
+const { locale = "en", site = "co", article, linkedProject } = Astro.props as Props;
+const links = makeLinks(site, locale);
 const t = makeT(locale);
 const title = pickLocalized(locale, article, "title");
 const body = pickLocalized(locale, article, "body");
@@ -55,13 +57,13 @@ const excerpt = pickLocalized(locale, article, "excerpt");
         <p class="lead">{excerpt}</p>
       )}
       {article.projectSlug && linkedProject?.story && (
-        <a href={linkHref(locale, locale, `/work/${article.projectSlug}/`) + '?view=story'} class="cta" style="margin-top: 56px">
+        <a href={links.internal(`/work/${article.projectSlug}/`) + '?view=story'} class="cta" style="margin-top: 56px">
           {t("news.seeFullCaseStudy")} <span class="arrow">→</span>
         </a>
       )}
     </div>
     <div class="closing-footer">
-      <a href={linkHref(locale, locale, "/news/")} class="cta">
+      <a href={links.internal("/news/")} class="cta">
         <span class="arrow">←</span> {t("news.backToAll")}
       </a>
       <button class="share-button cta">

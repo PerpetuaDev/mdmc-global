@@ -21,11 +21,12 @@ import StoryView from "../components/StoryView.astro";
 
 interface Props {
   locale?: "en" | "ja";
+  site?: "co" | "cojp";
   project: any;
   next: any;
 }
 
-const { locale = "en", project, next } = Astro.props as Props;
+const { locale = "en", site = "co", project, next } = Astro.props as Props;
 const hasStory = Boolean(project.story);
 ---
 
@@ -48,6 +49,7 @@ const hasStory = Boolean(project.story);
         pullQuote={project.pullQuote}
         pullQuoteAttribution={project.pullQuoteAttribution}
         next={next}
+        site={site}
         locale={locale}
       />
     </div>

@@ -1,0 +1,31 @@
+---
+// Article detail — mdmc.co.jp (root) tree: built at origin /jp and served
+// by the Worker at the co.jp root. Identical to src/pages/ja/news/
+// [slug].astro except site="cojp" passed to both Base and ArticleView
+// (language-region matrix, 2026-08-21). Zero live articles today, so
+// getStaticPaths emits an empty array here too. See news/[slug].astro for
+// the full header comment — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import ArticleView from "../../../views/ArticleView.astro";
+import { loadContent } from "../../../lib/content.js";
+
+export async function getStaticPaths() {
+  const { articles } = await loadContent();
+  return articles.map((article) => ({
+    params: { slug: article.slug },
+    props: { article },
+  }));
+}
+
+const { article } = Astro.props;
+const { projects } = await loadContent();
+const linkedProject = article.projectSlug
+  ? projects.find((p) => p.slug === article.projectSlug)
+  : null;
+const articleDescription = article.excerpt || "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
+const ogImage = article.heroImage?.url;
+---
+
+<Base title={`${article.title} — MDMC`} active="news" description={articleDescription} ogImage={ogImage} locale="ja" site="cojp">
+  <ArticleView locale="ja" site="cojp" article={article} linkedProject={linkedProject} />
+</Base>

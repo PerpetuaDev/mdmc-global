@@ -1,0 +1,29 @@
+---
+// Project detail — mdmc.co.jp/en tree (English on the Japan domain), served
+// by the Worker at co.jp/en, canonical → mdmc.co. Identical to src/pages/
+// work/[slug].astro except site="cojp" passed to both Base and ProjectView
+// (language-region matrix, 2026-08-21). getStaticPaths duplicates the root
+// loader calls — loadContent() is memoized per build (see content.js), so
+// this costs zero extra fetches. See work/[slug].astro for the full header
+// comment — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import ProjectView from "../../../views/ProjectView.astro";
+import { loadContent } from "../../../lib/content.js";
+import { nextProject } from "../../../lib/normalize.js";
+
+export async function getStaticPaths() {
+  const { projects } = await loadContent();
+  return projects.map((project) => ({
+    params: { slug: project.slug },
+    props: { project, next: nextProject(projects, project.slug) },
+  }));
+}
+
+const { project, next } = Astro.props;
+const projectDescription = project.description || "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
+const ogImage = project.heroImage?.url || project.thumbnail?.url;
+---
+
+<Base title={`${project.title} — MDMC`} active="work" description={projectDescription} ogImage={ogImage} locale="en" site="cojp">
+  <ProjectView locale="en" site="cojp" project={project} next={next} />
+</Base>

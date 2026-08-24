@@ -61,7 +61,7 @@ const headlineLines = t("contact.headline").split("\n");
       </>
     ))}</h1>
     {/* Anchor order mirrors the studios prop (locale-aware: ja leads with
-        the Japan studio via studiosForLocale in the page wrapper). */}
+        the Japan studio via studiosForSite in the page wrapper). */}
     <div class="anchor-row">
       {studios.map((s) => (
         <a href={`#studio-${s.id}`} class="cta" data-scroll={`studio-${s.id}`}>{regionLabel(s.region)} <span class="arrow" aria-hidden="true">↓</span></a>

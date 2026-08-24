@@ -3,13 +3,16 @@ import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { loadContent } from "../lib/content.js";
-import { counterpartPath, ORIGINS } from "../lib/i18n.js";
+import { enPathOf, SITES } from "../lib/i18n.js";
 
 interface Props {
   title: string;
   description?: string;
   active?: "home" | "work" | "news" | "about" | "contact";
   locale?: "en" | "ja";
+  // Which domain this tree is rendered FOR (region axis): "co" = mdmc.co,
+  // "cojp" = mdmc.co.jp. See the 2026-08-21 language-region-matrix plan doc.
+  site?: "co" | "cojp";
   // TEMPORARY back-compat: /ja/about/ still passes the old `lang` prop.
   // `locale` wins when both are given. A later task removes `lang` for good.
   lang?: string;
@@ -21,23 +24,21 @@ interface Props {
 }
 
 const defaultDescription = "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
-const { title, description = defaultDescription, active, locale, lang, ogImage, noHreflang } = Astro.props;
+const { title, description = defaultDescription, active, locale, site = "co", lang, ogImage, noHreflang } = Astro.props;
 const resolvedLocale = locale ?? (lang === "ja" ? "ja" : "en");
 const { projects, articles } = await loadContent();
 
-// EN-shaped path of the current page, regardless of which locale it's
-// rendering as — the shape linkHref/hreflang alternates are built from.
-const enPath = resolvedLocale === "ja" ? counterpartPath("ja", Astro.url.pathname) : Astro.url.pathname;
-const enAlternateUrl = new URL(enPath, Astro.site).toString();
-const jaAlternateUrl = ORIGINS.ja ? ORIGINS.ja + enPath : new URL("/ja" + enPath, Astro.site).toString();
+// EN-shaped path of the current page, regardless of which (site, lang) tree
+// it's rendering as — the shape all alternates/canonicals are built from.
+const enPath = enPathOf(site, resolvedLocale, Astro.url.pathname);
 
-// Canonical follows the ja origin: with mdmc.co.jp live, ja pages' canonical
-// is the co.jp URL (they're also reachable at mdmc.co/ja/* until the 301 —
-// this consolidates indexing onto the ja domain).
-const canonicalUrl =
-  resolvedLocale === "ja" && ORIGINS.ja
-    ? jaAlternateUrl
-    : new URL(Astro.url.pathname, Astro.site).toString();
+// Language decides the canonical domain (region duplicates consolidate by
+// canonical only, per the 2026-08-21 matrix decision): every ja rendering
+// canonicalizes to mdmc.co.jp, every en rendering to mdmc.co — so
+// mdmc.co/ja/* points at co.jp/* and co.jp/en/* points at mdmc.co/*.
+const enAlternateUrl = SITES.co + enPath;
+const jaAlternateUrl = SITES.cojp + enPath;
+const canonicalUrl = resolvedLocale === "ja" ? jaAlternateUrl : enAlternateUrl;
 ---
 
 <!DOCTYPE html>
@@ -64,9 +65,9 @@ const canonicalUrl =
 </head>
 <body>
   <div class="zoom">
-    <Header active={active} locale={resolvedLocale} enPath={enPath} projects={projects} articles={articles} />
+    <Header active={active} locale={resolvedLocale} site={site} enPath={enPath} projects={projects} articles={articles} />
     <slot />
-    <Footer locale={resolvedLocale} />
+    <Footer locale={resolvedLocale} site={site} />
   </div>
   <script>
     // Fade the outgoing page's content before same-origin navigations, for

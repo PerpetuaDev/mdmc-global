@@ -12,10 +12,11 @@ import { makeT, STRINGS } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
+  site?: "co" | "cojp";
   projects: any[];
 }
 
-const { locale = "en", projects } = Astro.props as Props;
+const { locale = "en", site = "co", projects } = Astro.props as Props;
 const t = makeT(locale);
 
 // Region chip labels: t('work.region.' + value) when the dict actually has
@@ -107,7 +108,7 @@ const specialties = [...new Set(projects.flatMap(specialtiesOf))].sort();
           data-regions={p.regions.join("|")}
           data-specialties={specialtiesOf(p).join("|")}
         >
-          <WorkCard project={p} headingLevel="h3" locale={locale} />
+          <WorkCard project={p} headingLevel="h3" locale={locale} site={site} />
         </div>
       ))}
     </div>

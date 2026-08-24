@@ -1,0 +1,24 @@
+---
+// Contact page — mdmc.co.jp (root) tree: built at origin /jp and served by
+// the Worker at the co.jp root. Identical to src/pages/ja/contact/
+// index.astro except site="cojp" passed to Base and ContactView and the
+// studio list is region-ordered for the Japan domain (language-region
+// matrix, 2026-08-21). See contact/index.astro for the full header comment
+// (provenance notes, payload contract) — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import ContactView from "../../../views/ContactView.astro";
+import { studiosForSite } from "../../../lib/studios.js";
+---
+
+{/* title/description are PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
+<Base
+  title="お問い合わせ — MDMC"
+  active="contact"
+  description="いま取り組んでいることをお聞かせください。MDMCはニュージーランド・オーストラリア・日本の3拠点で活動しています。"
+  locale="ja"
+  site="cojp"
+>
+  {/* studios in mdmc.co.jp's region order — Japan first: the DOMAIN is the
+      region, and studio order follows region, not language. */}
+  <ContactView locale="ja" site="cojp" studios={studiosForSite("cojp")} />
+</Base>
