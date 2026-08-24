@@ -9,7 +9,7 @@
 // it with the HTML, so it paints with first render. Vite's ?inline resolves
 // this to a data: string at build time.
 import logoDataUri from "../assets/mdmc-logo.png?inline";
-import { makeT, makeLinks } from "../lib/i18n.js";
+import { makeT, makeLinks, pickLocalized } from "../lib/i18n.js";
 
 interface ContentItem {
   slug: string;
@@ -132,7 +132,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
         <ul style="list-style: none">
           {workItems.map((p) => (
             <li style="margin-top: 10px">
-              <a href={href(`/work/${p.slug}/`)} class="mega-link" style="font-size: 20px">{p.title}</a>
+              <a href={href(`/work/${p.slug}/`)} class="mega-link" style="font-size: 20px">{pickLocalized(locale, p, "title")}</a>
             </li>
           ))}
         </ul>
@@ -143,7 +143,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
         <ul style="list-style: none">
           {newsItems.map((n) => (
             <li style="margin-top: 10px">
-              <a href={href(`/news/${n.slug}/`)} class="mega-link" style="font-size: 20px">{n.title}</a>
+              <a href={href(`/news/${n.slug}/`)} class="mega-link" style="font-size: 20px">{pickLocalized(locale, n, "title")}</a>
             </li>
           ))}
         </ul>
