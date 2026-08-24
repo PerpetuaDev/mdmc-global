@@ -116,6 +116,22 @@ const specialties = [...new Set(projects.flatMap(specialtiesOf))].sort();
 </main>
 
 <style>
+  /* Responsive (2026-08-24, desktop-only handoff): tablet narrows the 3×
+     128px-gap specialty filter grid to 2 columns; phones go single-column —
+     filters and the work grid alike. Inline section paddings (and the base
+     rules below this block, which share specificity and come later in
+     source) win the cascade, hence the !important overrides. */
+  @media (max-width: 1023px) {
+    .filter-list-specialty { grid-template-columns: repeat(2, max-content) !important; gap: 16px 64px !important; }
+  }
+  @media (max-width: 700px) {
+    section.gutter { padding-bottom: 96px !important; }
+    .work-h2 { margin-bottom: 40px !important; }
+    .filter-triggers { gap: 32px !important; }
+    .filter-list-specialty { grid-template-columns: minmax(0, 1fr) !important; }
+    .work-grid { grid-template-columns: 1fr !important; row-gap: 48px !important; }
+  }
+
   .work-h2 {
     font-size: 32px;
     font-weight: 500;

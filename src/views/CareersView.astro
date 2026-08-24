@@ -32,7 +32,11 @@ const t = makeT(locale);
 
 <main style="animation: pageIn .6s var(--ease)">
   {/* Statement headline + full-width hero */}
-  <section style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
+  {/* careers-hero / careers-intro / careers-positions / job-row / job-arrow:
+      class hooks only (no desktop styles) — layout is inline style="" per
+      the transcription, so the responsive <style> block below overrides it
+      with !important (established pattern). */}
+  <section class="careers-hero" style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
     <h1 style="font-size: clamp(48px, 5.6vw, 88px); font-weight: 500; letter-spacing: -0.025em; line-height: 1.02; text-wrap: balance; max-width: 1100px">
       {headline}
     </h1>
@@ -47,7 +51,7 @@ const t = makeT(locale);
 
   {/* Careers intro section with label grid */}
   {intro.length > 0 && (
-    <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l); display: grid; grid-template-columns: 240px minmax(0, 720px); gap: 48px">
+    <section class="careers-intro" style="padding: 96px var(--gutter-r) 0 var(--gutter-l); display: grid; grid-template-columns: 240px minmax(0, 720px); gap: 48px">
       <h2 class="label" style="padding-top: 10px">{t("careers.title")}</h2>
       <div>
         {intro.map((para) => (
@@ -60,12 +64,12 @@ const t = makeT(locale);
   )}
 
   {/* Open positions section */}
-  <section style="padding: 144px var(--gutter-r) 64px var(--gutter-l)">
+  <section class="careers-positions" style="padding: 144px var(--gutter-r) 64px var(--gutter-l)">
     <h2 class="label" style="margin-bottom: 40px">{t("careers.openPositions")}</h2>
     <ul style="list-style: none; margin: 0; padding: 0">
       {jobs.map((job) => (
         <li>
-          <a href={links.internal(`/careers/${job.slug}/`)} style="display: grid; grid-template-columns: minmax(0, 420px) 200px 160px 1fr; gap: 48px; align-items: center; padding: 28px 0; border-top: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); text-decoration: none; color: inherit; transition: opacity 0.2s ease">
+          <a class="job-row" href={links.internal(`/careers/${job.slug}/`)} style="display: grid; grid-template-columns: minmax(0, 420px) 200px 160px 1fr; gap: 48px; align-items: center; padding: 28px 0; border-top: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); text-decoration: none; color: inherit; transition: opacity 0.2s ease">
             <h3 style="font-size: 24px; font-weight: 500; letter-spacing: -0.005em; margin: 0">
               {pickLocalized(locale, job, "title")}
             </h3>
@@ -81,7 +85,7 @@ const t = makeT(locale);
                 {locale === "ja" ? (job.typeLabelJa ?? job.typeLabel) : job.typeLabel}
               </div>
             </div>
-            <span aria-hidden="true" style="justify-self: end; font-family: 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; font-size: 20px">→</span>
+            <span class="job-arrow" aria-hidden="true" style="justify-self: end; font-family: 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; font-size: 20px">→</span>
           </a>
         </li>
       ))}
@@ -95,6 +99,26 @@ const t = makeT(locale);
 </main>
 
 <style>
+  /* Responsive (2026-08-24, desktop-only handoff): the fixed job-row
+     columns (420px/200px/160px + 48px gaps ≈ 924px) don't fit tablets —
+     tablet keeps one row with narrower tracks; phones give the title its
+     own full row with studio/type side by side beneath and drop the arrow.
+     Layout is inline style="" on the elements, hence !important. */
+  @media (max-width: 1023px) {
+    .job-row { grid-template-columns: minmax(0, 1fr) 150px 130px 24px !important; gap: 24px !important; }
+  }
+  @media (max-width: 700px) {
+    .careers-hero { padding-top: 64px !important; }
+    .careers-hero > div { margin-top: 48px !important; }
+    .careers-intro { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; padding-top: 64px !important; }
+    .careers-intro p { font-size: 22px !important; }
+    .careers-positions { padding-top: 96px !important; }
+    .job-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px 24px !important; padding: 24px 0 !important; }
+    .job-row h3 { grid-column: 1 / -1; }
+    .job-arrow { display: none; }
+    .careers-positions a[href^="mailto:"] { margin-top: 56px !important; }
+  }
+
   a[href^="/careers/"]:hover {
     opacity: 0.6;
   }

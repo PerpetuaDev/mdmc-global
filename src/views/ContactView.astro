@@ -162,6 +162,30 @@ const headlineLines = t("contact.headline").split("\n");
 </main>
 
 <style>
+  /* Responsive (2026-08-24, desktop-only handoff): phones stack each studio
+     fold single-column with the photo first ALWAYS (the desktop 4fr/7fr
+     side-swap on AU is a wide-composition device, hence the order override
+     beating the inline order:2), stack the form label grids (mirrors
+     JobView), and step the 176px fold rhythm down. Inline styles and later
+     equal-specificity base rules win the cascade, hence !important. */
+  @media (max-width: 1023px) {
+    /* The side-by-side fold survives on tablets, but its 4fr info column is
+       ~215px there — 22px addresses wrapped almost every word. */
+    .studio-address { font-size: 19px !important; }
+    .studio-contact-links { font-size: 18px !important; }
+  }
+  @media (max-width: 700px) {
+    main > section:first-of-type { padding-top: 64px !important; }
+    .anchor-row { margin-top: 48px !important; gap: 12px 32px !important; }
+    .studio-fold { padding-top: 96px !important; }
+    .studio-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 32px !important; }
+    .studio-grid .studio-image { order: -1 !important; }
+    .studio-address { font-size: 20px !important; }
+    .form-section { padding-top: 112px !important; padding-bottom: 96px !important; }
+    .form-header { flex-wrap: wrap; gap: 12px 32px !important; }
+    .form-row { grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; padding: 20px 0 !important; }
+  }
+
   .contact-title {
     font-size: clamp(48px, 5.6vw, 88px);
     font-weight: 500;

@@ -32,7 +32,11 @@ const studios = studiosForSite(site);
 
 <main style="animation: pageIn .6s var(--ease)">
   {/* Statement headline + full-width hero */}
-  <section style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
+  {/* about-hero / about-lede / about-kv / about-studios / studio-strip:
+      class hooks only (no desktop styles) — the layout is inline style=""
+      per the transcription, so the responsive <style> block below overrides
+      it with !important (established pattern, see Header.astro). */}
+  <section class="about-hero" style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
     <h1 style="font-size: clamp(48px, 5.6vw, 88px); font-weight: 500; letter-spacing: -0.025em; line-height: 1.02; text-wrap: balance; max-width: 1100px">
       {headline}
     </h1>
@@ -47,7 +51,7 @@ const studios = studiosForSite(site);
 
   {/* Lede section with label grid */}
   {lede && (
-    <section style="padding: 96px var(--gutter-r) 0 var(--gutter-l); display: grid; grid-template-columns: 240px minmax(0, 720px); gap: 48px">
+    <section class="about-lede" style="padding: 96px var(--gutter-r) 0 var(--gutter-l); display: grid; grid-template-columns: 240px minmax(0, 720px); gap: 48px">
       <h2 class="label" style="padding-top: 10px">About</h2>
       <p style="font-size: 26px; line-height: 1.45; letter-spacing: -0.01em">
         {lede}
@@ -57,7 +61,7 @@ const studios = studiosForSite(site);
 
   {/* Four key-value sections with label grid (only if title exists) */}
   {sections.length > 0 && (
-    <section style="padding: 144px var(--gutter-r) 0 var(--gutter-l); display: grid; grid-template-columns: 240px minmax(0, 720px); gap: 96px 48px">
+    <section class="about-kv" style="padding: 144px var(--gutter-r) 0 var(--gutter-l); display: grid; grid-template-columns: 240px minmax(0, 720px); gap: 96px 48px">
       {sections.map((section) => (
         <>
           <h2 class="label" style="padding-top: 6px">
@@ -76,8 +80,8 @@ const studios = studiosForSite(site);
   )}
 
   {/* Three-up studio strip */}
-  <section style="padding: 160px var(--gutter-r) 160px var(--gutter-l)">
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px">
+  <section class="about-studios" style="padding: 160px var(--gutter-r) 160px var(--gutter-l)">
+    <div class="studio-strip" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px">
       {studios.map((studio) => (
         <div>
           <div style="width: 100%; aspect-ratio: 4 / 3; background: var(--ph); overflow: hidden">
@@ -105,3 +109,27 @@ const studios = studiosForSite(site);
     </div>
   </section>
 </main>
+
+<style>
+  /* Responsive (2026-08-24, desktop-only handoff): tablet keeps the 3-up
+     studio strip (it fits at 768 with the clamped gutters, just a tighter
+     gap); phones stack the 240px label grids (label above content) and the
+     studio strip, and step the 96–160px section rhythm down. Layout is
+     inline style="" on the elements (transcription), hence !important. */
+  @media (max-width: 1023px) {
+    .studio-strip { gap: 20px !important; }
+  }
+  @media (max-width: 700px) {
+    .about-hero { padding-top: 64px !important; }
+    .about-hero > div { margin-top: 48px !important; }
+    .about-lede { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; padding-top: 64px !important; }
+    .about-lede p { font-size: 22px !important; }
+    .about-kv { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; padding-top: 96px !important; }
+    /* Group separation: stacked, the uniform grid gap can't distinguish
+       label→body (tight) from body→next label (loose) — the body div
+       carries the extra air instead. */
+    .about-kv > div:not(:last-child) { margin-bottom: 48px; }
+    .about-studios { padding-top: 96px !important; padding-bottom: 96px !important; }
+    .studio-strip { grid-template-columns: minmax(0, 1fr) !important; row-gap: 48px !important; }
+  }
+</style>

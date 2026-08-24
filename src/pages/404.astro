@@ -29,3 +29,13 @@ import Base from "../layouts/Base.astro";
     </section>
   </main>
 </Base>
+
+<style>
+  /* Responsive (2026-08-24, desktop-only handoff): phones step the 160/200px
+     verticals down. Longhand padding-top/bottom only, like the inline styles
+     they override (the `padding` shorthand would clobber .gutter's sides) —
+     !important because inline style="" wins the cascade otherwise. */
+  @media (max-width: 700px) {
+    section.gutter { padding-top: 96px !important; padding-bottom: 120px !important; }
+  }
+</style>

@@ -60,6 +60,17 @@ const t = makeT(locale);
 </main>
 
 <style>
+  /* Responsive (2026-08-24, desktop-only handoff): phones go single-column
+     and the kind filter row wraps. Base rules below share specificity and
+     come later in source, hence the !important overrides (same pattern as
+     WorkIndexView). */
+  @media (max-width: 700px) {
+    section.gutter { padding-bottom: 96px !important; }
+    .news-h2 { margin-bottom: 40px !important; }
+    .filter-list-kind { flex-wrap: wrap; gap: 16px 40px !important; }
+    .news-grid { grid-template-columns: 1fr !important; row-gap: 48px !important; }
+  }
+
   .news-h2 {
     font-size: 32px;
     font-weight: 500;
