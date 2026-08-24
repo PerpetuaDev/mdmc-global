@@ -9,7 +9,7 @@
 // it with the HTML, so it paints with first render. Vite's ?inline resolves
 // this to a data: string at build time.
 import logoDataUri from "../assets/mdmc-logo.png?inline";
-import { makeT, linkHref } from "../lib/i18n.js";
+import { makeT, makeLinks } from "../lib/i18n.js";
 
 interface ContentItem {
   slug: string;
@@ -19,17 +19,19 @@ interface ContentItem {
 interface Props {
   active?: "home" | "work" | "news" | "about" | "contact";
   locale?: "en" | "ja";
+  site?: "co" | "cojp";
   // EN-shaped path of the current page (Base.astro computes this) — the
-  // input every linkHref call below uses, regardless of which locale we're
-  // rendering.
+  // input every link below is built from, regardless of which (site, lang)
+  // tree we're rendering.
   enPath?: string;
   projects: ContentItem[];
   articles: ContentItem[];
 }
 
-const { active, locale = "en", enPath = "/", projects = [], articles = [] } = Astro.props as Props;
+const { active, locale = "en", site = "co", enPath = "/", projects = [], articles = [] } = Astro.props as Props;
 const t = makeT(locale);
-const href = (path: string) => linkHref(locale, locale, path);
+const links = makeLinks(site, locale);
+const href = (path: string) => links.internal(path);
 
 const workItems = projects.slice(0, 4);
 const newsItems = articles.slice(0, 4);
@@ -37,30 +39,34 @@ const newsItems = articles.slice(0, 4);
 // Localized labels; ja leads with the local (Japan) studio, same principle
 // as studiosForLocale. The client script keeps these exact labels via the
 // data-region-labels attribute below (it's a bundled script, no server vars).
+// Region rows (2026-08-21 matrix model): a row for the domain you're already
+// on is a preference BUTTON (stores mdmc.region, no navigation); a row for
+// the other domain is a LINK to this page's counterpart there, carrying the
+// current language. NZ/AU both live on mdmc.co — which one you picked rides
+// along as ?r= so the destination (a different origin, different
+// localStorage) can adopt it. On co.jp the region is always Japan (the
+// domain IS the region), so nz/au are links out and jp is the button.
 const regionRows = [
-  { code: "nz", label: t("work.region.New Zealand") },
-  { code: "au", label: t("work.region.Australia") },
-  { code: "jp", label: t("work.region.Japan") },
+  { code: "nz", label: t("work.region.New Zealand"), href: site === "cojp" ? links.toSite("co", enPath) + "?r=nz" : null },
+  { code: "au", label: t("work.region.Australia"), href: site === "cojp" ? links.toSite("co", enPath) + "?r=au" : null },
+  { code: "jp", label: t("work.region.Japan"), href: site === "co" ? links.toSite("cojp", enPath) : null },
 ];
-const regions = locale === "ja" ? [regionRows[2], regionRows[0], regionRows[1]] : regionRows;
+const regions = site === "cojp" ? [regionRows[2], regionRows[0], regionRows[1]] : regionRows;
 const regionLabelsJson = JSON.stringify(Object.fromEntries(regionRows.map((r) => [r.code, r.label])));
-// Language row labels never translate (the English row always reads
-// "English", even on a ja page) — lang.en/lang.ja happen to hold identical
-// values in both dicts, so t() is just a convenient lookup here.
+// Language rows switch language ON THE CURRENT DOMAIN (relative links) —
+// language never changes your region. Row labels never translate (the
+// English row always reads "English", even on a ja page).
 const languages = [
-  { code: "en", label: t("lang.en"), href: linkHref(locale, "en", enPath) },
-  { code: "ja", label: t("lang.ja"), href: linkHref(locale, "ja", enPath) },
+  { code: "en", label: t("lang.en"), href: links.toLang("en", enPath) },
+  { code: "ja", label: t("lang.ja"), href: links.toLang("ja", enPath) },
 ];
 
-// Server-rendered defaults. Region is a stored client preference; its
-// DEFAULT follows the page locale (Japan first on ja — same local-studio
-// principle as studiosForLocale) and the client script may override it from
-// localStorage. Locale is NOT a preference at all: the URL (domain/path) is
-// the single source of truth, so the language UI always renders the page's
-// own locale — a stored language could only ever contradict the page it's
-// shown on (that was a live bug: a stale mdmc.locale=ja painted EN pages as
-// "New Zealand JA" with 日本語 marked active).
-const defaultRegion = locale === "ja" ? "jp" : "nz";
+// Server-rendered defaults. Region is a stored client preference on mdmc.co
+// (nz/au; default nz) and FIXED to jp on co.jp; the client script may
+// override from localStorage/?r= on mdmc.co only. Locale is NOT a
+// preference at all: the URL is the single source of truth, so the language
+// UI always renders the page's own locale.
+const defaultRegion = site === "cojp" ? "jp" : "nz";
 const defaultLocale = locale;
 const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.label ?? regionRows[0].label;
 ---
@@ -68,6 +74,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
 <header
   data-header
   data-page-locale={locale}
+  data-page-site={site}
   style="position: relative; z-index: 100; background: #fff; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; padding: 64px var(--gutter-r) 36px var(--gutter-l); font-size: 20px"
 >
   <a href={href("/")} aria-label={t("a11y.homeLink")} style="display: flex; align-items: center; gap: 14px; justify-self: start">
@@ -159,12 +166,22 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
             <ul style="list-style: none">
               {regions.map((r) => (
                 <li style="margin-top: 10px">
-                  <button
-                    type="button"
-                    data-region={r.code}
-                    class:list={["mega-link", "locale-btn", { "is-active": r.code === defaultRegion }]}
-                    style="display: block; width: 100%; text-align: right; font-size: 20px"
-                  >{r.label}</button>
+                  {r.href ? (
+                    <a
+                      href={r.href}
+                      data-region={r.code}
+                      data-region-link
+                      class="mega-link locale-btn"
+                      style="display: block; width: 100%; text-align: right; font-size: 20px"
+                    >{r.label}</a>
+                  ) : (
+                    <button
+                      type="button"
+                      data-region={r.code}
+                      class:list={["mega-link", "locale-btn", { "is-active": r.code === defaultRegion }]}
+                      style="display: block; width: 100%; text-align: right; font-size: 20px"
+                    >{r.label}</button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -318,16 +335,31 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
   }
 
   const pageLocale = header.dataset.pageLocale === 'ja' ? 'ja' : 'en';
-  // With nothing stored, the region default follows the page locale (Japan
-  // first on ja) — mirrors the server-rendered default.
-  const defaultRegion = pageLocale === 'ja' ? 'jp' : 'nz';
+  const pageSite = header.dataset.pageSite === 'cojp' ? 'cojp' : 'co';
+  // On co.jp the region IS the domain (always jp); on mdmc.co the stored
+  // preference distinguishes nz/au (default nz).
+  const defaultRegion = pageSite === 'cojp' ? 'jp' : 'nz';
   function normalizeRegion(v) {
-    return v === 'nz' || v === 'au' || v === 'jp' ? v : defaultRegion;
+    if (pageSite === 'cojp') return 'jp';
+    return v === 'nz' || v === 'au' ? v : defaultRegion;
   }
   // One-time hygiene: nothing reads mdmc.locale any more (see comment
   // above) — clear stale values so old visits can't confuse anyone reading
   // storage by hand either.
   try { localStorage.removeItem('mdmc.locale'); } catch { /* fine */ }
+
+  // Cross-domain region carry: localStorage can't cross origins, so region
+  // links from the other domain append ?r=nz|au — adopt it, then strip the
+  // param from the address bar.
+  try {
+    const url = new URL(location.href);
+    const r = url.searchParams.get('r');
+    if (r === 'nz' || r === 'au') {
+      writeStore(REGION_KEY, r);
+      url.searchParams.delete('r');
+      history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+    }
+  } catch { /* fine — preference just falls back to the default */ }
 
   // In-memory fallback so clicks still update the UI within this page view
   // even when readStore/writeStore can't touch localStorage at all.
@@ -352,7 +384,9 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
     });
   }
 
-  header.querySelectorAll('[data-region]').forEach((btn) => {
+  // Only the preference BUTTONS store locally; region LINKS ([data-region-link])
+  // navigate to the other domain and hand the choice over via ?r= instead.
+  header.querySelectorAll('button[data-region]').forEach((btn) => {
     btn.addEventListener('click', () => {
       memRegion = btn.dataset.region;
       writeStore(REGION_KEY, memRegion);

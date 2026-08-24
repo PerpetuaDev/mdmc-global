@@ -1,0 +1,17 @@
+---
+// Work index — mdmc.co.jp (root) tree: built at origin /jp and served by
+// the Worker at the co.jp root. Identical to src/pages/ja/work/index.astro
+// except site="cojp" passed to both Base and WorkIndexView (language-region
+// matrix, 2026-08-21). See work/index.astro for the full header comment
+// (data loading, provenance notes) — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import WorkIndexView from "../../../views/WorkIndexView.astro";
+import { loadContent } from "../../../lib/content.js";
+
+const { projects } = await loadContent();
+---
+
+{/* title/description are PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
+<Base title="ワーク — MDMC" active="work" description="MDMCのワーク — デザインとデジタル戦略を横断する統合エージェンシーの実績をご紹介します。" locale="ja" site="cojp">
+  <WorkIndexView locale="ja" site="cojp" projects={projects} />
+</Base>

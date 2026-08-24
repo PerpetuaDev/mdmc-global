@@ -1,0 +1,20 @@
+---
+// News index — mdmc.co.jp/en tree (English on the Japan domain), served by
+// the Worker at co.jp/en, canonical → mdmc.co. Identical to src/pages/news/
+// index.astro except site="cojp" passed to both Base and NewsIndexView
+// (language-region matrix, 2026-08-21). KINDS uses the EN
+// ARTICLE_KIND_LABELS map like the root page. See news/index.astro for the
+// full header comment (data loading, KINDS derivation, provenance notes) —
+// unchanged here.
+import Base from "../../../layouts/Base.astro";
+import NewsIndexView from "../../../views/NewsIndexView.astro";
+import { loadContent, ARTICLE_KIND_LABELS } from "../../../lib/content.js";
+
+const { articles } = await loadContent();
+
+const KINDS = Object.entries(ARTICLE_KIND_LABELS).map(([value, label]) => ({ value, label }));
+---
+
+<Base title="News — MDMC" active="news" description="News and writing from MDMC." locale="en" site="cojp">
+  <NewsIndexView locale="en" site="cojp" articles={articles} kinds={KINDS} />
+</Base>

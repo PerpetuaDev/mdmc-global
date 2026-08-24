@@ -1,0 +1,40 @@
+---
+// Job posting page — mdmc.co.jp (root) tree: built at origin /jp and served
+// by the Worker at the co.jp root. Identical to src/pages/ja/careers/
+// [slug].astro except site="cojp" passed to both Base and JobView
+// (language-region matrix, 2026-08-21). `job` has no `.ja` overlay (see
+// JobView.astro's header comment) — a deliberate, documented EN fallback.
+// NO `active` prop, same as the EN wrapper. See careers/[slug].astro for
+// the full header comment — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import JobView from "../../../views/JobView.astro";
+import { loadContent } from "../../../lib/content.js";
+
+export async function getStaticPaths() {
+  const { jobs } = await loadContent();
+  return jobs.map((job) => ({
+    params: { slug: job.slug },
+    props: { job },
+  }));
+}
+
+const { job } = Astro.props as {
+  job: {
+    slug: string;
+    documentId: string;
+    title: string;
+    excerpt: string;
+    body: string[];
+    location: string;
+    typeLabel: string;
+    locationLabel?: string;
+    applyEmail: string;
+    heroImage: { url: string; alt: string } | null;
+  };
+};
+const ogImage = job.heroImage?.url;
+---
+
+<Base title={`${job.title} — MDMC`} description={job.excerpt || undefined} ogImage={ogImage} locale="ja" site="cojp">
+  <JobView locale="ja" site="cojp" job={job} />
+</Base>

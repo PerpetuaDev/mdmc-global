@@ -9,15 +9,17 @@
 // (design/handoff/design/MDMC Site.dc.html lines 111-146; hero window = 4
 // newest projects, 6000ms auto-advance, workCols = 2, thumbRatio = 16 / 9).
 import WorkCard from "../components/WorkCard.astro";
-import { makeT, pickLocalized, linkHref, interpolate } from "../lib/i18n.js";
+import { makeT, pickLocalized, makeLinks, interpolate } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
+  site?: "co" | "cojp";
   projects: any[];
   redirectMap: Record<string, Record<string, string>>;
 }
 
-const { locale = "en", projects, redirectMap } = Astro.props as Props;
+const { locale = "en", site = "co", projects, redirectMap } = Astro.props as Props;
+const links = makeLinks(site, locale);
 const t = makeT(locale);
 const heroSlides = projects.slice(0, 4);
 const first = heroSlides[0];
@@ -71,10 +73,10 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
     <div class="hero-frame">
       {heroSlides.map((p, i) => (
         <a
-          href={linkHref(locale, locale, `/work/${p.slug}/`)}
+          href={links.internal(`/work/${p.slug}/`)}
           data-slide
           data-title={pickLocalized(locale, p, "title")}
-          data-href={linkHref(locale, locale, `/work/${p.slug}/`)}
+          data-href={links.internal(`/work/${p.slug}/`)}
           aria-label={interpolate(t("a11y.openProject"), { title: pickLocalized(locale, p, "title") })}
           aria-hidden={i === 0 ? "false" : "true"}
           tabindex="-1"
@@ -91,7 +93,7 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
 
       <div class="hero-overlay">
         <a
-          href={first ? linkHref(locale, locale, `/work/${first.slug}/`) : "#"}
+          href={first ? links.internal(`/work/${first.slug}/`) : "#"}
           data-hero-name
           style="pointer-events: auto; font-size: 20px; color: #000"
         >{first ? pickLocalized(locale, first, "title") : undefined}</a>
@@ -113,7 +115,7 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
 
   <section style="padding: 0 var(--gutter-r) 160px var(--gutter-l)">
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 26px; row-gap: 64px">
-      {projects.map((p) => <WorkCard project={p} locale={locale} />)}
+      {projects.map((p) => <WorkCard project={p} locale={locale} site={site} />)}
     </div>
   </section>
 </main>

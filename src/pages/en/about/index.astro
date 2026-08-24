@@ -1,0 +1,21 @@
+---
+// About EN — mdmc.co.jp/en tree (English on the Japan domain), served by
+// the Worker at co.jp/en, canonical → mdmc.co. Identical to src/pages/
+// about/index.astro except site="cojp" passed to both Base and AboutView
+// (language-region matrix, 2026-08-21) — the studio strip is region-ordered
+// (Japan first). See AboutView.astro for the template itself and its header
+// comment for provenance notes.
+import Base from "../../../layouts/Base.astro";
+import AboutView from "../../../views/AboutView.astro";
+import { loadContent } from "../../../lib/content.js";
+
+const { about } = await loadContent();
+
+// Description for og:description: first paragraph of lede (for SEO) or default
+const lede = about?.lede ?? "";
+const description = lede ? lede.substring(0, 160) : undefined;
+---
+
+<Base title="About — MDMC" active="about" description={description} locale="en" site="cojp">
+  <AboutView locale="en" site="cojp" about={about} />
+</Base>

@@ -1,0 +1,19 @@
+---
+// News index — mdmc.co.jp (root) tree: built at origin /jp and served by
+// the Worker at the co.jp root. Identical to src/pages/ja/news/index.astro
+// except site="cojp" passed to both Base and NewsIndexView (language-region
+// matrix, 2026-08-21). See news/index.astro for the full header comment
+// (data loading, KINDS derivation, provenance notes) — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import NewsIndexView from "../../../views/NewsIndexView.astro";
+import { loadContent, ARTICLE_KIND_LABELS_JA } from "../../../lib/content.js";
+
+const { articles } = await loadContent();
+
+const KINDS = Object.entries(ARTICLE_KIND_LABELS_JA).map(([value, label]) => ({ value, label }));
+---
+
+{/* title/description are PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
+<Base title="ニュース — MDMC" active="news" description="MDMCからのニュースと読みものをお届けします。" locale="ja" site="cojp">
+  <NewsIndexView locale="ja" site="cojp" articles={articles} kinds={KINDS} />
+</Base>

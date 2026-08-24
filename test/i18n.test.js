@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { makeT, localePath, counterpartPath, LOCALES, STRINGS, ORIGINS, linkHref, tMisses, pickLocalized, interpolate } from '../src/lib/i18n.js'
+import { makeT, localePath, counterpartPath, LOCALES, STRINGS, SITES, sitePrefix, originPrefix, makeLinks, enPathOf, tMisses, pickLocalized, interpolate } from '../src/lib/i18n.js'
 
 describe('makeT', () => {
   it('returns locale strings and falls back to en, then the key', () => {
@@ -25,19 +25,50 @@ describe('paths', () => {
   })
 })
 
-describe('linkHref', () => {
-  const live = { en: 'https://mdmc.co', ja: 'https://mdmc.co.jp' }
-  const sameOrigin = { en: 'https://mdmc.co', ja: null }
-  it('is relative in same-origin mode', () => {
-    expect(linkHref('en', 'ja', '/work/', sameOrigin)).toBe('/ja/work/')
-    expect(linkHref('ja', 'ja', '/work/', sameOrigin)).toBe('/ja/work/')
-    expect(linkHref('ja', 'en', '/work/', sameOrigin)).toBe('/work/')
+describe('makeLinks (region × language matrix, 2026-08-21)', () => {
+  it('internal links are same-domain relative, prefixed per tree', () => {
+    expect(makeLinks('co', 'en').internal('/work/')).toBe('/work/')
+    expect(makeLinks('co', 'ja').internal('/work/')).toBe('/ja/work/')
+    expect(makeLinks('cojp', 'ja').internal('/work/')).toBe('/work/')
+    expect(makeLinks('cojp', 'en').internal('/work/')).toBe('/en/work/')
+    expect(makeLinks('co', 'ja').internal('/')).toBe('/ja/')
+    expect(makeLinks('cojp', 'en').internal('/')).toBe('/en/')
   })
-  it('crosses domains when the ja origin is live', () => {
-    expect(linkHref('en', 'ja', '/work/', live)).toBe('https://mdmc.co.jp/work/')
-    expect(linkHref('ja', 'ja', '/work/', live)).toBe('https://mdmc.co.jp/work/')
-    expect(linkHref('ja', 'en', '/work/', live)).toBe('https://mdmc.co/work/')
-    expect(linkHref('en', 'en', '/work/', live)).toBe('/work/')
+  it('toLang switches language ON the current domain (relative)', () => {
+    expect(makeLinks('co', 'en').toLang('ja', '/work/')).toBe('/ja/work/')
+    expect(makeLinks('co', 'ja').toLang('en', '/work/')).toBe('/work/')
+    expect(makeLinks('cojp', 'ja').toLang('en', '/work/')).toBe('/en/work/')
+    expect(makeLinks('cojp', 'en').toLang('ja', '/work/')).toBe('/work/')
+  })
+  it('toSite is the only cross-domain absolute, carrying the language', () => {
+    expect(makeLinks('co', 'en').toSite('cojp', '/work/')).toBe('https://mdmc.co.jp/en/work/')
+    expect(makeLinks('co', 'ja').toSite('cojp', '/work/')).toBe('https://mdmc.co.jp/work/')
+    expect(makeLinks('cojp', 'ja').toSite('co', '/work/')).toBe('https://mdmc.co/ja/work/')
+    expect(makeLinks('cojp', 'en').toSite('co', '/work/')).toBe('https://mdmc.co/work/')
+    expect(makeLinks('cojp', 'en').toSite('co', '/')).toBe('https://mdmc.co/')
+  })
+})
+
+describe('sitePrefix / originPrefix / enPathOf', () => {
+  it('surface prefixes: only co-ja and cojp-en carry one', () => {
+    expect(sitePrefix('co', 'en')).toBe('')
+    expect(sitePrefix('co', 'ja')).toBe('/ja')
+    expect(sitePrefix('cojp', 'ja')).toBe('')
+    expect(sitePrefix('cojp', 'en')).toBe('/en')
+  })
+  it('origin prefixes: cojp-ja is built under /jp', () => {
+    expect(originPrefix('co', 'ja')).toBe('/ja')
+    expect(originPrefix('cojp', 'ja')).toBe('/jp')
+    expect(originPrefix('cojp', 'en')).toBe('/en')
+    expect(originPrefix('co', 'en')).toBe('')
+  })
+  it('enPathOf strips the origin prefix back to the EN-shaped path', () => {
+    expect(enPathOf('co', 'en', '/work/x/')).toBe('/work/x/')
+    expect(enPathOf('co', 'ja', '/ja/work/x/')).toBe('/work/x/')
+    expect(enPathOf('cojp', 'ja', '/jp/work/x/')).toBe('/work/x/')
+    expect(enPathOf('cojp', 'en', '/en/work/x/')).toBe('/work/x/')
+    expect(enPathOf('cojp', 'ja', '/jp/')).toBe('/')
+    expect(enPathOf('co', 'ja', '/ja/')).toBe('/')
   })
 })
 
@@ -70,12 +101,10 @@ describe('LOCALES', () => {
   })
 })
 
-describe('ORIGINS', () => {
-  it('ships en live', () => {
-    expect(ORIGINS.en).toBe('https://mdmc.co')
-  })
-  it('ships ja on mdmc.co.jp', () => {
-    expect(ORIGINS.ja).toBe('https://mdmc.co.jp')
+describe('SITES', () => {
+  it('ships both domains', () => {
+    expect(SITES.co).toBe('https://mdmc.co')
+    expect(SITES.cojp).toBe('https://mdmc.co.jp')
   })
 })
 

@@ -1,0 +1,16 @@
+---
+// Work index — mdmc.co.jp/en tree (English on the Japan domain), served by
+// the Worker at co.jp/en, canonical → mdmc.co. Identical to src/pages/work/
+// index.astro except site="cojp" passed to both Base and WorkIndexView
+// (language-region matrix, 2026-08-21). See work/index.astro for the full
+// header comment — unchanged here.
+import Base from "../../../layouts/Base.astro";
+import WorkIndexView from "../../../views/WorkIndexView.astro";
+import { loadContent } from "../../../lib/content.js";
+
+const { projects } = await loadContent();
+---
+
+<Base title="Work — MDMC" active="work" description="Selected work by MDMC — an integrated design & digital strategy agency." locale="en" site="cojp">
+  <WorkIndexView locale="en" site="cojp" projects={projects} />
+</Base>

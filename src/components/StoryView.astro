@@ -48,7 +48,7 @@
 // criteria and would need plumbing (current index + total project count)
 // this component isn't given.
 import PullQuote from './PullQuote.astro';
-import { makeT, pickLocalized, linkHref } from '../lib/i18n.js';
+import { makeT, pickLocalized, makeLinks } from '../lib/i18n.js';
 
 interface GallerySlot {
   url: string;
@@ -78,6 +78,7 @@ interface Props {
   pullQuoteAttribution: string | null;
   next: NextProject | null;
   locale?: "en" | "ja";
+  site?: "co" | "cojp";
 }
 
 const {
@@ -87,8 +88,9 @@ const {
   pullQuote = null,
   pullQuoteAttribution = null,
   next = null,
-  locale = "en",
+  locale = "en", site = "co",
 } = Astro.props as Props;
+const links = makeLinks(site, locale);
 const t = makeT(locale);
 
 // Same fallback rule as GalleryStack: the real gallery when non-empty, else
@@ -150,7 +152,7 @@ const sections = [
 <PullQuote quote={pullQuote} attribution={pullQuoteAttribution} />
 
 {next && (
-  <a href={linkHref(locale, locale, `/work/${next.slug}/`)} class="next-project">
+  <a href={links.internal(`/work/${next.slug}/`)} class="next-project">
     <div class="next-project-head">
       <span class="label">{t('project.next')}</span>
     </div>

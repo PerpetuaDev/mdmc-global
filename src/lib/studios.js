@@ -31,11 +31,12 @@
 // closed-state buttons in design/handoff/design/MDMC Site.dc.html (lines
 // 715, 735, 755). addressLines remains the full, separate value used in the
 // open panel.
-// Locale-aware ordering: each locale leads with its local studio (ja → JP
-// first), everything else keeping its canonical order. Used by the footer,
+// Region-aware ordering (2026-08-21 matrix model): the DOMAIN leads with its
+// local studio — mdmc.co.jp shows Japan first, mdmc.co shows the canonical
+// NZ/AU/JP order — regardless of the page's language. Used by the footer,
 // the Contact page, and any other studio directory surface.
-export function studiosForLocale(locale) {
-  if (locale !== 'ja') return STUDIOS
+export function studiosForSite(site) {
+  if (site !== 'cojp') return STUDIOS
   return [...STUDIOS].sort((a, b) => (a.id === 'jp' ? -1 : 0) - (b.id === 'jp' ? -1 : 0))
 }
 

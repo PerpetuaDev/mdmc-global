@@ -3,10 +3,10 @@ import { mapPath, handleRequest } from '../workers/ja-proxy/worker.js'
 
 describe('ja-proxy mapPath', () => {
   it('maps HTML routes onto the ja tree', () => {
-    expect(mapPath('/')).toEqual({ kind: 'html', to: '/ja/' })
-    expect(mapPath('/work/')).toEqual({ kind: 'html', to: '/ja/work/' })
-    expect(mapPath('/work/youki/')).toEqual({ kind: 'html', to: '/ja/work/youki/' })
-    expect(mapPath('/about/')).toEqual({ kind: 'html', to: '/ja/about/' })
+    expect(mapPath('/')).toEqual({ kind: 'html', to: '/jp/' })
+    expect(mapPath('/work/')).toEqual({ kind: 'html', to: '/jp/work/' })
+    expect(mapPath('/work/youki/')).toEqual({ kind: 'html', to: '/jp/work/youki/' })
+    expect(mapPath('/about/')).toEqual({ kind: 'html', to: '/jp/about/' })
   })
 
   it('fetches assets verbatim', () => {
@@ -27,6 +27,9 @@ describe('ja-proxy mapPath', () => {
     expect(mapPath('/ja/work/')).toEqual({ kind: 'redirect', to: '/work/' })
     expect(mapPath('/ja/')).toEqual({ kind: 'redirect', to: '/' })
     expect(mapPath('/ja')).toEqual({ kind: 'redirect', to: '/' })
+    expect(mapPath('/jp/work/')).toEqual({ kind: 'redirect', to: '/work/' })
+    expect(mapPath('/jp/')).toEqual({ kind: 'redirect', to: '/' })
+    expect(mapPath('/jp')).toEqual({ kind: 'redirect', to: '/' })
   })
 
   it('serves robots inline and hides the single-site sitemap', () => {
@@ -96,6 +99,16 @@ describe('ja-proxy handleRequest', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [reqArg, initArg] = fetchMock.mock.calls[0]
     expect(reqArg.headers.get('x-mdmc-ja-proxy')).toBe('1')
+    expect(reqArg.url).toBe('https://mdmc.co/jp/about/')
     expect(initArg).toEqual({ redirect: 'manual' })
+  })
+
+  it('serves English on the Japan domain from the origin /en tree', async () => {
+    fetchMock.mockResolvedValue(new Response('english', { status: 200 }))
+    const res = await handleRequest(new Request('https://mdmc.co.jp/en/work/'))
+    expect(res.status).toBe(200)
+    expect(fetchMock.mock.calls[0][0].url).toBe('https://mdmc.co/en/work/')
+    expect(mapPath('/en/')).toEqual({ kind: 'html', to: '/en/' })
+    expect(mapPath('/en')).toEqual({ kind: 'redirect', to: '/en/' })
   })
 })
