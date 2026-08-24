@@ -27,7 +27,19 @@ interface Props {
 }
 
 const { locale = "en", site = "co", project, next } = Astro.props as Props;
-const hasStory = Boolean(project.story);
+// Localized story/pull-quote: the `.ja` overlay (normalizeProjectJa) carries
+// its own story object when any ja story field exists; per-field fallback to
+// EN happens here so a partially-translated case study still renders whole.
+const enStory = project.story;
+const jaStory = project.ja?.story;
+const story =
+  locale === "ja" && jaStory
+    ? Object.fromEntries(Object.keys(enStory ?? jaStory).map((k) => [k, jaStory[k] ?? enStory?.[k] ?? null]))
+    : enStory;
+const pullQuote = locale === "ja" ? (project.ja?.pullQuote ?? project.pullQuote) : project.pullQuote;
+const pullQuoteAttribution =
+  locale === "ja" ? (project.ja?.pullQuoteAttribution ?? project.pullQuoteAttribution) : project.pullQuoteAttribution;
+const hasStory = Boolean(story);
 ---
 
 <main style="animation: pageIn .6s var(--ease)">
@@ -36,18 +48,18 @@ const hasStory = Boolean(project.story);
     <GalleryStack
       gallery={project.gallery}
       heroImage={project.heroImage}
-      pullQuote={project.pullQuote}
-      pullQuoteAttribution={project.pullQuoteAttribution}
+      pullQuote={pullQuote}
+      pullQuoteAttribution={pullQuoteAttribution}
     />
   </div>
   {hasStory && (
     <div data-view-pane="story" hidden>
       <StoryView
-        story={project.story}
+        story={story}
         gallery={project.gallery}
         heroImage={project.heroImage}
-        pullQuote={project.pullQuote}
-        pullQuoteAttribution={project.pullQuoteAttribution}
+        pullQuote={pullQuote}
+        pullQuoteAttribution={pullQuoteAttribution}
         next={next}
         site={site}
         locale={locale}

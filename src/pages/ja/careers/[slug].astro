@@ -6,6 +6,7 @@
 // careers/[slug].astro for the full header comment — unchanged here.
 import Base from "../../../layouts/Base.astro";
 import JobView from "../../../views/JobView.astro";
+import { pickLocalized } from "../../../lib/i18n.js";
 import { loadContent } from "../../../lib/content.js";
 
 export async function getStaticPaths() {
@@ -33,6 +34,6 @@ const { job } = Astro.props as {
 const ogImage = job.heroImage?.url;
 ---
 
-<Base title={`${job.title} — MDMC`} description={job.excerpt || undefined} ogImage={ogImage} locale="ja">
+<Base title={`${pickLocalized("ja", job, "title")} — MDMC`} description={pickLocalized("ja", job, "excerpt") || undefined} ogImage={ogImage} locale="ja">
   <JobView locale="ja" job={job} />
 </Base>
