@@ -7,6 +7,7 @@ import {
   blocksToParagraphs,
   LOCALIZED_PROJECT_FIELDS,
   LOCALIZED_ARTICLE_FIELDS,
+  LOCALIZED_JOB_FIELDS,
 } from './normalize.js'
 
 const API = 'https://upbeat-approval-82a9e54c20.strapiapp.com/api'
@@ -237,13 +238,21 @@ function normalizeAboutJapan(item) {
 
 // `offers` (a repeatable component) is deliberately ignored this phase per
 // the brief — not populated on the fetch, not surfaced here.
-function normalizeCareer(item) {
+function normalizeCareer(item, jaItem = null) {
   if (!item) return null
   return {
     headline: item.headline ?? '',
     intro: blocksToParagraphs(item.intro),
     contactEmail: item.contact_email ?? null,
     heroImage: mediaOf(item.hero_image),
+    // Single type, so the ja locale entry is merged here rather than via
+    // mergeLocales — same `.ja` overlay shape consumers pickLocalized() on.
+    ja: jaItem
+      ? {
+          headline: jaItem.headline ?? null,
+          intro: jaItem.intro != null ? blocksToParagraphs(jaItem.intro) : null,
+        }
+      : null,
   }
 }
 
@@ -299,6 +308,18 @@ function normalizeJob(item) {
     locationType: item.location_type ?? '',
     applyEmail: item.apply_email ?? '',
     heroImage: mediaOf(item.hero_image),
+    ja: normalizeJobJa(item.ja),
+  }
+}
+
+// Same overlay convention as normalizeProjectJa/normalizeArticleJa: null when
+// no ja locale exists, else only the localized fields consumers read.
+function normalizeJobJa(overlay) {
+  if (!overlay) return null
+  return {
+    title: overlay.title ?? null,
+    excerpt: overlay.excerpt ?? null,
+    body: overlay.body != null ? blocksToParagraphs(overlay.body) : null,
   }
 }
 
@@ -327,7 +348,7 @@ const CAREER_POPULATE = 'populate[hero_image]=true'
 const JOBS_POPULATE = 'populate[hero_image]=true'
 
 async function _load() {
-  const [projectsEn, projectsJa, articlesEn, articlesJa, aboutRaw, aboutJapanRaw, careerRaw, jobsRaw] =
+  const [projectsEn, projectsJa, articlesEn, articlesJa, aboutRaw, aboutJapanRaw, careerRaw, careerJaRaw, jobsRaw, jobsJaRaw] =
     await Promise.all([
       fetchJson(`/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=en`),
       fetchJson(`/projects?${PROJECTS_POPULATE}&sort=date:desc&locale=ja`),
@@ -336,7 +357,9 @@ async function _load() {
       fetchJson(`/about?${ABOUT_POPULATE}`),
       fetchJson(`/about-japan?${ABOUT_JAPAN_POPULATE}`),
       fetchJson(`/career?${CAREER_POPULATE}&locale=en`),
+      fetchJson(`/career?${CAREER_POPULATE}&locale=ja`),
       fetchJson(`/jobs?${JOBS_POPULATE}&locale=en`),
+      fetchJson(`/jobs?${JOBS_POPULATE}&locale=ja`),
     ])
 
   const rawProjectsEn = projectsEn ?? snapshot.projects_en ?? []
@@ -352,9 +375,10 @@ async function _load() {
 
   const about = normalizeAbout(aboutRaw ?? snapshot.about ?? null)
   const aboutJapan = normalizeAboutJapan(aboutJapanRaw ?? snapshot.about_japan ?? null)
-  const career = normalizeCareer(careerRaw ?? snapshot.career_en ?? null)
-  const rawJobs = jobsRaw ?? snapshot.jobs_en ?? []
-  const jobs = assignSlugs(rawJobs.map(normalizeJob))
+  const career = normalizeCareer(careerRaw ?? snapshot.career_en ?? null, careerJaRaw ?? snapshot.career_ja ?? null)
+  const rawJobsEn = jobsRaw ?? snapshot.jobs_en ?? []
+  const rawJobsJa = jobsJaRaw ?? snapshot.jobs_ja ?? []
+  const jobs = assignSlugs(mergeLocales(rawJobsEn, rawJobsJa, LOCALIZED_JOB_FIELDS).map(normalizeJob))
 
   return { projects, articles, about, aboutJapan, career, jobs }
 }

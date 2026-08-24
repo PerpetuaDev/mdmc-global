@@ -17,6 +17,7 @@ export const LOCALIZED_PROJECT_FIELDS = [
   'pull_quote_attribution',
 ]
 export const LOCALIZED_ARTICLE_FIELDS = ['title', 'excerpt', 'body']
+export const LOCALIZED_JOB_FIELDS = ['title', 'excerpt', 'body']
 
 // Strapi 5 richtext blocks → array of paragraph strings. Ported as-is from
 // main:src/strapi.js (lines 27-36) so both the old and new content layers

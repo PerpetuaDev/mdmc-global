@@ -1,17 +1,18 @@
 ---
 // Careers page (ja) — identical to src/pages/careers/index.astro except
 // locale="ja" passed to both Base and CareersView (Phase-5 Task 4). `career`
-// and `jobs` have no `.ja` overlay (see CareersView.astro's header comment)
-// — a deliberate, documented EN fallback. See careers/index.astro for the
-// full header comment — unchanged here.
+// and `jobs` carry `.ja` overlays (machine-drafted placeholders, 2026-08-24)
+// picked below via pickLocalized. See careers/index.astro for the full
+// header comment.
 import Base from "../../../layouts/Base.astro";
 import CareersView from "../../../views/CareersView.astro";
+import { pickLocalized } from "../../../lib/i18n.js";
 import { loadContent } from "../../../lib/content.js";
 
 const { career, jobs } = await loadContent();
 
-const headline = career?.headline ?? "Careers";
-const intro = career?.intro ?? [];
+const headline = (career && pickLocalized("ja", career, "headline")) || "Careers";
+const intro = (career && pickLocalized("ja", career, "intro")) || [];
 const heroImage = career?.heroImage;
 const contactEmail = career?.contactEmail ?? "careers@mdmc.co";
 ---

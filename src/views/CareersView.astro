@@ -13,7 +13,7 @@
 // intro/hero as en — a deliberate, documented EN fallback, not a bug. Same
 // for `jobs` (normalizeJob has no `.ja` overlay either): job titles/locale/
 // type render in English on ja pages too.
-import { makeT, makeLinks } from "../lib/i18n.js";
+import { makeT, makeLinks, pickLocalized } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -67,7 +67,7 @@ const t = makeT(locale);
         <li>
           <a href={links.internal(`/careers/${job.slug}/`)} style="display: grid; grid-template-columns: minmax(0, 420px) 200px 160px 1fr; gap: 48px; align-items: center; padding: 28px 0; border-top: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); text-decoration: none; color: inherit; transition: opacity 0.2s ease">
             <h3 style="font-size: 24px; font-weight: 500; letter-spacing: -0.005em; margin: 0">
-              {job.title}
+              {pickLocalized(locale, job, "title")}
             </h3>
             <div>
               <div class="label" style="font-size: 11px">{t("careers.meta.studio")}</div>

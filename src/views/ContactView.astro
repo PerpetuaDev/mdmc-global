@@ -122,7 +122,7 @@ const headlineLines = t("contact.headline").split("\n");
       <div class="label">{t("contact.form.to")}<span class="meta-dot" aria-hidden="true">·</span><span id="contact-to">MDMC</span></div>
     </div>
 
-    <form id="contact-form-el">
+    <form id="contact-form-el" data-msg-ok={t("form.thankYou")} data-msg-err={t("form.error")}>
       <div class="form-row form-row-top" style="align-items: baseline">
         <label for="cf-name" class="label">{t("contact.form.name")}</label>
         <input id="cf-name" name="name" type="text" required />
@@ -484,13 +484,13 @@ const headlineLines = t("contact.headline").split("\n");
         if (ok) {
           const confirmLine = document.createElement('p');
           confirmLine.className = 'contact-confirm';
-          confirmLine.textContent = "Thank you — we'll be in touch.";
+          confirmLine.textContent = form.dataset.msgOk || "Thank you — we'll be in touch.";
           confirmLine.setAttribute('role', 'status');
           confirmLine.tabIndex = -1;
           form.replaceWith(confirmLine);
           confirmLine.focus();
         } else {
-          showError('Something went wrong — please try again.');
+          showError(form.dataset.msgErr || 'Something went wrong — please try again.');
           try {
             (window as any).mdmcTurnstileReset?.('contact');
           } catch {
@@ -502,7 +502,7 @@ const headlineLines = t("contact.headline").split("\n");
       } catch {
         // Absolute last resort: no path through this handler may throw.
         isSubmitting = false;
-        showError('Something went wrong — please try again.');
+        showError(form.dataset.msgErr || 'Something went wrong — please try again.');
         try {
           (window as any).mdmcTurnstileReset?.('contact');
         } catch {

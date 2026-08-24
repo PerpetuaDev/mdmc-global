@@ -8,12 +8,13 @@
 // comment — unchanged here.
 import Base from "../../../layouts/Base.astro";
 import CareersView from "../../../views/CareersView.astro";
+import { pickLocalized } from "../../../lib/i18n.js";
 import { loadContent } from "../../../lib/content.js";
 
 const { career, jobs } = await loadContent();
 
-const headline = career?.headline ?? "Careers";
-const intro = career?.intro ?? [];
+const headline = (career && pickLocalized("ja", career, "headline")) || "Careers";
+const intro = (career && pickLocalized("ja", career, "intro")) || [];
 const heroImage = career?.heroImage;
 const contactEmail = career?.contactEmail ?? "careers@mdmc.co";
 ---
