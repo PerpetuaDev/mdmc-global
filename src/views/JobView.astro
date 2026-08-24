@@ -120,6 +120,21 @@ const t = makeT(locale);
 </main>
 
 <style>
+  /* Responsive (2026-08-24, desktop-only handoff): phones stack the 240px
+     label grids — role section and every apply .form-row (label above
+     input) — let the apply header wrap, and step the section rhythm down.
+     Inline paddings and later equal-specificity base rules win the cascade,
+     hence !important. */
+  @media (max-width: 700px) {
+    main > section:first-child { padding-top: 64px !important; }
+    .hero-container { margin-top: 48px !important; }
+    .role-section { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; margin-top: 80px !important; margin-bottom: 80px !important; }
+    .role-body { font-size: 20px !important; }
+    .apply-header { flex-wrap: wrap; gap: 12px 32px !important; }
+    .form-row { grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; padding: 20px 0 !important; }
+    main > section:last-of-type { padding-bottom: 96px !important; }
+  }
+
   .job-title {
     font-size: clamp(40px, 4.4vw, 64px);
     font-weight: 500;

@@ -167,6 +167,21 @@ const sections = [
 )}
 
 <style>
+  /* Responsive (2026-08-24, desktop-only handoff): phones stack the two
+     story columns — article FIRST (the reader opened this pane to read;
+     the image stack, which duplicates the gallery pane's assets, follows) —
+     and the next-project foot wraps. Later equal-specificity base rules win
+     the cascade, hence !important. */
+  @media (max-width: 700px) {
+    .story-columns { grid-template-columns: 1fr !important; padding-top: 64px !important; gap: 72px !important; }
+    .story-article { order: -1; }
+    .story-images { gap: 48px !important; }
+    .story-section + .story-section { margin-top: 72px !important; }
+    .next-project { margin-top: 80px !important; }
+    .next-project-foot { flex-wrap: wrap; gap: 12px 32px !important; }
+    .next-project-title { font-size: 24px !important; }
+  }
+
   .story-columns {
     padding-top: 96px;
     display: grid;

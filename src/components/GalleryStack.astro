@@ -126,6 +126,14 @@ for (let i = 0; i < slots.length; i++) {
 <PullQuote quote={pullQuote} attribution={pullQuoteAttribution} />
 
 <style>
+  /* Responsive (2026-08-24, desktop-only handoff): phones stack the two_up
+     pairs and tighten the 96px stack rhythm. Later equal-specificity base
+     rules win the cascade, hence !important. */
+  @media (max-width: 700px) {
+    .gallery-stack { gap: 64px !important; padding-top: 64px !important; }
+    .gallery-pair { grid-template-columns: 1fr !important; gap: 48px !important; }
+  }
+
   .gallery-stack {
     display: grid;
     gap: 96px;

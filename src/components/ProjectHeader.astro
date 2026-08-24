@@ -59,6 +59,16 @@ const showMetaRow = specialties.length > 0 || hasStory;
 </section>
 
 <style>
+  /* Responsive (2026-08-24, desktop-only handoff): phones tighten the top
+     padding, step the description down, and let the meta row (specialties +
+     optional view toggle) wrap. Later equal-specificity base rules win the
+     cascade, hence !important. */
+  @media (max-width: 700px) {
+    .project-header { padding-top: 64px !important; }
+    .project-description { font-size: 20px !important; }
+    .project-meta { flex-wrap: wrap; gap: 16px 32px !important; }
+  }
+
   .project-header {
     padding-top: 80px;
   }

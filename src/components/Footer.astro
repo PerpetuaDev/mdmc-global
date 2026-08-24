@@ -153,6 +153,27 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
 </footer>
 
 <style>
+  /* Responsive (2026-08-24, desktop-only handoff): below 1024px the CTA
+     stacks above the studio list; on phones each studio row stacks its
+     label above the address/panel and open panels show the photo full-width.
+     Inline grid styles on the wrappers win the cascade, hence !important. */
+  @media (max-width: 1023px) {
+    footer[data-footer] > div:first-of-type {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 48px !important;
+    }
+  }
+  @media (max-width: 700px) {
+    footer[data-footer] { padding-top: 48px !important; font-size: 17px !important; }
+    .studio-row > div {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 12px !important;
+      padding-right: 40px !important;
+    }
+    .studio-image { width: 100% !important; flex: 1 1 100% !important; }
+    .footer-bottom { flex-wrap: wrap; gap: 12px 24px; }
+  }
+
   .footer-cta {
     transition: opacity 0.2s ease;
   }
