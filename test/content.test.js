@@ -7,6 +7,7 @@ import {
   normalizeCareer,
   normalizeJob,
   ARTICLE_KIND_LABELS,
+  heroSlidesOf,
 } from '../src/lib/content.js'
 import { assignSlugs } from '../src/lib/normalize.js'
 
@@ -343,5 +344,29 @@ describe('normalizeJob', () => {
   it('assignSlugs gives the job a routable slug from its title', () => {
     const [out] = assignSlugs([normalizeJob(raw)])
     expect(out.slug).toBe('bilingual-administrator')
+  })
+})
+
+describe('heroSlidesOf', () => {
+  // Home hero window = 4 newest projects, but only ones that actually have a
+  // hero image: a project with hero_image unset in the CMS must never land in
+  // the slideshow as an empty grey placeholder frame (mdmc.co 2026-08-25:
+  // Zenrise Brand Identity, 4th-newest, no hero -> blank slide every cycle).
+  const proj = (id, heroImage) => ({ documentId: id, slug: id, heroImage })
+  const hero = { url: 'https://cdn/x.webp', alt: '' }
+
+  it('skips projects without a hero image and keeps date order', () => {
+    const projects = [proj('a', hero), proj('b', null), proj('c', hero), proj('d', hero), proj('e', hero)]
+    expect(heroSlidesOf(projects).map((p) => p.slug)).toEqual(['a', 'c', 'd', 'e'])
+  })
+
+  it('caps the window at 4 slides', () => {
+    const projects = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => proj(id, hero))
+    expect(heroSlidesOf(projects)).toHaveLength(4)
+  })
+
+  it('returns fewer than 4 when not enough projects have heroes', () => {
+    const projects = [proj('a', hero), proj('b', null), proj('c', null)]
+    expect(heroSlidesOf(projects).map((p) => p.slug)).toEqual(['a'])
   })
 })

@@ -7,9 +7,11 @@
 //
 // See src/pages/index.astro's original header comment for provenance notes
 // (design/handoff/design/MDMC Site.dc.html lines 111-146; hero window = 4
-// newest projects, 6000ms auto-advance, workCols = 2, thumbRatio = 16 / 9).
+// newest projects WITH a hero image — see heroSlidesOf in content.js —
+// 6000ms auto-advance, workCols = 2, thumbRatio = 16 / 9).
 import WorkCard from "../components/WorkCard.astro";
 import { makeT, pickLocalized, makeLinks, interpolate } from "../lib/i18n.js";
+import { heroSlidesOf } from "../lib/content.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -21,7 +23,7 @@ interface Props {
 const { locale = "en", site = "co", projects, redirectMap } = Astro.props as Props;
 const links = makeLinks(site, locale);
 const t = makeT(locale);
-const heroSlides = projects.slice(0, 4);
+const heroSlides = heroSlidesOf(projects);
 const first = heroSlides[0];
 
 // home.manifesto.1/2 store their line breaks as literal '\n'; split into

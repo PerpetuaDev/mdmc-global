@@ -394,6 +394,17 @@ export function loadContent() {
   return (_p ??= _load())
 }
 
+// Home hero slideshow window: the 4 newest projects (the list is already
+// date-desc) that actually have a hero image. A project with `hero_image`
+// unset in the CMS is skipped rather than rendered as an empty grey
+// placeholder frame — three live projects have no hero today (2026-08-25),
+// and Zenrise Brand Identity was 4th-newest, so the slideshow showed a blank
+// slide every cycle. WorkCard/GalleryStack keep their own degraded states.
+export const HERO_SLIDE_COUNT = 4
+export function heroSlidesOf(projects) {
+  return (projects ?? []).filter((p) => p?.heroImage).slice(0, HERO_SLIDE_COUNT)
+}
+
 // Exported for unit testing the pure normalization logic in isolation from
 // fetch/fallback (test/content.test.js). ARTICLE_KIND_LABELS is also
 // consumed by src/pages/news/index.astro so its KINDS filter list derives
