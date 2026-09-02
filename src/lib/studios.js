@@ -9,11 +9,14 @@
 //   the old footer's studios array.
 // - AU: address from pages.jsx + old footer; email au@mdmc.co from the old
 //   footer. No AU phone number exists anywhere on the old site.
-// - JP: address (English) from pages.jsx contact-block; email contact@mdmc.co
-//   from the old footer (note: jp.about.location.contact.v uses team@mdmc.co
-//   for the Yokohama office page — the *footer* specifically used
-//   contact@mdmc.co, which is what we mirror here). No JP phone number
-//   exists anywhere on the old site.
+// - JP: address (English) from pages.jsx contact-block. Email is
+//   contact@mdmc.co.jp as of 2026-09-02 — a real Workspace group ("MDMC
+//   Japan", aliases jp@mdmc.co and the legacy tyo@mdmc.co) on the Japan
+//   domain, replacing the transcribed-from-the-old-footer contact@mdmc.co.
+//   The old site had no JP-domain address to point at; it does now, and the
+//   JP studio should show it on both domains. The About page's own
+//   お問い合わせ line (about-jp-data.js) moved to the same address, so the
+//   two no longer deliberately differ. No JP phone number exists anywhere.
 //
 // image: self-hosted studio photography (public/images/studios/, 1600w webp,
 // wired 2026-08-20): nz = the Christchurch office interior (the old About
@@ -74,7 +77,7 @@ export const STUDIOS = [
       '5-57-2 Kitanakadori, Naka-ku',
       'Yokohama, Kanagawa 231-0003, Japan',
     ],
-    email: 'contact@mdmc.co',
+    email: 'contact@mdmc.co.jp',
     phone: null,
     image: '/images/studios/jp.webp',
     // Japanese-format address (user-confirmed 2026-08-20, same source as

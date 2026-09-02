@@ -33,13 +33,12 @@
 // - 業務内容 (services): i18n.jsx jp.about.fact.gyomu.v — real, unchanged.
 // - 交通 (access/transit): i18n.jsx jp.about.location.access.v — real,
 //   unchanged.
-// - お問い合わせ (contact, access block): i18n.jsx
-//   jp.about.location.contact.v = "team@mdmc.co" — real. Note this
-//   intentionally differs from studios.js's JP footer email
-//   (contact@mdmc.co); studios.js's own comment already documents that the
-//   Yokohama office page specifically used team@mdmc.co while the footer
-//   used contact@mdmc.co, so the two are expected to differ, not a
-//   conflict to resolve.
+// - お問い合わせ (contact, access block): was i18n.jsx
+//   jp.about.location.contact.v = "team@mdmc.co", transcribed from the old
+//   Yokohama office page. Now contact@mdmc.co.jp (2026-09-02) — the real
+//   Workspace group for the Japan studio. The old team@/contact@ split was
+//   an artefact of the old site having no JP-domain address; both now point
+//   at the same place, matching studios.js.
 //
 // Nothing here is a genuine content gap — no placeholder copy needed.
 export const ABOUT_JP = {
@@ -80,6 +79,6 @@ export const ABOUT_JP = {
         'JR関内駅より徒歩10分',
       ],
     },
-    { title: 'お問い合わせ', lines: ['team@mdmc.co'] },
+    { title: 'お問い合わせ', lines: ['contact@mdmc.co.jp'] },
   ],
 }
