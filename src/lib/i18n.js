@@ -31,6 +31,7 @@ export const STRINGS = {
     // (old site used a Global/Japan "site" model, not a Region picker). ---
     'nav.region': 'Region',
     'nav.language': 'Language',
+    'nav.menu': 'Menu',
 
     // --- lang.* (ported verbatim) ---
     'lang.label': 'English',
@@ -158,6 +159,8 @@ export const STRINGS = {
     'a11y.browseProjects': 'Browse featured projects',
     'a11y.prevSlide': 'Previous slide',
     'a11y.nextSlide': 'Next slide',
+    'a11y.openMenu': 'Open menu',
+    'a11y.closeMenu': 'Close menu',
     'a11y.filterByType': 'Filter by type',
     'a11y.filterBySpecialty': 'Filter by specialty',
     'a11y.filterByRegion': 'Filter by region',
@@ -217,6 +220,7 @@ export const STRINGS = {
     // ------------------------------------------------------------------
     'nav.region': '地域',
     'nav.language': '言語',
+    'nav.menu': 'メニュー',
 
     'work.filter.region': '地域',
     'work.filter.specialty': '専門分野',
@@ -265,6 +269,8 @@ export const STRINGS = {
     'a11y.browseProjects': '注目プロジェクトを見る',
     'a11y.prevSlide': '前のスライド',
     'a11y.nextSlide': '次のスライド',
+    'a11y.openMenu': 'メニューを開く',
+    'a11y.closeMenu': 'メニューを閉じる',
     'a11y.filterByType': '種類で絞り込み',
     'a11y.filterBySpecialty': '専門分野で絞り込み',
     'a11y.filterByRegion': '地域で絞り込み',
