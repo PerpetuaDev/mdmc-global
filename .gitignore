@@ -9,3 +9,6 @@ node_modules/
 design-export/
 design-export.zip
 design-screenshots/
+
+# Local responsive-audit measurements (scripts/audit-responsive.mjs)
+.audit/

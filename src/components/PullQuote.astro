@@ -29,8 +29,8 @@ const { quote = null, attribution = null } = Astro.props as Props;
      down below the clamp() floor and tighten the section top. Later
      equal-specificity base rules win the cascade, hence !important. */
   @media (max-width: 700px) {
-    .pull-quote-section { padding-top: 80px !important; }
-    .pull-quote p { font-size: 24px !important; }
+    .pull-quote-section { padding-top: var(--sp-6) !important; }
+    .pull-quote p { font-size: var(--text-l) !important; }
     .pull-quote footer { margin-top: 24px !important; }
   }
 

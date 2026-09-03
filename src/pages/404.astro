@@ -19,7 +19,7 @@ import Base from "../layouts/Base.astro";
       {/* Bilingual body: this one static 404.html also serves mdmc.co.jp
           (the Worker proxies origin 404s), so the JA line rides along under
           the EN one rather than maintaining a separate ja error page. */}
-      <p style="margin-top: 32px; font-size: 20px; line-height: 1.5; max-width: 560px">
+      <p style="margin-top: 32px; font-size: var(--text); line-height: 1.5; max-width: 560px">
         The page you're looking for doesn't exist or has moved.<br />
         <span lang="ja">お探しのページは存在しないか、移動した可能性があります。</span>
       </p>
@@ -36,6 +36,6 @@ import Base from "../layouts/Base.astro";
      they override (the `padding` shorthand would clobber .gutter's sides) —
      !important because inline style="" wins the cascade otherwise. */
   @media (max-width: 700px) {
-    section.gutter { padding-top: 96px !important; padding-bottom: 120px !important; }
+    section.gutter { padding-top: var(--sp-7) !important; padding-bottom: var(--sp-7) !important; }
   }
 </style>

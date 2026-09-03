@@ -75,7 +75,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
   data-header
   data-page-locale={locale}
   data-page-site={site}
-  style="position: relative; z-index: 100; background: #fff; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; padding: 64px var(--gutter-r) 36px var(--gutter-l); font-size: 20px"
+  style="position: relative; z-index: 100; background: #fff; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; padding: 64px var(--gutter-r) 36px var(--gutter-l); font-size: var(--text)"
 >
   <a href={href("/")} aria-label={t("a11y.homeLink")} style="display: flex; align-items: center; gap: 14px; justify-self: start">
     {/* width/height attrs reserve the box pre-decode; the data-URI src makes
@@ -117,9 +117,104 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
       style="padding: 6px 0; font-size: 16px; color: #000; white-space: nowrap; display: inline-flex; align-items: baseline; gap: 10px"
     >
       <span data-locale-label data-region-labels={regionLabelsJson}>{defaultRegionLabel}</span>
-      <span data-locale-code style="font-size: 10px; letter-spacing: 0.14em; color: var(--muted); position: relative; top: -1px">{defaultLocale.toUpperCase()}</span>
+      <span data-locale-code style="font-size: var(--label); letter-spacing: 0.14em; color: var(--muted); position: relative; top: -1px">{defaultLocale.toUpperCase()}</span>
     </button>
   </div>
+
+  {/* Below-1024 nav (2026-09-03). The supermenu opens on mouseenter only, so
+      before this existed no touch user could reach its four panels — 17 links
+      shipped as unreachable DOM. This renders the same data as a full-screen
+      dialog, and the hover panel stops rendering below 1024 so nothing is
+      shipped twice.
+
+      It lives INSIDE <header> deliberately: every region/locale handler in
+      the script below is scoped to `header` (header.querySelectorAll(
+      '[data-region]') etc.), so the drawer's region buttons and language
+      links inherit the whole preference mechanism — localStorage, the ?r=
+      carry, label refresh, active states — instead of duplicating it.
+
+      <dialog> is deliberate too: showModal() gives focus containment,
+      Escape and a backdrop natively, none of which this codebase has. */}
+  <button
+    type="button"
+    data-drawer-open
+    class="drawer-trigger"
+    aria-expanded="false"
+    aria-label={t("a11y.openMenu")}
+  >
+    <span class="drawer-bar" aria-hidden="true"></span>
+    <span class="drawer-bar" aria-hidden="true"></span>
+  </button>
+
+  <dialog data-drawer class="drawer" aria-label={t("a11y.primaryNav")}>
+    <div class="drawer-head">
+      <span class="label">{t("nav.menu")}</span>
+      <button type="button" data-drawer-close class="drawer-close" aria-label={t("a11y.closeMenu")}>
+        <span aria-hidden="true">✕</span>
+      </button>
+    </div>
+
+    <nav class="drawer-nav" aria-label={t("a11y.primaryNav")}>
+      <a href={href("/work/")} class:list={["drawer-link", { "is-active": active === "work" }]}>{t("nav.work")}</a>
+      <a href={href("/news/")} class:list={["drawer-link", { "is-active": active === "news" }]}>{t("nav.news")}</a>
+      <a href={href("/about/")} class:list={["drawer-link", { "is-active": active === "about" }]}>{t("nav.about")}</a>
+      <a href={href("/careers/")} class="drawer-link">{t("nav.careers")}</a>
+      <a href={href("/contact/")} class:list={["drawer-link", { "is-active": active === "contact" }]}>{t("nav.contact")}</a>
+    </nav>
+
+    {workItems.length > 0 && (
+      <div class="drawer-section">
+        <span class="label">{t("work.title")}</span>
+        <ul>
+          {workItems.map((p) => (
+            <li><a href={href(`/work/${p.slug}/`)} class="drawer-sublink">{pickLocalized(locale, p, "title")}</a></li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {newsItems.length > 0 && (
+      <div class="drawer-section">
+        <span class="label">{t("news.title")}</span>
+        <ul>
+          {newsItems.slice(0, 3).map((n) => (
+            <li><a href={href(`/news/${n.slug}/`)} class="drawer-sublink">{pickLocalized(locale, n, "title")}</a></li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    <div class="drawer-section">
+      <span class="label">{t("nav.region")}</span>
+      <ul class="drawer-inline">
+        {regions.map((r) => (
+          <li>{r.href ? (
+            <a href={r.href} data-region={r.code} data-region-link class="drawer-chip">{r.label}</a>
+          ) : (
+            <button
+              type="button"
+              data-region={r.code}
+              class:list={["drawer-chip", { "is-active": r.code === defaultRegion }]}
+            >{r.label}</button>
+          )}</li>
+        ))}
+      </ul>
+    </div>
+
+    <div class="drawer-section">
+      <span class="label">{t("nav.language")}</span>
+      <ul class="drawer-inline">
+        {languages.map((l) => (
+          <li><a
+            href={l.href}
+            data-locale={l.code}
+            data-locale-link
+            class:list={["drawer-chip", { "is-active": l.code === defaultLocale }]}
+          >{l.label}</a></li>
+        ))}
+      </ul>
+    </div>
+  </dialog>
 
   <div
     data-mega
@@ -132,7 +227,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
         <ul style="list-style: none">
           {workItems.map((p) => (
             <li style="margin-top: 10px">
-              <a href={href(`/work/${p.slug}/`)} class="mega-link" style="font-size: 20px">{pickLocalized(locale, p, "title")}</a>
+              <a href={href(`/work/${p.slug}/`)} class="mega-link" style="font-size: var(--text)">{pickLocalized(locale, p, "title")}</a>
             </li>
           ))}
         </ul>
@@ -143,7 +238,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
         <ul style="list-style: none">
           {newsItems.map((n) => (
             <li style="margin-top: 10px">
-              <a href={href(`/news/${n.slug}/`)} class="mega-link" style="font-size: 20px">{pickLocalized(locale, n, "title")}</a>
+              <a href={href(`/news/${n.slug}/`)} class="mega-link" style="font-size: var(--text)">{pickLocalized(locale, n, "title")}</a>
             </li>
           ))}
         </ul>
@@ -154,8 +249,8 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
           <div style="flex: 0 0 335px" class="label">{t("nav.about")}</div>
         </div>
         <ul style="list-style: none">
-          <li style="margin-top: 10px"><a href={href("/about/")} class="mega-link" style="font-size: 20px">{t("nav.about")}</a></li>
-          <li style="margin-top: 10px"><a href={href("/careers/")} class="mega-link" style="font-size: 20px">{t("nav.careers")}</a></li>
+          <li style="margin-top: 10px"><a href={href("/about/")} class="mega-link" style="font-size: var(--text)">{t("nav.about")}</a></li>
+          <li style="margin-top: 10px"><a href={href("/careers/")} class="mega-link" style="font-size: var(--text)">{t("nav.careers")}</a></li>
         </ul>
       </div>
 
@@ -172,14 +267,14 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
                       data-region={r.code}
                       data-region-link
                       class="mega-link locale-btn"
-                      style="display: block; width: 100%; text-align: right; font-size: 20px"
+                      style="display: block; width: 100%; text-align: right; font-size: var(--text)"
                     >{r.label}</a>
                   ) : (
                     <button
                       type="button"
                       data-region={r.code}
                       class:list={["mega-link", "locale-btn", { "is-active": r.code === defaultRegion }]}
-                      style="display: block; width: 100%; text-align: right; font-size: 20px"
+                      style="display: block; width: 100%; text-align: right; font-size: var(--text)"
                     >{r.label}</button>
                   )}
                 </li>
@@ -196,7 +291,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
                     data-locale={l.code}
                     data-locale-link
                     class:list={["mega-link", "locale-btn", { "is-active": l.code === defaultLocale }]}
-                    style="display: block; width: 100%; text-align: right; font-size: 20px"
+                    style="display: block; width: 100%; text-align: right; font-size: var(--text)"
                   >{l.label}</a>
                 </li>
               ))}
@@ -214,10 +309,189 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
      225px nav offset; mobile goes two-row (logo + locale trigger up top, nav
      on its own row). Inline layout styles on the elements win the cascade,
      hence the !important overrides here, scoped to this component. */
+  /* The wordmark shrinks with the header. The inline height:22px on the img
+     is from the desktop handoff, hence !important. Aspect ratio is held by
+     the element's own aspect-ratio + width:auto, so only height is set. */
+  @media (max-width: 1023px) {
+    header[data-header] img[alt="MDMC"] { height: var(--logo-h) !important; }
+  }
+  @media (max-width: 700px) {
+    header[data-header] img[alt="MDMC"] { height: var(--logo-h) !important; }
+    /* (44 - 16) / 2 */
+    header[data-header] > a { margin-block: -14px; }
+  }
+
+  /* --- Drawer (2026-09-03) ------------------------------------------------
+     Desktop never renders the trigger or the dialog; below 1024 the header
+     collapses to wordmark + hamburger and everything else moves inside. */
+  .drawer-trigger,
+  .drawer {
+    display: none;
+  }
+
+  @media (max-width: 1023px) {
+    .drawer-trigger {
+      display: inline-flex !important;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 6px;
+      /* OUT OF FLOW on purpose. A control's visual size and its touch target
+         are separate concerns: in flow, the 44px hit area also became the
+         header's content height and forced an 84px header. Absolutely
+         positioned and centred, the button keeps a real 44x44 target while
+         header height is set by the wordmark alone. The only thing that
+         overhangs is invisible padding; the 1px bars stay well inside.
+         (The 44px figure is Apple HIG / WCAG 2.5.5 AAA — WCAG 2.5.8 AA is
+         24x24 — so it is a chosen floor, not a requirement.) */
+      /* Stays in flow, in the wordmark's own grid row, and uses the SAME
+         negative-margin trick the wordmark link does: a 44px box whose
+         margin box collapses to --logo-h. Both items therefore present
+         identical 16px margin boxes to `align-items: center`, so their
+         centres coincide exactly and the header row height is still the
+         wordmark's.
+
+         Absolute positioning was tried first (top: calc(--hdr-pt +
+         --logo-h/2)) and landed 1px high: centring a 16px margin box inside
+         a 44px border box leaves an odd remainder, and the two elements
+         rounded it in opposite directions. Sharing one mechanism removes the
+         disagreement instead of correcting it with a magic pixel. */
+      justify-self: end;
+      min-width: var(--tap);
+      min-height: var(--tap);
+      margin-block: calc((var(--logo-h) - var(--tap)) / 2);
+    }
+    .drawer-bar {
+      display: block;
+      width: 26px;
+      height: 1px;
+      background: var(--ink);
+    }
+
+    .drawer[open] {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-5);
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      max-width: none;
+      height: 100%;
+      max-height: none;
+      margin: 0;
+      border: 0;
+      padding: var(--sp-4) var(--gutter-r) var(--sp-6) var(--gutter-l);
+      background: var(--paper);
+      color: var(--ink);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .drawer::backdrop { background: rgba(0, 0, 0, 0.4); }
+
+    .drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .drawer-close {
+      min-width: var(--tap);
+      min-height: var(--tap);
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: var(--text);
+    }
+
+    .drawer-nav { display: flex; flex-direction: column; }
+    .drawer-link {
+      font-size: var(--text-l);
+      min-height: var(--tap);
+      display: inline-flex;
+      align-items: center;
+      box-shadow: inset 0 -1px 0 var(--hairline);
+    }
+    /* Active row matches the site's nav convention — underline only, no
+       weight change (see the NAV_SECTION note on .nav-link). */
+    .drawer-link.is-active {
+      text-decoration: underline;
+      text-underline-offset: 6px;
+    }
+
+    .drawer-section > .label { display: block; margin-bottom: var(--sp-2); }
+    .drawer-section ul { list-style: none; }
+    .drawer-sublink {
+      font-size: var(--text);
+      min-height: var(--tap);
+      display: inline-flex;
+      align-items: center;
+    }
+    .drawer-inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 var(--sp-4);
+    }
+    .drawer-chip {
+      min-height: var(--tap);
+      display: inline-flex;
+      align-items: center;
+      font-size: var(--text);
+    }
+    .drawer-chip.is-active {
+      text-decoration: underline;
+      text-underline-offset: 5px;
+    }
+
+    /* The inline nav, the spacer, the locale trigger and the hover panel all
+       move into the drawer below 1024. Not rendering the panel keeps its 17
+       links from shipping twice. */
+    header[data-header] > nav,
+    header[data-header] .header-spacer,
+    header[data-header] > div:has(.locale-trigger),
+    header[data-header] [data-mega] {
+      display: none !important;
+    }
+  }
+
+  /* Touch floor (2026-09-03). !important is required: these carry inline
+     layout styles from the handoff transcription, the established pattern in
+     this component (see the note above). Grown by min-height only — type
+     size and visual weight are unchanged. */
+  @media (max-width: 1023px) {
+    header[data-header] .nav-link,
+    header[data-header] .locale-trigger,
+    header[data-header] .mega-link {
+      min-height: var(--tap) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+    /* The wordmark link keeps a real 44px hit box — negative block margins
+       stop that box setting the header's row height, so the margin box
+       contributes only the logo's own height. This is what made the header
+       84px: the link's tap floor, not the hamburger. The rect stays 44px, so
+       the audit is measuring a genuine target rather than being appeased. */
+    header[data-header] > a {
+      min-height: var(--tap) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      margin-block: -13px;
+    }
+  }
+
   @media (max-width: 1023px) {
     header[data-header] {
-      padding-top: 36px !important;
-      padding-bottom: 24px !important;
+      /* Compact header (2026-09-03). The hamburger's 44px tap floor sets the
+         content height, so the reduction comes out of padding: 36/24 was
+         sized for the two-row layout that no longer exists below 1024.
+         Header goes 104px -> 70px at 768. */
+      /* Asymmetric on purpose: the wordmark sat 14px off the top of the
+         screen, which is cramped against a status bar. Weight moves to the
+         top and the total height is unchanged (20 + 18 + 8 = 46).
+         --hdr-pt/--logo-h are the single source of truth for the padding,
+         the wordmark height and the hamburger's vertical anchor. */
+      --hdr-pt: 20px;
+      --logo-h: 18px;
+      padding-top: var(--hdr-pt) !important;
+      padding-bottom: 8px !important;
       /* Drop the 1fr spacer track and make the nav's own track the flexible
          one — the ja nav (私たちについて…) is wider than a tablet leaves
          room for, and only a minmax(0,1fr) track lets it shrink. */
@@ -240,9 +514,14 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
   @media (max-width: 700px) {
     header[data-header] {
       grid-template-columns: auto 1fr !important;
-      row-gap: 18px;
-      padding-top: 24px !important;
-      padding-bottom: 16px !important;
+      /* row-gap was for the old two-row header (nav on its own row); the nav
+         lives in the drawer now, so there is no second row to space. */
+      /* Same 24px of total padding as the symmetric 12/12 it replaces, so
+         the header height is unchanged — the weight just moves to the top. */
+      --hdr-pt: 18px;
+      --logo-h: 16px;
+      padding-top: var(--hdr-pt) !important;
+      padding-bottom: 6px !important;
       font-size: 17px !important;
     }
     header[data-header] > nav {
@@ -259,7 +538,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
       gap: 12px 22px !important;
       flex-wrap: wrap;
     }
-    header[data-header] .locale-trigger { font-size: 14px !important; grid-column: 2; }
+    header[data-header] .locale-trigger { font-size: var(--text-s) !important; grid-column: 2; }
     /* Locale panel: the right-aligned 260px+180px column pair overflows a
        phone — stack the two lists, still right-aligned. */
     [data-panel="locale"] > div { flex-direction: column !important; gap: 36px !important; align-items: flex-end; }
@@ -358,6 +637,51 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
     if (name) show(name);
     else hide();
   });
+
+  // --- Drawer (2026-09-03) -----------------------------------------------
+  // <dialog>.showModal() covers focus containment, Escape and the backdrop.
+  // What it does NOT cover: background scroll, and surviving a navigation —
+  // the site uses cross-document view transitions, so a drawer left open
+  // would still be painted over the incoming page as it fades in.
+  const drawer = header.querySelector('[data-drawer]') as HTMLDialogElement | null;
+  const drawerOpen = header.querySelector('[data-drawer-open]');
+  const drawerClose = header.querySelector('[data-drawer-close]');
+  if (drawer && drawerOpen) {
+    const open = () => {
+      if (drawer.open) return;
+      drawer.showModal();
+      drawerOpen.setAttribute('aria-expanded', 'true');
+      // Scroll lock on the root rather than position:fixed on body, which
+      // would lose the scroll position. The reserved scrollbar-gutter in
+      // global.css means this does not change the page width.
+      document.documentElement.style.overflow = 'hidden';
+    };
+    const close = () => { if (drawer.open) drawer.close(); };
+    // 'close' fires for Escape and for .close() alike, so the teardown lives
+    // here rather than in each caller.
+    drawer.addEventListener('close', () => {
+      drawerOpen.setAttribute('aria-expanded', 'false');
+      document.documentElement.style.overflow = '';
+    });
+    drawerOpen.addEventListener('click', open);
+    drawerClose?.addEventListener('click', close);
+    drawer.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      // Backdrop click: the event target is the dialog itself only when the
+      // click landed outside its content box.
+      if (target === drawer) { close(); return; }
+      // Any in-drawer navigation must close it — see the view-transition note.
+      // Region preference BUTTONS do not navigate, so they stay open and the
+      // shared region handler below repaints their active state in place.
+      if (target.closest('a')) close();
+    });
+    addEventListener('pagehide', close);
+    // Crossing into the zoom world hides the trigger, so a drawer left open
+    // there would have no visible way to close.
+    matchMedia('(min-width: 1024px)').addEventListener('change', (e) => {
+      if (e.matches) close();
+    });
+  }
 
   // Region persistence — clicks write localStorage and refresh the trigger
   // label + active states. Language is deliberately NOT persisted: the URL

@@ -11,7 +11,8 @@
 // 6000ms auto-advance, workCols = 2, thumbRatio = 16 / 9).
 import WorkCard from "../components/WorkCard.astro";
 import { makeT, pickLocalized, makeLinks, interpolate } from "../lib/i18n.js";
-import { heroSlidesOf } from "../lib/content.js";
+import { thumbSlidesOf } from "../lib/content.js";
+import { unwrapAuthoredBreaks } from "../lib/text.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -23,8 +24,13 @@ interface Props {
 const { locale = "en", site = "co", projects, redirectMap } = Astro.props as Props;
 const links = makeLinks(site, locale);
 const t = makeT(locale);
-const heroSlides = heroSlidesOf(projects);
-const first = heroSlides[0];
+// Below 1024 the slideshow runs on 4:3 thumbnails, so ALL six projects are
+// eligible; at >=1024 the three without hero art are hidden by CSS, leaving
+// the same three heroSlidesOf() used to allow. One <picture> per slide means
+// the browser downloads one image, not both. Slide 0 (zenrise-website) has
+// hero art, so the server-rendered initial slide is correct at both widths.
+const thumbSlides = thumbSlidesOf(projects);
+const first = thumbSlides[0];
 
 // home.manifesto.1/2 store their line breaks as literal '\n'; split into
 // segments rendered around literal <br> tags below (see i18n.js). Each
@@ -39,6 +45,13 @@ const first = heroSlides[0];
 const escAmp = (s: string) => s.replace(/&/g, "&amp;");
 const manifesto1 = t("home.manifesto.1").split("\n").map(escAmp);
 const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
+// Below 1024 those authored breaks orphan their last word at a narrow measure
+// ("people", "honest", "noise."), so the same copy is also emitted as flowing
+// paragraphs and the two are swapped by media query. Both are in the DOM and
+// only one is shown: two short paragraphs of duplicated bytes is negligible,
+// and a CSS swap stays correct with JS disabled and across resizes.
+const manifesto1Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.1")));
+const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
 
 // Legacy hash-URL redirect shim: the `script is:inline
 // define:vars={{ redirectMap }}` immediately below — see
@@ -71,33 +84,40 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
   </script>
 
 <main style="animation: pageIn .6s var(--ease)">
-  <section style="padding: 40px var(--gutter-r) 0 var(--gutter-l)">
+  <section class="home-hero-section" style="padding: 40px var(--gutter-r) 0 var(--gutter-l)">
+    <div class="hero-block">
     <div class="hero-frame">
-      {heroSlides.map((p, i) => (
+      {thumbSlides.map((p, i) => (
         <a
           href={links.internal(`/work/${p.slug}/`)}
           data-slide
           data-title={pickLocalized(locale, p, "title")}
+          data-dark-hero={p.darkHero ? "true" : undefined}
           data-href={links.internal(`/work/${p.slug}/`)}
           aria-label={interpolate(t("a11y.openProject"), { title: pickLocalized(locale, p, "title") })}
           aria-hidden={i === 0 ? "false" : "true"}
           tabindex="-1"
-          class="hero-slide"
+          class:list={["hero-slide", { "is-thumb-only": !p.heroImage }]}
           style={`opacity: ${i === 0 ? "1" : "0"}; pointer-events: ${i === 0 ? "auto" : "none"}`}
         >
-          {p.heroImage ? (
-            <img src={p.heroImage.url} alt={p.heroImage.alt || pickLocalized(locale, p, "title")} />
+          {p.thumbnail ? (
+            <picture>
+              {p.heroImage && <source media="(min-width: 1024px)" srcset={p.heroImage.url} />}
+              <img src={p.thumbnail.url} alt={p.thumbnail.alt || pickLocalized(locale, p, "title")} crossorigin="anonymous" />
+            </picture>
           ) : (
             <div class="hero-placeholder" aria-hidden="true"></div>
           )}
         </a>
       ))}
 
+      </div>
+
       <div class="hero-overlay">
         <a
           href={first ? links.internal(`/work/${first.slug}/`) : "#"}
           data-hero-name
-          style="pointer-events: auto; font-size: 20px; color: #000"
+          style="pointer-events: auto; font-size: var(--text); color: #000"
         >{first ? pickLocalized(locale, first, "title") : undefined}</a>
         <div role="group" aria-label={t("a11y.browseProjects")} style="pointer-events: auto; display: inline-flex; align-items: center; gap: 12px; transform: translateY(5px)">
           <button type="button" data-hero-prev aria-label={t("a11y.prevSlide")} class="hero-arrow hero-arrow-prev">←</button>
@@ -110,8 +130,14 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
 
   <section class="home-manifesto" style="padding: 143px var(--gutter-r) 168px calc(var(--gutter-l) + 150px); font-size: 32px; line-height: 1.4; letter-spacing: -0.005em">
     <div style="max-width: 880px">
-      <p><Fragment set:html={manifesto1[0]} /> <br><Fragment set:html={manifesto1[1]} /></p>
-      <p style="margin-top: 1.5em"><Fragment set:html={manifesto2[0]} /> <br><Fragment set:html={manifesto2[1]} /> <br><Fragment set:html={manifesto2[2]} /></p>
+      <div class="manifesto-lined">
+        <p><Fragment set:html={manifesto1[0]} /> <br><Fragment set:html={manifesto1[1]} /></p>
+        <p style="margin-top: 1.5em"><Fragment set:html={manifesto2[0]} /> <br><Fragment set:html={manifesto2[1]} /> <br><Fragment set:html={manifesto2[2]} /></p>
+      </div>
+      <div class="manifesto-flow">
+        <p><Fragment set:html={manifesto1Flow} /></p>
+        <p style="margin-top: 1.5em"><Fragment set:html={manifesto2Flow} /></p>
+      </div>
     </div>
   </section>
 
@@ -126,18 +152,120 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
      is a desktop composition — tablets keep a shorter formula, phones use a
      fixed-ratio hero. Manifesto loses its 150px indent and steps down; the
      work grid goes single-column on phones. */
+  /* Touch floor (2026-09-03): the hero arrows were 21x34 and the project
+     title link 22px tall. The overlay is absolutely positioned, so growing
+     these does not move the frame. */
+  /* Desktop keeps the authored line breaks; below 1024 the flowing copy
+     takes over. See the note beside manifesto1Flow in the frontmatter. */
+  @media (min-width: 1024px) {
+    /* Desktop keeps the hero-art-only set — heroSlidesOf()'s guard, now
+       expressed in CSS because the DOM carries the wider thumbnail set.
+       display:none (not opacity) so the cycling script can count it. */
+    .hero-slide.is-thumb-only { display: none; }
+  }
+
+  @media (max-width: 1023px) {
+    /* Tighter than the desktop 32/24 inset, in step with the reduced header. */
+    .hero-overlay { left: 20px; right: 20px; bottom: 16px; }
+  }
+
+  @media (max-width: 1023px) {
+    /* Full-bleed: the hero is the only element on the site that breaks the
+       gutter, so the override is scoped to its own section. */
+    .home-hero-section {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      /* The 40px handoff gap was set against a 120px desktop header; below a
+         42px one it read as more air than the header itself. */
+      padding-top: var(--sp-2) !important;
+    }
+    .hero-frame {
+      /* The desktop fold rule (100svh/--page-zoom - 266.7px) encodes desktop
+         header metrics and is meaningless against a narrow header, so the
+         frame is a fixed 16:9 box. sizeHero() is guarded to match.
+
+         16:9 is chosen from the assets as they actually are, measured
+         2026-09-03: the six thumbnails run 1.33, 1.50, 2.17 (x3) and 2.66,
+         so NO fixed ratio is crop-free — the spec's "all 4:3" premise was
+         wrong. At 16:9 the worst case shows 67% of an image and the dominant
+         2.17 screenshots show 82%, against 27% for the portrait box this
+         replaces. A fixed ratio also keeps the frame height stable, so the
+         page does not reflow as slides rotate. */
+      height: auto !important;
+      min-height: 0 !important;
+      /* 3:4 portrait, full-bleed (user decision 2026-09-03). Taller and
+         edge-to-edge gives the hero real presence on a phone, at the cost of
+         crop: against these assets (1.33 / 1.50 / 2.17 x3 / 2.66) a 0.75
+         frame shows roughly 35% of a 2.17 screenshot. The real fix is
+         portrait-cropped hero art in Strapi. */
+      aspect-ratio: 3 / 4;
+      /* 3:4 unbounded would make the frame taller than the viewport on a
+         tablet — 768x1024 at 768, and 1364px tall at 1023. Phones are
+         unaffected (520px at a 390x844 viewport, so exactly 3:4); wider
+         viewports get as much height as 3:4 allows without swallowing the
+         whole screen. svh needs no --page-zoom division here: the zoom
+         world starts at 1024. */
+      max-height: 80svh;
+    }
+  }
+
+  .manifesto-flow { display: none; }
+  @media (max-width: 1023px) {
+    .manifesto-lined { display: none; }
+    .manifesto-flow { display: block; }
+  }
+
+  @media (max-width: 1023px) {
+    .hero-overlay a {
+      min-height: var(--tap);
+      display: inline-flex;
+      align-items: center;
+    }
+    .hero-arrow {
+      min-width: var(--tap);
+      min-height: var(--tap);
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
   @media (max-width: 1023px) {
     /* !important also on the scoped-class overrides: this block sits above
        the base rules in source order, and equal-specificity scoped rules
        later in the sheet would otherwise win the cascade. */
-    .hero-frame { min-height: 480px !important; }
+    /* The old tablet floor (min-height: 480px !important) is gone: it sat
+       later in source than the 16:9 block above with equal specificity, so it
+       won the cascade and pinned the frame to 480px tall — which is why the
+       frame measured 332x480 (0.69) at 390 instead of 16:9. The aspect-ratio
+       governs the frame's height at every width below 1024 now. */
     .home-manifesto { padding: 104px var(--gutter-r) 120px var(--gutter-l) !important; font-size: 26px !important; }
   }
   @media (max-width: 700px) {
-    .hero-frame { height: 62svh !important; min-height: 340px !important; }
+    /* Arrows hidden on phones (user decision): redundant against the
+       6s auto-advance, and the slide itself is the link. The whole
+       role="group" goes, not just the buttons, so no empty labelled group
+       is left behind for assistive tech. Tablet keeps them. */
+    .hero-overlay [role="group"] { display: none !important; }
+
+    /* Caption sits over the image again, bottom-left, tighter than the 16/14
+       it used before. Legibility comes from luminance detection rather than a
+       scrim — see the sampling in the script below. */
+    .hero-overlay { left: 12px !important; right: 12px !important; bottom: 10px !important; }
+
+    /* .hero-frame sizing lives in the max-width:1023px block above — a
+       62svh height here (!important, and later in source) overrode it and
+       kept the frame portrait at 390px. */
     .home-manifesto { padding: 80px var(--gutter-r) 96px var(--gutter-l) !important; font-size: 21px !important; }
-    .home-workgrid > div { grid-template-columns: 1fr !important; row-gap: 48px !important; }
+    .home-workgrid > div { grid-template-columns: 1fr !important; row-gap: var(--sp-5) !important; }
     .hero-overlay { left: 16px !important; right: 16px !important; bottom: 14px !important; }
+  }
+
+  /* Wrapper so the caption can sit outside the frame's overflow:hidden. On
+     desktop the overlay is absolute against this box, which has exactly the
+     frame's height, so bottom/left/right resolve as they always did. */
+  .hero-block {
+    position: relative;
   }
 
   .hero-frame {
@@ -173,6 +301,13 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
     object-fit: cover;
   }
 
+  /* Dark-artwork treatment. The overlay's colour is set on the container so
+     the title and the arrow glyphs flip together. */
+  .hero-overlay.is-dark,
+  .hero-overlay.is-dark a,
+  .hero-overlay.is-dark button { color: #fff !important; }
+  .hero-overlay.is-dark span[aria-hidden] { background: rgba(255,255,255,0.5) !important; }
+
   .hero-overlay {
     position: absolute;
     left: 32px;
@@ -201,28 +336,138 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
   }
 </style>
 <script>
-  const slides = [...document.querySelectorAll('[data-slide]')]
+  // The DOM carries the mobile slide set (every project with a thumbnail);
+  // at >=1024 CSS hides the ones without hero art. So the cycle must run over
+  // VISIBLE slides and be rebuilt whenever a resize crosses that boundary —
+  // counting all of them would fade to a display:none slide for six seconds.
+  const allSlides = [...document.querySelectorAll('[data-slide]')]
   const name = document.querySelector('[data-hero-name]')
+  let slides = []
   let i = 0
+  let timer = null
+
+  const visibleSlides = () => allSlides.filter((s) => getComputedStyle(s).display !== 'none')
+
   function show(n) {
     if (!slides.length) return
     i = (n + slides.length) % slides.length
-    slides.forEach((s, j) => {
-      const active = j === i
-      s.style.opacity = active ? '1' : '0'
-      s.style.pointerEvents = active ? 'auto' : 'none'
-      s.setAttribute('aria-hidden', active ? 'false' : 'true')
+    // Reset every slide, not just the visible set: one hidden at this width
+    // may still carry opacity:1 from the other side of the boundary.
+    allSlides.forEach((s) => {
+      s.style.opacity = '0'
+      s.style.pointerEvents = 'none'
+      s.setAttribute('aria-hidden', 'true')
     })
+    const active = slides[i]
+    active.style.opacity = '1'
+    active.style.pointerEvents = 'auto'
+    active.setAttribute('aria-hidden', 'false')
     if (name) {
-      name.textContent = slides[i].dataset.title ?? ''
-      name.href = slides[i].dataset.href ?? '#'
+      name.textContent = active.dataset.title ?? ''
+      name.href = active.dataset.href ?? '#'
+    }
+    paintCaption(active)
+    // The first paint can land before the image has decoded, in which case
+    // captionIsOnDarkArt returns null and leaves the default; re-run on load.
+    const img = active.querySelector('img')
+    if (img && !img.complete) img.addEventListener('load', () => paintCaption(active), { once: true })
+  }
+
+  function rebuild() {
+    const next = visibleSlides()
+    const countChanged = next.length !== slides.length
+    slides = next
+    if (countChanged || i >= slides.length) i = 0
+    if (slides.length) show(i)
+    if (timer) clearInterval(timer)
+    const auto = !matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (auto && slides.length > 1) timer = setInterval(() => show(i + 1), 6000)
+  }
+
+  // A manual advance restarts the timer so the slide does not jump again a
+  // moment later.
+  function step(delta) {
+    show(i + delta)
+    if (timer) clearInterval(timer)
+    const auto = !matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (auto && slides.length > 1) timer = setInterval(() => show(i + 1), 6000)
+  }
+
+  // --- Light / dark caption (2026-09-03) ---------------------------------
+  // Strapi used to carry a dark_hero boolean for this; it was added in
+  // mdmc-strapi 990f3b3 and dropped in a5ed85f during the Astro-cutover
+  // schema cleanup. content.js still reads `dark_hero ?? false`, so a
+  // re-added field would flow through as an explicit override — until then
+  // this derives the answer from the artwork itself, which also means new
+  // projects need no editorial input.
+  //
+  // Samples ONLY the region actually visible behind the caption: the images
+  // are object-fit:cover, so the frame's bottom-left corner maps to some
+  // interior rect of the source, not to the source's own corner.
+  //
+  // Depends on the media CDN sending access-control-allow-origin (Strapi
+  // Cloud does, with `vary: Origin`) plus crossorigin="anonymous" on the img.
+  // Every failure path — taint, decode, no context — is caught and simply
+  // leaves the default dark-on-light treatment.
+  const overlay = document.querySelector('.hero-overlay')
+
+  function captionIsOnDarkArt(slide) {
+    try {
+      const img = slide.querySelector('img')
+      if (!img || !img.naturalWidth || !frame) return null
+      const fw = frame.clientWidth, fh = frame.clientHeight
+      const iw = img.naturalWidth, ih = img.naturalHeight
+      if (!fw || !fh) return null
+
+      // cover geometry: the source rect that the frame actually shows
+      const scale = Math.max(fw / iw, fh / ih)
+      const offX = (fw - iw * scale) / 2
+      const offY = (fh - ih * scale) / 2
+      const toSrc = (x, y) => [(x - offX) / scale, (y - offY) / scale]
+
+      // the caption's box in frame coordinates, clamped into the frame
+      const cs = getComputedStyle(overlay)
+      const padL = parseFloat(cs.left) || 12
+      const boxW = Math.min(fw - padL, 240)
+      const boxH = 44
+      const [sx, sy] = toSrc(padL, Math.max(0, fh - boxH - (parseFloat(cs.bottom) || 10)))
+      const [ex, ey] = toSrc(padL + boxW, fh)
+      const sw = Math.max(1, Math.min(iw - sx, ex - sx))
+      const sh = Math.max(1, Math.min(ih - sy, ey - sy))
+
+      const N = 12
+      const cv = document.createElement('canvas')
+      cv.width = N; cv.height = N
+      const ctx = cv.getContext('2d', { willReadFrequently: true })
+      if (!ctx) return null
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, N, N)
+      const px = ctx.getImageData(0, 0, N, N).data
+      let sum = 0
+      for (let i = 0; i < px.length; i += 4) {
+        // Rec. 601 luma, good enough for a legibility decision
+        sum += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]
+      }
+      return sum / (px.length / 4) < 140
+    } catch {
+      return null // tainted canvas, or the image is not decoded yet
     }
   }
-  document.querySelector('[data-hero-prev]')?.addEventListener('click', () => show(i - 1))
-  document.querySelector('[data-hero-next]')?.addEventListener('click', () => show(i + 1))
-  const auto = !matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (auto && slides.length > 1) setInterval(() => show(i + 1), 6000)
-  if (slides.length) show(0)
+
+  function paintCaption(slide) {
+    if (!overlay || !slide) return
+    // An explicit CMS value, if the field ever comes back, wins outright.
+    const declared = slide.dataset.darkHero
+    const dark = declared === 'true' ? true
+      : declared === 'false' ? false
+      : captionIsOnDarkArt(slide)
+    if (dark === null) return // leave whatever is there rather than guess
+    overlay.classList.toggle('is-dark', dark)
+  }
+
+  document.querySelector('[data-hero-prev]')?.addEventListener('click', () => step(-1))
+  document.querySelector('[data-hero-next]')?.addEventListener('click', () => step(1))
+  rebuild()
+  addEventListener('resize', rebuild)
 
   // Fold rule: gap below the image (to viewport bottom) === gap above it
   // (logo bottom -> image top). The CSS calc already lands within a pixel;
@@ -243,6 +488,11 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
   function sizeHero() {
     if (!frame || !logo) return
     frame.style.height = ''
+    // The fold rule is a zoom-world concept. Below 1024 the frame is a 4:3
+    // box sized by CSS, so this must not write a height over it — and the
+    // clear above matters when resizing DOWN across the boundary, which would
+    // otherwise leave a stale desktop pixel height inline.
+    if (!matchMedia('(min-width: 1024px)').matches) return
     const zoomEl = document.querySelector('.zoom')
     const zoom = zoomEl ? parseFloat(getComputedStyle(zoomEl).zoom) || 1 : 1
     const logoBottom = pageTopCss(logo) + logo.offsetHeight

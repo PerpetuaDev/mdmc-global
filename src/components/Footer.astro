@@ -157,6 +157,28 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
      stacks above the studio list; on phones each studio row stacks its
      label above the address/panel and open panels show the photo full-width.
      Inline grid styles on the wrappers win the cascade, hence !important. */
+  /* Touch floor (2026-09-03). .studio-plus was the worst offender on the
+     site at 25x30. Grown by min box size, not by type scaling. */
+  @media (max-width: 1023px) {
+    .studio-plus {
+      min-width: var(--tap) !important;
+      min-height: var(--tap) !important;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+    .studio-row > div > button.label,
+    .studio-link,
+    .studio-message,
+    .footer-cta,
+    .studio-closed,
+    .footer-link {
+      min-height: var(--tap) !important;
+      display: inline-flex !important;
+      align-items: center;
+    }
+  }
+
   @media (max-width: 1023px) {
     footer[data-footer] > div:first-of-type {
       grid-template-columns: minmax(0, 1fr) !important;
@@ -164,7 +186,7 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
     }
   }
   @media (max-width: 700px) {
-    footer[data-footer] { padding-top: 48px !important; font-size: 17px !important; }
+    footer[data-footer] { padding-top: var(--sp-5) !important; font-size: 17px !important; }
     .studio-row > div {
       grid-template-columns: minmax(0, 1fr) !important;
       gap: 12px !important;
@@ -311,7 +333,7 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
     display: flex;
     justify-content: space-between;
     gap: 32px;
-    font-size: 14px;
+    font-size: var(--text-s);
     color: var(--muted);
     flex-wrap: wrap;
   }
@@ -333,7 +355,7 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
   }
 
   .footer-link {
-    font-size: 14px;
+    font-size: var(--text-s);
     color: inherit;
     transition: color 0.2s ease;
   }

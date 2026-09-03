@@ -405,6 +405,22 @@ export function heroSlidesOf(projects) {
   return (projects ?? []).filter((p) => p?.heroImage).slice(0, HERO_SLIDE_COUNT)
 }
 
+// Mobile and tablet slide on thumbnails, not hero images. The hero assets are
+// 2600x1200; object-fit:cover into the narrow frame (319x558 at a 390
+// viewport) scaled them to 1209px wide and showed 319 of it — 74% of every
+// image cropped away, measured 2026-09-03. Thumbnails are 4:3, which is the
+// narrow frame's own ratio, so nothing crops.
+//
+// Every project has a thumbnail while only three have hero art, so the narrow
+// hero also shows the full set instead of the three heroSlidesOf() allows.
+// That divergence is deliberate and resolves itself when the missing
+// 2600x1200 heroes land in Strapi.
+export const THUMB_SLIDE_COUNT = 6
+
+export function thumbSlidesOf(projects, count = THUMB_SLIDE_COUNT) {
+  return (projects ?? []).filter((p) => p?.thumbnail).slice(0, count)
+}
+
 // Exported for unit testing the pure normalization logic in isolation from
 // fetch/fallback (test/content.test.js). ARTICLE_KIND_LABELS is also
 // consumed by src/pages/news/index.astro so its KINDS filter list derives

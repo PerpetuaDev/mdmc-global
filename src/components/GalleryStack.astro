@@ -130,7 +130,7 @@ for (let i = 0; i < slots.length; i++) {
      pairs and tighten the 96px stack rhythm. Later equal-specificity base
      rules win the cascade, hence !important. */
   @media (max-width: 700px) {
-    .gallery-stack { gap: 64px !important; padding-top: 64px !important; }
+    .gallery-stack { gap: 64px !important; padding-top: var(--sp-6) !important; }
     .gallery-pair { grid-template-columns: 1fr !important; gap: 48px !important; }
   }
 
@@ -168,7 +168,7 @@ for (let i = 0; i < slots.length; i++) {
 
   .gallery-caption {
     margin-top: 16px;
-    font-size: 14px;
+    font-size: var(--text-s);
     color: var(--muted);
   }
 

@@ -69,7 +69,7 @@ const studios = studiosForSite(site);
           </h2>
           <div>
             {section.body.map((para) => (
-              <p style="font-size: 20px; line-height: 1.6; margin: 0">
+              <p style="font-size: var(--text); line-height: 1.6; margin: 0">
                 {para}
               </p>
             ))}
@@ -120,16 +120,16 @@ const studios = studiosForSite(site);
     .studio-strip { gap: 20px !important; }
   }
   @media (max-width: 700px) {
-    .about-hero { padding-top: 64px !important; }
-    .about-hero > div { margin-top: 48px !important; }
-    .about-lede { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; padding-top: 64px !important; }
+    .about-hero { padding-top: var(--sp-6) !important; }
+    .about-hero > div { margin-top: var(--sp-5) !important; }
+    .about-lede { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; padding-top: var(--sp-6) !important; }
     .about-lede p { font-size: 22px !important; }
-    .about-kv { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; padding-top: 96px !important; }
+    .about-kv { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; padding-top: var(--sp-7) !important; }
     /* Group separation: stacked, the uniform grid gap can't distinguish
        label→body (tight) from body→next label (loose) — the body div
        carries the extra air instead. */
-    .about-kv > div:not(:last-child) { margin-bottom: 48px; }
-    .about-studios { padding-top: 96px !important; padding-bottom: 96px !important; }
-    .studio-strip { grid-template-columns: minmax(0, 1fr) !important; row-gap: 48px !important; }
+    .about-kv > div:not(:last-child) { margin-bottom: var(--sp-5); }
+    .about-studios { padding-top: var(--sp-7) !important; padding-bottom: var(--sp-7) !important; }
+    .studio-strip { grid-template-columns: minmax(0, 1fr) !important; row-gap: var(--sp-5) !important; }
   }
 </style>

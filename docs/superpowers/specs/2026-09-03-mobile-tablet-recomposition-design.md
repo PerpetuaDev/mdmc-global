@@ -35,9 +35,20 @@ real rendered geometry. Findings:
 - **The home manifesto double-wraps.** Copy carries authored `\n` breaks sized
   for desktop; at 390 each line wraps again, orphaning "people", "honest",
   "noise."
-- **Structural debt:** 9 ad-hoc breakpoints beyond the documented 1023/700
-  grammar (1100, 900, 880, 820, 720, 640, 560, 460, 400 — one in nearly every
-  view) and ~120 `!important` declarations. Root cause: the handoff was
+- **Structural debt: `!important`, but NOT stray breakpoints.**
+  **CORRECTED 2026-09-03 during execution.** The original audit claimed nine
+  ad-hoc breakpoints (1100, 900, 880, 820, 720, 640, 560, 460, 400). That was
+  wrong: the grep behind it counted `max-width` **CSS properties** — element
+  measure caps like `.work-card-desc { max-width: 460px }` — not media
+  queries. Those caps are legitimate and unrelated to breakpoints.
+  The real inventory is **exactly two breakpoints**, already consistent:
+  `max-width: 1023px` (7 uses) and `max-width: 700px` (16 uses), plus one
+  `min-width: 1024px`. The 2026-08-24 grammar was followed cleanly and needs
+  no consolidation. There is likewise no `max-width: 1100px` media query, so
+  the "four rules straddling the desktop boundary" risk does not exist.
+  The `!important` count was also understated: it is **173** occurrences, not
+  ~120 (the original count was of lines, not occurrences). **154 of the 173
+  sit inside `@media` blocks** — confirming the cause: the handoff was
   transcribed as **inline styles**, so every responsive override must outrank
   them.
 - **Tablet has no identity.** At 768 every metric is identical to 390 — same
@@ -53,8 +64,8 @@ assertions. Layout has never had a checker, which is how the above accumulated.
 |---|---|
 | Scope | Full re-composition below 1024 |
 | Mobile nav | Drawer / full-screen menu, carrying supermenu content |
-| Tiers | Two: mobile <700, tablet 700–1023; drawer below 1024 |
-| Mobile hero | 4:3 thumbnail, uncropped, all 6 projects |
+| Tiers | Two: mobile <=700, tablet 701–1023; drawer below 1024 |
+| Mobile hero | 16:9 thumbnail frame, all 6 projects (revised — see §4) |
 | Slide divergence | Accepted — 6 on mobile, 3 on desktop; resolves when real heroes land |
 | Audit script | Committed as a permanent regression check |
 
@@ -69,25 +80,32 @@ the **text/UI tier**, which is fixed px throughout: 10, 11, 12, 13, 14, 16, 17,
 
 Four text tokens replace it, plus a space scale and a tap floor:
 
+**Ramps use `calc(intercept + Nvw)`, not a bare `Nvw`** — corrected during
+execution. The first cut used proportional terms and measurement killed it:
+`16vw` reaches 96px at a **600px** viewport, so every token was already at its
+desktop value by 768px and the scale did nothing across the entire tablet band
+— the exact problem this pass exists to fix. The intercepts are solved so each
+token sits at its floor near 390px and reaches its cap at 1024px.
+
 ```css
 :root {
   --label: 12px;                        /* hard floor — never 10 or 11 */
   --tap:   44px;
 
   /* text tier: fluid below 1024 */
-  --text-s: clamp(13px, 3.4vw, 14px);
-  --text:   clamp(16px, 4.1vw, 20px);
-  --text-l: clamp(19px, 5.2vw, 24px);
+  --text-s: clamp(13px, calc(12.4px + 0.16vw), 14px);
+  --text:   clamp(16px, calc(13.5px + 0.63vw), 20px);
+  --text-l: clamp(19px, calc(16px   + 0.79vw), 24px);
 
   /* space tier: the observed 8/16/24/32/48/64/96 rhythm, compressed
      on narrow viewports — 96px section gaps cost real scroll at 390 */
   --sp-1: 8px;
   --sp-2: 16px;
-  --sp-3: clamp(16px, 4.1vw, 24px);
-  --sp-4: clamp(20px, 5.5vw, 32px);
-  --sp-5: clamp(28px, 8.2vw, 48px);
-  --sp-6: clamp(36px, 11vw,  64px);
-  --sp-7: clamp(44px, 16vw,  96px);
+  --sp-3: clamp(16px, calc(11px + 1.26vw), 24px);
+  --sp-4: clamp(20px, calc(14px + 1.74vw), 32px);
+  --sp-5: clamp(28px, calc(22px + 2.52vw), 48px);
+  --sp-6: clamp(36px, calc(30px + 3.31vw), 64px);
+  --sp-7: clamp(44px, calc(41px + 5.36vw), 96px);
 }
 @media (min-width: 1024px) {            /* pin desktop to today's px */
   :root {
@@ -101,9 +119,15 @@ Fluid below 1024, pinned above. Desktop therefore cannot move: every token
 resolves at >=1024 to the literal value in the file today. `--label`, `--tap`,
 `--sp-1` and `--sp-2` are constants and need no pinning.
 
-At 390 this compresses the large section rhythm by roughly a third (96 -> 62,
-64 -> 43) while leaving small gaps alone — the single biggest source of dead
-scroll on mobile today.
+Measured resolution (2026-09-03), showing the ramp is continuous across the
+1024 boundary so nothing snaps where the zoom world begins:
+
+| width | `--text` | `--sp-5` | `--sp-7` |
+|---|---|---|---|
+| 390  | 16   | 31.8 | 61.9 |
+| 768  | 18.3 | 41.3 | 82.2 |
+| 1023 | 19.9 | 47.8 | 95.8 |
+| 1024 | 20   | 48   | 96   |
 
 **Only exact matches adopt a token.** A token pins to one desktop value, so
 letting a 19px element adopt `--text` (20px at desktop) would move it by 1px at
@@ -118,18 +142,23 @@ more verbose than a full token sweep and deliberately so: it makes "desktop
 cannot move" a property of the mechanism rather than a thing to be careful
 about.
 
-## 2. Breakpoint consolidation
+## 2. Breakpoints — no change required
 
-Two blocks, replacing nine:
+**Superseded 2026-09-03 during execution.** This section originally called for
+consolidating nine strays onto two blocks and splitting four `max-width: 1100px`
+rules. Neither exists (see the corrected finding above). The codebase already
+uses exactly:
 
-- `@media (max-width: 1023px)` — tablet and below
-- `@media (max-width: 699px)` — mobile
+- `@media (max-width: 1023px)` — tablet and below (7 uses)
+- `@media (max-width: 700px)` — mobile (16 uses)
+- `@media (min-width: 1024px)` — the zoom world (1 use)
 
-**The 1100px rules need care.** Four `max-width: 1100px` blocks span 1024–1100,
-i.e. inside the desktop zoom world, as well as all of tablet and mobile.
-Folding them into a `1023px` block would change desktop. Each is split into a
-desktop-side rule (1024–1100, preserving current behaviour exactly) and a
-tablet-side rule. Proven by before/after capture at 1024, 1100 and 1440.
+The boundary is `700px` inclusive, so tablet is 701–1023. The spec's original
+`699px` was arbitrary; rewriting 16 media queries to move a boundary one pixel
+is churn with no visual consequence and a real typo risk, so **700px stands**
+and every later section reads `max-width: 700px`.
+
+No work in this section. Later tasks write into the two existing blocks.
 
 ## 3. Drawer
 
@@ -161,27 +190,59 @@ dictionaries, so all four trees (`/`, `/en`, `/ja`, `/jp`) are covered.
 
 `src/views/HomeView.astro`, `src/lib/content.js`.
 
-Below 1024:
+**The "all 6 projects have 4:3 thumbnails" premise was WRONG.** Corrected
+2026-09-03 during execution by measuring the assets:
 
-- frame becomes **4:3**, uncropped
-- the `height: calc(100svh / var(--page-zoom) - 266.7px)` fold rule is dropped.
-  That 266.7px encodes desktop header metrics and is meaningless against a
-  one-row header. The accompanying re-measure script is desktop-only.
-- source swaps from `heroImage` (2600x1200) to the project **thumbnail** (4:3)
+| asset | natural | ratio |
+|---|---|---|
+| zenrise_tours_website_web_hero | 2600x1200 | 2.17 |
+| youki_prototype_web_hero | 2600x1200 | 2.17 |
+| myocp_booking_website_hero | 2600x1200 | 2.17 |
+| zenrise_branding_thumb | 2500x1875 | 1.33 |
+| ocp_brand_identity_thumb | 1680x632 | 2.66 |
+| dtb_website_hero | 2007x1338 | 1.50 |
 
-The swap uses a single `<picture>` with `media`, so the browser downloads **one**
-image per slide rather than both.
+Only one is 4:3. The original finding inferred "4:3 thumbnails" from the
+work-grid cards, which crop a wide asset into a 4:3 box. Because the sources
+span 1.33 to 2.66, **no fixed frame ratio is crop-free** and the "crop: 0%"
+promise was unachievable.
 
-**Slide-set divergence.** Mobile shows all 6 projects; desktop shows the 3 with
-a `heroImage`, as `heroSlidesOf()` already enforces. Six slides render; the
-three without a hero are hidden at >=1024.
+Below 1024 the frame is therefore a fixed **16:9**, chosen on the measured
+spread: worst case shows 67% of an image, the dominant 2.17 screenshots show
+82%, against **27%** for the portrait box it replaces (measured 0.264 before,
+0.821 after). A fixed ratio also keeps the frame height stable so the page
+does not reflow as slides rotate.
 
-Consequence for the cycling script: it currently counts slide elements, so it
-must count **visible** slides and re-evaluate on resize. This is the most
-delicate part of the pass and gets its own plan step and unit test.
+Also below 1024:
 
-The existing `heroSlidesOf()` test in `content.test.js` stays green; a new
-sibling helper for the thumbnail set is added with its own tests.
+- the `height: calc(100svh / var(--page-zoom) - 266.7px)` fold rule is
+  dropped. That 266.7px encodes desktop header metrics and is meaningless
+  against a narrow header. `sizeHero()` is guarded to desktop and clears any
+  inline height it left behind when a resize crosses down.
+- **two pre-existing `!important` rules had to be removed to let the frame
+  size at all**: `.hero-frame { height: 62svh !important }` in the 700px block
+  and `.hero-frame { min-height: 480px !important }` in a later 1023px block.
+  Both sat after the new rule in source order with equal specificity, so they
+  won the cascade and pinned the frame portrait (332x480, ratio 0.69).
+- the source swaps from `heroImage` to the project `thumbnail`, via a single
+  `<picture>` with `<source media="(min-width: 1024px)">` so the browser
+  downloads one image per slide. Measured payload: desktop 7 unique images
+  before and after; **mobile drops 7 to 6**, because the hero slides now reuse
+  files the work grid already needs.
+- **a contrast scrim was added.** The overlay is hardcoded `color: #000` over
+  arbitrary project imagery, so on a dark thumbnail the title and the left
+  arrow vanished entirely. A soft white bottom gradient restores contrast
+  without touching the type. This is pre-existing and also latent on desktop;
+  desktop is left alone and the issue reported rather than silently changed.
+
+**Slide-set divergence.** Mobile shows all 6 projects; desktop shows the 3
+with a `heroImage`, hidden below by CSS (`display: none`, not opacity, so the
+cycling script can count them). Verified: 6 visible at 390 and 768, 3 at 1440.
+
+The cycling script counts **visible** slides and rebuilds on resize, resets
+every slide (one hidden at this width may carry `opacity: 1` from the other
+side of the boundary), and restarts its timer on a manual advance. Overlay
+title and active slide verified in sync across three advances.
 
 ## 5. Typography and composition fixes
 

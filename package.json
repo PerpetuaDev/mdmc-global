@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "audit:responsive": "node scripts/audit-responsive.mjs --widths 390,768"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
