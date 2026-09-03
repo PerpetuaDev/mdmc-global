@@ -127,18 +127,18 @@ const signature = aboutJapan?.signature ?? { role: "", name: "", romaji: "", por
      the elements (transcription), hence !important. CJK strings don't
      hyphen-break, so the stacked tracks stay minmax(0, 1fr). */
   @media (max-width: 700px) {
-    .jp-hero { padding-top: 64px !important; }
-    .jp-greeting { padding-top: 64px !important; padding-bottom: 80px !important; }
-    .jp-facts { padding-top: 64px !important; padding-bottom: 64px !important; }
+    .jp-hero { padding-top: var(--sp-6) !important; }
+    .jp-greeting { padding-top: var(--sp-6) !important; padding-bottom: var(--sp-6) !important; }
+    .jp-facts { padding-top: var(--sp-6) !important; padding-bottom: var(--sp-6) !important; }
     .jp-facts h2, .jp-access h2 { margin-bottom: 40px !important; }
     .jp-fact-row { grid-template-columns: minmax(0, 1fr) !important; gap: 8px !important; padding: 20px 0 !important; }
     /* A 390px viewport leaves the name column ~218px next to the 96px
        portrait — フィンレイソン・リアム (10 chars at 22px) broke one
        character onto its own line; the smaller portrait keeps it whole. */
-    .jp-signature { grid-template-columns: 72px minmax(0, 1fr) !important; gap: 20px !important; margin-top: 56px !important; }
+    .jp-signature { grid-template-columns: 72px minmax(0, 1fr) !important; gap: 20px !important; margin-top: var(--sp-5) !important; }
     .jp-signature > div:first-child { width: 72px !important; height: 72px !important; }
     .jp-sig-name { font-size: 19px !important; }
-    .jp-access { padding-top: 64px !important; padding-bottom: 96px !important; }
+    .jp-access { padding-top: var(--sp-6) !important; padding-bottom: var(--sp-7) !important; }
     .jp-access-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 40px !important; }
   }
 

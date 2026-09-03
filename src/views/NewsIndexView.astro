@@ -75,10 +75,10 @@ const t = makeT(locale);
   }
 
   @media (max-width: 700px) {
-    section.gutter { padding-bottom: 96px !important; }
+    section.gutter { padding-bottom: var(--sp-7) !important; }
     .news-h2 { margin-bottom: 40px !important; }
     .filter-list-kind { flex-wrap: wrap; gap: 16px 40px !important; }
-    .news-grid { grid-template-columns: 1fr !important; row-gap: 48px !important; }
+    .news-grid { grid-template-columns: 1fr !important; row-gap: var(--sp-5) !important; }
   }
 
   .news-h2 {

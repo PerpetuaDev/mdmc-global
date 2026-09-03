@@ -194,13 +194,13 @@ const headlineLines = t("contact.headline").split("\n");
     .studio-contact-links { font-size: 18px !important; }
   }
   @media (max-width: 700px) {
-    main > section:first-of-type { padding-top: 64px !important; }
-    .anchor-row { margin-top: 48px !important; gap: 12px 32px !important; }
-    .studio-fold { padding-top: 96px !important; }
+    main > section:first-of-type { padding-top: var(--sp-6) !important; }
+    .anchor-row { margin-top: var(--sp-5) !important; gap: 12px 32px !important; }
+    .studio-fold { padding-top: var(--sp-7) !important; }
     .studio-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 32px !important; }
     .studio-grid .studio-image { order: -1 !important; }
     .studio-address { font-size: var(--text) !important; }
-    .form-section { padding-top: 112px !important; padding-bottom: 96px !important; }
+    .form-section { padding-top: var(--sp-7) !important; padding-bottom: var(--sp-7) !important; }
     .form-header { flex-wrap: wrap; gap: 12px 32px !important; }
     .form-row { grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; padding: 20px 0 !important; }
   }
@@ -217,6 +217,24 @@ const headlineLines = t("contact.headline").split("\n");
     display: flex;
     flex-wrap: wrap;
     gap: 16px 56px;
+  }
+
+  /* Four studio anchors in a wrapping row collapse into a lumpy 2x2 cluster
+     at 390px — the pairs read as a grid rather than a list of destinations.
+     Stacked as full-width ruled rows they read as what they are. The rule is
+     an inset box-shadow rather than a border so it does not fight .cta's own
+     transparent border-bottom, which :hover animates to currentColor. */
+  @media (max-width: 700px) {
+    .anchor-row {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      gap: 0 !important;
+      align-items: stretch;
+    }
+    .anchor-row > .cta {
+      justify-content: space-between;
+      box-shadow: inset 0 -1px 0 var(--hairline);
+    }
   }
 
   .studio-fold {

@@ -134,11 +134,11 @@ const specialties = [...new Set(projects.flatMap(specialtiesOf))].sort();
     .filter-list-specialty { grid-template-columns: repeat(2, max-content) !important; gap: 16px 64px !important; }
   }
   @media (max-width: 700px) {
-    section.gutter { padding-bottom: 96px !important; }
+    section.gutter { padding-bottom: var(--sp-7) !important; }
     .work-h2 { margin-bottom: 40px !important; }
     .filter-triggers { gap: 32px !important; }
     .filter-list-specialty { grid-template-columns: minmax(0, 1fr) !important; }
-    .work-grid { grid-template-columns: 1fr !important; row-gap: 48px !important; }
+    .work-grid { grid-template-columns: 1fr !important; row-gap: var(--sp-5) !important; }
   }
 
   .work-h2 {

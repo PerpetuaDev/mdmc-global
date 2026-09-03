@@ -173,11 +173,11 @@ const sections = [
      and the next-project foot wraps. Later equal-specificity base rules win
      the cascade, hence !important. */
   @media (max-width: 700px) {
-    .story-columns { grid-template-columns: 1fr !important; padding-top: 64px !important; gap: 72px !important; }
+    .story-columns { grid-template-columns: 1fr !important; padding-top: var(--sp-6) !important; gap: 72px !important; }
     .story-article { order: -1; }
     .story-images { gap: 48px !important; }
-    .story-section + .story-section { margin-top: 72px !important; }
-    .next-project { margin-top: 80px !important; }
+    .story-section + .story-section { margin-top: var(--sp-6) !important; }
+    .next-project { margin-top: var(--sp-6) !important; }
     .next-project-foot { flex-wrap: wrap; gap: 12px 32px !important; }
     .next-project-title { font-size: var(--text-l) !important; }
   }

@@ -134,13 +134,13 @@ const t = makeT(locale);
   }
 
   @media (max-width: 700px) {
-    main > section:first-child { padding-top: 64px !important; }
-    .hero-container { margin-top: 48px !important; }
-    .role-section { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; margin-top: 80px !important; margin-bottom: 80px !important; }
+    main > section:first-child { padding-top: var(--sp-6) !important; }
+    .hero-container { margin-top: var(--sp-5) !important; }
+    .role-section { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; margin-top: var(--sp-6) !important; margin-bottom: var(--sp-6) !important; }
     .role-body { font-size: var(--text) !important; }
     .apply-header { flex-wrap: wrap; gap: 12px 32px !important; }
     .form-row { grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; padding: 20px 0 !important; }
-    main > section:last-of-type { padding-bottom: 96px !important; }
+    main > section:last-of-type { padding-bottom: var(--sp-7) !important; }
   }
 
   .job-title {

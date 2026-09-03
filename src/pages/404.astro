@@ -36,6 +36,6 @@ import Base from "../layouts/Base.astro";
      they override (the `padding` shorthand would clobber .gutter's sides) —
      !important because inline style="" wins the cascade otherwise. */
   @media (max-width: 700px) {
-    section.gutter { padding-top: 96px !important; padding-bottom: 120px !important; }
+    section.gutter { padding-top: var(--sp-7) !important; padding-bottom: var(--sp-7) !important; }
   }
 </style>

@@ -108,15 +108,15 @@ const t = makeT(locale);
     .job-row { grid-template-columns: minmax(0, 1fr) 150px 130px 24px !important; gap: 24px !important; }
   }
   @media (max-width: 700px) {
-    .careers-hero { padding-top: 64px !important; }
-    .careers-hero > div { margin-top: 48px !important; }
-    .careers-intro { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; padding-top: 64px !important; }
+    .careers-hero { padding-top: var(--sp-6) !important; }
+    .careers-hero > div { margin-top: var(--sp-5) !important; }
+    .careers-intro { grid-template-columns: minmax(0, 1fr) !important; gap: 16px !important; padding-top: var(--sp-6) !important; }
     .careers-intro p { font-size: 22px !important; }
-    .careers-positions { padding-top: 96px !important; }
+    .careers-positions { padding-top: var(--sp-7) !important; }
     .job-row { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 16px 24px !important; padding: 24px 0 !important; }
     .job-row h3 { grid-column: 1 / -1; }
     .job-arrow { display: none; }
-    .careers-positions a[href^="mailto:"] { margin-top: 56px !important; }
+    .careers-positions a[href^="mailto:"] { margin-top: var(--sp-5) !important; }
   }
 
   a[href^="/careers/"]:hover {
