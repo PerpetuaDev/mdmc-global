@@ -126,6 +126,17 @@ const signature = aboutJapan?.signature ?? { role: "", name: "", romaji: "", por
      and step the 96–160px section rhythm down. Layout is inline style="" on
      the elements (transcription), hence !important. CJK strings don't
      hyphen-break, so the stacked tracks stay minmax(0, 1fr). */
+  /* Touch floor (2026-09-03): this view's mail link was 160x29. It only
+     appears on the JA about composition, which is why the EN-tree audit
+     never saw it. */
+  @media (max-width: 1023px) {
+    .jp-mail-link {
+      min-height: var(--tap);
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+
   @media (max-width: 700px) {
     .jp-hero { padding-top: var(--sp-6) !important; }
     .jp-greeting { padding-top: var(--sp-6) !important; padding-bottom: var(--sp-6) !important; }

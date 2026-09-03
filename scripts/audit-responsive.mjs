@@ -35,8 +35,12 @@ export async function discoverPaths(prefix = '') {
   const detail = []
   for (const section of ['work', 'news', 'careers']) {
     try {
-      const html = await (await fetch(`${ORIGIN}${prefix}/${section}/`)).text()
-      const m = html.match(new RegExp(`href="${prefix}/${section}/([^"/]+)/"`))
+      // Always discover from the ROOT tree and apply the prefix ourselves.
+      // Slugs are shared across all four trees, and the /jp tree's own links
+      // are deliberately unprefixed — on co.jp the Worker serves that tree at
+      // the domain root — so scraping a prefixed tree's hrefs finds nothing.
+      const html = await (await fetch(`${ORIGIN}/${section}/`)).text()
+      const m = html.match(new RegExp(`href="/${section}/([^"/]+)/"`))
       if (m) detail.push(`${prefix}/${section}/${m[1]}/`)
       else console.warn(`  (no ${section} detail page found — that template is not audited)`)
     } catch {
@@ -171,7 +175,12 @@ const MEASURE = `(() => {
     // exempts inline text for the same reason; text links here still get a
     // 44px height plus the 24px WCAG minimum width.
     if (interactive) {
-      const symbolic = txt.replace(/\\s/g, '').length <= 2;
+      // "Symbolic" means the label carries NO letters or digits — a glyph
+      // like '+', an arrow, or the close cross. It is NOT "short": CJK words
+      // are routinely one to three characters, and a character-count rule
+      // classified the footer's 日本 (Japan) as a glyph and demanded 44px of
+      // width from a two-character word.
+      const symbolic = !/[\\p{L}\\p{N}]/u.test(txt);
       const minW = symbolic ? ${TAP_FLOOR_PX} : 24;
       if (r.width < minW || r.height < ${TAP_FLOOR_PX}) {
         smallTaps.push({ tag, cls: clsOf(el), w: Math.round(r.width), h: Math.round(r.height),

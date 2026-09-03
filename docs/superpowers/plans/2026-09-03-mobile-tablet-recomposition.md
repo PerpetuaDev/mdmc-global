@@ -1679,3 +1679,125 @@ captured before any edit."
 - Wiring `audit:responsive` into CI.
 - A global inline-style refactor. Only touched elements were de-inlined.
 - Removing the supermenu markup from the below-1024 payload (needs a runtime breakpoint; see Task 11 Step 5).
+
+
+---
+
+# Outcomes (2026-09-03)
+
+All three gates read **zero** across 10 page types x {390, 768} x all four
+trees (`/`, `/en`, `/ja`, `/jp`). Desktop geometry unchanged at 1024/1100/1440
+against a baseline captured before any edit. 295 vitest tests pass; production
+build clean at 89 pages.
+
+| | before | after |
+|---|---|---|
+| horizontal overflow | 0 | 0 |
+| text under 12px | 1-3 per page | 0 |
+| interactive under floor | 22-40 per page | 0 |
+| mobile hero image visible | 26% | 82% |
+| body text at 390 | 20px | 16px |
+| large section gap at 390 | 96px | 62px |
+
+## Spec errors that measurement caught
+
+Three claims in the spec were wrong. All three were found by measuring, not by
+review, which is the argument for building the audit script first.
+
+1. **Token ramps saturated far too early.** The original `Nvw` coefficients hit
+   their caps around a 600px viewport, so every token already equalled its
+   desktop value by 768px and the scale did nothing across the entire tablet
+   band — the exact problem the pass exists to fix. Replaced with
+   `calc(intercept + Nvw)` solved to floor near 390 and cap at 1024. `--sp-7`
+   now measures 61.9 / 82.2 / 95.8 / 96 at 390 / 768 / 1023 / 1024, continuous
+   across the boundary.
+
+2. **There are no stray breakpoints.** The claim of nine came from a grep that
+   counted `max-width` CSS *properties* (element measure caps such as
+   `.work-card-desc { max-width: 460px }`), not media queries. The codebase
+   already used exactly `1023px` and `700px`. **Task 3 was void**, and the four
+   `max-width: 1100px` rules it warned about — the riskiest step in the plan —
+   do not exist. The `!important` half of that finding was real and
+   understated: 173 occurrences, not ~120, with 154 inside `@media` blocks.
+
+3. **The thumbnails are not 4:3.** Measured: 1.33, 1.50, 2.17 (x3), 2.66. The
+   "4:3" reading came from the work-grid cards, which crop a wide asset into a
+   4:3 box. No fixed frame ratio can be crop-free on that spread, so the
+   approved "crop: 0%" was unachievable; the user re-picked **16:9** on the
+   measured numbers (worst case 67% visible, dominant case 82%).
+
+## Defects found and fixed beyond the plan
+
+- **Two `!important` rules silently overrode the new hero frame**:
+  `height: 62svh` in the 700px block and `min-height: 480px` in a later 1023px
+  block, both winning on source order. The frame stayed portrait (332x480,
+  ratio 0.69) until they were removed.
+- **The hero overlay was invisible on dark imagery** — hardcoded `color: #000`
+  over arbitrary project art, so on the Youki thumbnail the title *and* the
+  left arrow vanished. A scrim was added below 1024. **Still latent on
+  desktop**, deliberately left alone rather than changed silently.
+- **Form inputs and textareas were 22px tall** on both the contact and the
+  apply form.
+- **Two separate `.filter-trigger` implementations** exist (WorkIndexView and
+  NewsIndexView); fixing one left the other failing.
+- **`.jp-mail-link` (160x29) only exists on the JA about composition**, so the
+  EN-tree audit never saw it — found only by running all four trees.
+- The audit's own **gate was wrong twice**: it first demanded 44x44 of every
+  control, failing 'Work' (40x44) and 'English' (43x44) on width alone; then
+  its "symbolic" test used a character count, which classified the footer's
+  日本 as a glyph and demanded 44px of width from a two-character word. Width
+  is now required only where the label contains no letters or digits.
+- **The diff matched runs by array position**, so snapshotting 1024/1100/1440
+  and diffing 1024/1440 compared 1440 against the 1100 baseline and reported
+  46 phantom diffs. It keys by width and path now.
+- **`/jp` detail pages were never audited**: that tree's internal links are
+  deliberately unprefixed (on co.jp the Worker serves it at the domain root),
+  so scraping its hrefs found nothing. Discovery now reads slugs from the root
+  tree and applies the prefix itself.
+
+## Deliberate deviations from the plan
+
+- **Task 3 skipped entirely** — no work existed (see above).
+- **Tasks 9 and 10 committed together.** Splitting them would have meant
+  committing an inert dialog.
+- **The drawer lives inside `<header>`, not in `NavDrawer.astro`.** Every
+  region/locale handler is scoped to that element, so the drawer inherits the
+  whole preference mechanism — localStorage, the `?r=` carry, label refresh,
+  active states — instead of duplicating logic that is subtle and easy to get
+  wrong. Verified: a region button updates its own chip *and* the header label
+  and leaves the drawer open, while any link closes it.
+- **Tablet two-column grids needed no work** — `/`, `/work/` and `/news/`
+  already rendered 2 columns at 768 and 1 at 390. That plan step came from the
+  "tablet has no identity" finding, which was about type and space metrics; the
+  token ramp is what actually gives tablet its identity.
+- **Contact's tap targets were closed in Task 5 rather than Task 8**, so the
+  gate went green earlier than planned.
+- **`/careers/` grew 2px of desktop page height** — the two 11px meta labels
+  rising to the 12px floor, which the spec carved out as the one intentional
+  desktop change. Nothing else moved on any page; zero header diffs. The
+  baseline was re-taken so this accepted 2px does not mask a later regression.
+
+## Verified non-issues (chased and cleared)
+
+- Hidden desktop slides add **no** extra downloads: the work grid already
+  fetches every thumbnail. Desktop is 7 unique images before and after; mobile
+  dropped 7 to 6.
+- The contact clock rendering "23 59" is its colon mid-blink, by design.
+- The hero overlay title appearing to disagree with the visible slide was a
+  mid-crossfade capture; title and slide verified in sync across three
+  advances.
+- The drawer's long news title is not overflowing: the widest element's right
+  edge is exactly the content boundary (390 - 24px gutter = 366px).
+
+## Left for the design pass
+
+- The 16:9 hero is 187px tall at 390. That matches the work-card image ratio
+  exactly (`thumbRatio = 16 / 9`), so it is consistent with the site's own
+  system, but it gives the hero no more presence than a grid card. A design
+  decision, not a defect.
+- Desktop's latent hero-overlay contrast problem.
+- The drawer scrolls at 390 (content 1014px against an 844px viewport).
+- `nav.menu`, `a11y.openMenu`, `a11y.closeMenu` are machine-drafted in ja and
+  need the native review pass.
+- The three missing 2600x1200 `hero_image` assets, and the inconsistent
+  `thumbnail` ratios — the real fix for the hero is content, not code.
