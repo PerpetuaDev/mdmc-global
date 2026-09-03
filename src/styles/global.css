@@ -118,3 +118,11 @@ html.page-leaving main {
   }
 }
 @media (prefers-reduced-motion: reduce) { main, .filter-list { animation: none !important; } }
+
+/* Touch ergonomics (2026-09-03). Below the zoom world, interactive text needs
+   a 44px box. Grown with min-height and inline-flex centring — never by
+   scaling type: these are editorial text links and giving them button weight
+   would be the wrong design. Desktop opts out entirely; it has a cursor. */
+@media (max-width: 1023px) {
+  .cta { min-height: var(--tap); }
+}

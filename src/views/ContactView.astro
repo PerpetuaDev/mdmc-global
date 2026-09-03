@@ -173,6 +173,20 @@ const headlineLines = t("contact.headline").split("\n");
      beating the inline order:2), stack the form label grids (mirrors
      JobView), and step the 176px fold rhythm down. Inline styles and later
      equal-specificity base rules win the cascade, hence !important. */
+  /* Touch floor (2026-09-03): the form fields were 22px tall and this
+     view's own studio links 29px (the Footer's are handled in Footer.astro). */
+  @media (max-width: 1023px) {
+    .form-row input,
+    .form-row textarea {
+      min-height: var(--tap) !important;
+    }
+    .studio-link {
+      min-height: var(--tap);
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+
   @media (max-width: 1023px) {
     /* The side-by-side fold survives on tablets, but its 4fr info column is
        ~215px there — 22px addresses wrapped almost every word. */

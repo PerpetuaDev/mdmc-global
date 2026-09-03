@@ -126,6 +126,24 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
      is a desktop composition — tablets keep a shorter formula, phones use a
      fixed-ratio hero. Manifesto loses its 150px indent and steps down; the
      work grid goes single-column on phones. */
+  /* Touch floor (2026-09-03): the hero arrows were 21x34 and the project
+     title link 22px tall. The overlay is absolutely positioned, so growing
+     these does not move the frame. */
+  @media (max-width: 1023px) {
+    .hero-overlay a {
+      min-height: var(--tap);
+      display: inline-flex;
+      align-items: center;
+    }
+    .hero-arrow {
+      min-width: var(--tap);
+      min-height: var(--tap);
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
   @media (max-width: 1023px) {
     /* !important also on the scoped-class overrides: this block sits above
        the base rules in source order, and equal-specificity scoped rules

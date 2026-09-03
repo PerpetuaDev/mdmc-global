@@ -214,6 +214,21 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
      225px nav offset; mobile goes two-row (logo + locale trigger up top, nav
      on its own row). Inline layout styles on the elements win the cascade,
      hence the !important overrides here, scoped to this component. */
+  /* Touch floor (2026-09-03). !important is required: these carry inline
+     layout styles from the handoff transcription, the established pattern in
+     this component (see the note above). Grown by min-height only — type
+     size and visual weight are unchanged. */
+  @media (max-width: 1023px) {
+    header[data-header] > a,
+    header[data-header] .nav-link,
+    header[data-header] .locale-trigger,
+    header[data-header] .mega-link {
+      min-height: var(--tap) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+  }
+
   @media (max-width: 1023px) {
     header[data-header] {
       padding-top: 36px !important;

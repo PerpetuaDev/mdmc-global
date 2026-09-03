@@ -162,8 +162,21 @@ const MEASURE = `(() => {
     const tag = el.tagName.toLowerCase();
     const interactive = tag === 'a' || tag === 'button' || tag === 'input' || tag === 'textarea' || tag === 'summary';
     // A control inside a closed <dialog> measures 0 and is skipped above.
-    if (interactive && (r.width < ${TAP_FLOOR_PX} || r.height < ${TAP_FLOOR_PX})) {
-      smallTaps.push({ tag, cls: clsOf(el), w: Math.round(r.width), h: Math.round(r.height), txt: txt.slice(0, 20) });
+    //
+    // Height is required of everything. WIDTH is only required of symbolic
+    // controls — an icon or glyph button ('+', '<', '>') must be graspable in
+    // both axes, but an inline text link is as wide as its word and demanding
+    // 44px would force artificial padding onto 'Work' (40px) or 'English'
+    // (43px), distorting an editorial design to satisfy a number. WCAG 2.5.8
+    // exempts inline text for the same reason; text links here still get a
+    // 44px height plus the 24px WCAG minimum width.
+    if (interactive) {
+      const symbolic = txt.replace(/\\s/g, '').length <= 2;
+      const minW = symbolic ? ${TAP_FLOOR_PX} : 24;
+      if (r.width < minW || r.height < ${TAP_FLOOR_PX}) {
+        smallTaps.push({ tag, cls: clsOf(el), w: Math.round(r.width), h: Math.round(r.height),
+                         txt: txt.slice(0, 20), need: minW + 'x' + ${TAP_FLOOR_PX} });
+      }
     }
   }
   // Report TRUE totals alongside a capped sample of distinct kinds. Reporting

@@ -121,6 +121,15 @@ const specialties = [...new Set(projects.flatMap(specialtiesOf))].sort();
      filters and the work grid alike. Inline section paddings (and the base
      rules below this block, which share specificity and come later in
      source) win the cascade, hence the !important overrides. */
+  /* Touch floor (2026-09-03): the filter triggers were 22px tall. */
+  @media (max-width: 1023px) {
+    .filter-trigger {
+      min-height: var(--tap) !important;
+      display: inline-flex !important;
+      align-items: center;
+    }
+  }
+
   @media (max-width: 1023px) {
     .filter-list-specialty { grid-template-columns: repeat(2, max-content) !important; gap: 16px 64px !important; }
   }

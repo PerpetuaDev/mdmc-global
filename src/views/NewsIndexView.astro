@@ -64,6 +64,16 @@ const t = makeT(locale);
      and the kind filter row wraps. Base rules below share specificity and
      come later in source, hence the !important overrides (same pattern as
      WorkIndexView). */
+  /* Touch floor (2026-09-03): this view has its own filter trigger, 22px
+     tall — WorkIndexView's is handled separately in that component. */
+  @media (max-width: 1023px) {
+    .filter-trigger {
+      min-height: var(--tap) !important;
+      display: inline-flex !important;
+      align-items: center;
+    }
+  }
+
   @media (max-width: 700px) {
     section.gutter { padding-bottom: 96px !important; }
     .news-h2 { margin-bottom: 40px !important; }

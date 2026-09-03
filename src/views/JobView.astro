@@ -125,6 +125,14 @@ const t = makeT(locale);
      input) — let the apply header wrap, and step the section rhythm down.
      Inline paddings and later equal-specificity base rules win the cascade,
      hence !important. */
+  /* Touch floor (2026-09-03): the apply form's fields were 22px tall. */
+  @media (max-width: 1023px) {
+    .form-row input,
+    .form-row textarea {
+      min-height: var(--tap) !important;
+    }
+  }
+
   @media (max-width: 700px) {
     main > section:first-child { padding-top: 64px !important; }
     .hero-container { margin-top: 48px !important; }
