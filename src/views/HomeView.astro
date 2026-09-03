@@ -85,6 +85,7 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
 
 <main style="animation: pageIn .6s var(--ease)">
   <section class="home-hero-section" style="padding: 40px var(--gutter-r) 0 var(--gutter-l)">
+    <div class="hero-block">
     <div class="hero-frame">
       {thumbSlides.map((p, i) => (
         <a
@@ -108,6 +109,8 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
           )}
         </a>
       ))}
+
+      </div>
 
       <div class="hero-overlay">
         <a
@@ -198,24 +201,6 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
          world starts at 1024. */
       max-height: 80svh;
     }
-    /* The overlay is currentColor/#000 over arbitrary project imagery, so on
-       a dark thumbnail the title and arrows disappeared entirely (the left
-       arrow was invisible against the Youki photo). A soft scrim restores
-       contrast without changing the type. Desktop has the same latent issue
-       but is out of scope for this pass — reported, not silently changed. */
-    .hero-frame::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      /* Capped: 45% of a portrait frame is far more white than the overlay
-         needs, and it washed out the middle of the image. */
-      height: clamp(96px, 28%, 200px);
-      background: linear-gradient(to top, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
-      pointer-events: none;
-      z-index: 1;
-    }
   }
 
   .manifesto-flow { display: none; }
@@ -251,12 +236,39 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
     .home-manifesto { padding: 104px var(--gutter-r) 120px var(--gutter-l) !important; font-size: 26px !important; }
   }
   @media (max-width: 700px) {
+    /* Arrows hidden on phones (user decision): redundant against the
+       6s auto-advance, and the slide itself is the link. The whole
+       role="group" goes, not just the buttons, so no empty labelled group
+       is left behind for assistive tech. Tablet keeps them. */
+    .hero-overlay [role="group"] { display: none !important; }
+
+    /* With the scrim removed, a #000 title over arbitrary project art was
+       unreadable on the dark slides — the exact problem the scrim had been
+       covering. So on phones the title becomes a caption BELOW the image,
+       which is the pattern the site already uses on work cards (image,
+       then title). No scrim needed, legible on any artwork. */
+    .hero-overlay {
+      position: static !important;
+      left: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      padding: var(--sp-2) var(--gutter-r) 0 var(--gutter-l);
+      pointer-events: auto;
+    }
+
     /* .hero-frame sizing lives in the max-width:1023px block above — a
        62svh height here (!important, and later in source) overrode it and
        kept the frame portrait at 390px. */
     .home-manifesto { padding: 80px var(--gutter-r) 96px var(--gutter-l) !important; font-size: 21px !important; }
     .home-workgrid > div { grid-template-columns: 1fr !important; row-gap: var(--sp-5) !important; }
     .hero-overlay { left: 16px !important; right: 16px !important; bottom: 14px !important; }
+  }
+
+  /* Wrapper so the caption can sit outside the frame's overflow:hidden. On
+     desktop the overlay is absolute against this box, which has exactly the
+     frame's height, so bottom/left/right resolve as they always did. */
+  .hero-block {
+    position: relative;
   }
 
   .hero-frame {
