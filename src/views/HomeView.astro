@@ -12,6 +12,7 @@
 import WorkCard from "../components/WorkCard.astro";
 import { makeT, pickLocalized, makeLinks, interpolate } from "../lib/i18n.js";
 import { heroSlidesOf } from "../lib/content.js";
+import { unwrapAuthoredBreaks } from "../lib/text.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -39,6 +40,13 @@ const first = heroSlides[0];
 const escAmp = (s: string) => s.replace(/&/g, "&amp;");
 const manifesto1 = t("home.manifesto.1").split("\n").map(escAmp);
 const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
+// Below 1024 those authored breaks orphan their last word at a narrow measure
+// ("people", "honest", "noise."), so the same copy is also emitted as flowing
+// paragraphs and the two are swapped by media query. Both are in the DOM and
+// only one is shown: two short paragraphs of duplicated bytes is negligible,
+// and a CSS swap stays correct with JS disabled and across resizes.
+const manifesto1Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.1")));
+const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
 
 // Legacy hash-URL redirect shim: the `script is:inline
 // define:vars={{ redirectMap }}` immediately below — see
@@ -110,8 +118,14 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
 
   <section class="home-manifesto" style="padding: 143px var(--gutter-r) 168px calc(var(--gutter-l) + 150px); font-size: 32px; line-height: 1.4; letter-spacing: -0.005em">
     <div style="max-width: 880px">
-      <p><Fragment set:html={manifesto1[0]} /> <br><Fragment set:html={manifesto1[1]} /></p>
-      <p style="margin-top: 1.5em"><Fragment set:html={manifesto2[0]} /> <br><Fragment set:html={manifesto2[1]} /> <br><Fragment set:html={manifesto2[2]} /></p>
+      <div class="manifesto-lined">
+        <p><Fragment set:html={manifesto1[0]} /> <br><Fragment set:html={manifesto1[1]} /></p>
+        <p style="margin-top: 1.5em"><Fragment set:html={manifesto2[0]} /> <br><Fragment set:html={manifesto2[1]} /> <br><Fragment set:html={manifesto2[2]} /></p>
+      </div>
+      <div class="manifesto-flow">
+        <p><Fragment set:html={manifesto1Flow} /></p>
+        <p style="margin-top: 1.5em"><Fragment set:html={manifesto2Flow} /></p>
+      </div>
     </div>
   </section>
 
@@ -129,6 +143,14 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
   /* Touch floor (2026-09-03): the hero arrows were 21x34 and the project
      title link 22px tall. The overlay is absolutely positioned, so growing
      these does not move the frame. */
+  /* Desktop keeps the authored line breaks; below 1024 the flowing copy
+     takes over. See the note beside manifesto1Flow in the frontmatter. */
+  .manifesto-flow { display: none; }
+  @media (max-width: 1023px) {
+    .manifesto-lined { display: none; }
+    .manifesto-flow { display: block; }
+  }
+
   @media (max-width: 1023px) {
     .hero-overlay a {
       min-height: var(--tap);
