@@ -317,6 +317,8 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
   }
   @media (max-width: 700px) {
     header[data-header] img[alt="MDMC"] { height: 16px !important; }
+    /* (44 - 16) / 2 */
+    header[data-header] > a { margin-block: -14px; }
   }
 
   /* --- Drawer (2026-09-03) ------------------------------------------------
@@ -332,11 +334,22 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
       display: inline-flex !important;
       flex-direction: column;
       justify-content: center;
+      align-items: flex-end;
       gap: 6px;
-      justify-self: end;
+      /* OUT OF FLOW on purpose. A control's visual size and its touch target
+         are separate concerns: in flow, the 44px hit area also became the
+         header's content height and forced an 84px header. Absolutely
+         positioned and centred, the button keeps a real 44x44 target while
+         header height is set by the wordmark alone. The only thing that
+         overhangs is invisible padding; the 1px bars stay well inside.
+         (The 44px figure is Apple HIG / WCAG 2.5.5 AAA — WCAG 2.5.8 AA is
+         24x24 — so it is a chosen floor, not a requirement.) */
+      position: absolute;
+      right: var(--gutter-r);
+      top: 50%;
+      transform: translateY(-50%);
       min-width: var(--tap);
       min-height: var(--tap);
-      align-items: flex-end;
     }
     .drawer-bar {
       display: block;
@@ -434,13 +447,23 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
      this component (see the note above). Grown by min-height only — type
      size and visual weight are unchanged. */
   @media (max-width: 1023px) {
-    header[data-header] > a,
     header[data-header] .nav-link,
     header[data-header] .locale-trigger,
     header[data-header] .mega-link {
       min-height: var(--tap) !important;
       display: inline-flex !important;
       align-items: center !important;
+    }
+    /* The wordmark link keeps a real 44px hit box — negative block margins
+       stop that box setting the header's row height, so the margin box
+       contributes only the logo's own height. This is what made the header
+       84px: the link's tap floor, not the hamburger. The rect stays 44px, so
+       the audit is measuring a genuine target rather than being appeased. */
+    header[data-header] > a {
+      min-height: var(--tap) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      margin-block: -13px;
     }
   }
 
@@ -450,8 +473,8 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
          content height, so the reduction comes out of padding: 36/24 was
          sized for the two-row layout that no longer exists below 1024.
          Header goes 104px -> 70px at 768. */
-      padding-top: 12px !important;
-      padding-bottom: 10px !important;
+      padding-top: 14px !important;
+      padding-bottom: 14px !important;
       /* Drop the 1fr spacer track and make the nav's own track the flexible
          one — the ja nav (私たちについて…) is wider than a tablet leaves
          room for, and only a minmax(0,1fr) track lets it shrink. */
@@ -476,8 +499,8 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
       grid-template-columns: auto 1fr !important;
       /* row-gap was for the old two-row header (nav on its own row); the nav
          lives in the drawer now, so there is no second row to space. */
-      padding-top: 8px !important;
-      padding-bottom: 8px !important;
+      padding-top: 12px !important;
+      padding-bottom: 12px !important;
       font-size: 17px !important;
     }
     header[data-header] > nav {

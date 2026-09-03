@@ -166,6 +166,9 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
     .home-hero-section {
       padding-left: 0 !important;
       padding-right: 0 !important;
+      /* The 40px handoff gap was set against a 120px desktop header; below a
+         42px one it read as more air than the header itself. */
+      padding-top: var(--sp-2) !important;
     }
     .hero-frame {
       /* The desktop fold rule (100svh/--page-zoom - 266.7px) encodes desktop
