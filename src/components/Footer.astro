@@ -2,7 +2,7 @@
 // Footer — studio accordions + live clocks.
 // Transcribed from design/handoff/design/MDMC Site.dc.html, the footer block
 // starting "Have a project in mind" (search that string), before the
-// <script type="text/x-dc"> tag. Full-black top rule is the only full-black
+// script type="text/x-dc" tag. Full-black top rule is the only full-black
 // rule on the site (spec); inner accordion rows use the 0.12 hairline.
 //
 // The prototype's onClick handlers fire on several elements per row (label,
@@ -30,7 +30,7 @@ const STUDIOS = studiosForSite(site);
 const closedLineOf = (s: any) => (locale === "ja" ? (s.closedLineJa ?? s.closedLine) : s.closedLine);
 const addressLinesOf = (s: any) => (locale === "ja" ? (s.addressLinesJa ?? s.addressLines) : s.addressLines);
 // The bottom-bar script needs localized region names but is a bundled
-// <script> (no server vars) — carried via a data attribute on the button.
+// script block (no server vars) — carried via a data attribute on the button.
 const regionLabelsJson = JSON.stringify({
   nz: regionLabel("New Zealand"),
   au: regionLabel("Australia"),

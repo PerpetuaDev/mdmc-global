@@ -44,7 +44,7 @@ const regions = [...new Set(projects.flatMap((p) => p.regions))].sort();
 const specialtiesOf = (p: any) => (locale === "ja" ? (p.specialtiesJa ?? p.specialties) : p.specialties);
 const specialties = [...new Set(projects.flatMap(specialtiesOf))].sort();
 
-// Filter values are pipe-joined into data-attributes (see <script> below).
+// Filter values are pipe-joined into data-attributes (see the script block below).
 // None of today's live region/service strings contain "|", so this is a
 // safe delimiter for now — if that ever changes, switch to a JSON
 // data-attribute instead of splitting on "|".

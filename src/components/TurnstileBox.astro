@@ -42,7 +42,7 @@ const { name, language } = Astro.props;
   const SITE_KEY = '0x4AAAAAADx-FIVqP87bxM04';
   const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
-  // Module-scope state. Astro dedupes identical inline <script> content
+  // Module-scope state. Astro dedupes identical inline script content
   // across repeated uses of this component on one page, so this module
   // body still only runs once per page load even with several boxes.
   let scriptPromise = null;

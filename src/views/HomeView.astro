@@ -40,8 +40,8 @@ const escAmp = (s: string) => s.replace(/&/g, "&amp;");
 const manifesto1 = t("home.manifesto.1").split("\n").map(escAmp);
 const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
 
-// Legacy hash-URL redirect shim: the `<script is:inline
-// define:vars={{ redirectMap }}>` immediately below — see
+// Legacy hash-URL redirect shim: the `script is:inline
+// define:vars={{ redirectMap }}` immediately below — see
 // src/pages/index.astro's comment above <HomeView /> for the full
 // explanation (canonical impl in src/lib/legacy-redirects.js, and why that
 // doc comment lives one level up rather than here).
