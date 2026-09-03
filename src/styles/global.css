@@ -35,6 +35,37 @@ input, textarea { font: inherit; }
   --gutter-l: clamp(24px, 8.6458vw, 220px);
   --gutter-r: clamp(24px, 5.94vw, 152px);
   --ease: cubic-bezier(.2,.7,.2,1);
+
+  /* Type and space scale (2026-09-03). Fluid below 1024px; pinned to the
+     literal desktop px in the min-width:1024px block below, so desktop
+     cannot move. Only sizes that already EQUAL a token's desktop value may
+     adopt it — adopting a near-miss (19px -> --text) would shift desktop.
+     The display tier is deliberately absent: the five heading clamp()s are
+     already fluid and are left alone. */
+  --label: 12px;   /* hard floor — the header locale code was 10px */
+  --tap: 44px;
+
+  /* Each ramp is calc(intercept + Nvw) rather than a bare Nvw, and that
+     matters: a proportional term hits its cap far too early. The first cut
+     used 16vw for --sp-7, which reaches 96px at a 600px viewport — so every
+     token was already AT its desktop value by 768px and the scale did nothing
+     across the whole tablet band, which is the exact problem this pass exists
+     to fix (measured 2026-09-03). The intercept is solved so each token hits
+     its floor around 390px and its desktop cap at 1024px, giving tablet a
+     real intermediate value. */
+  --text-s: clamp(13px, calc(12.4px + 0.16vw), 14px);
+  --text: clamp(16px, calc(13.5px + 0.63vw), 20px);
+  --text-l: clamp(19px, calc(16px + 0.79vw), 24px);
+
+  /* The observed 8/16/24/32/48/64/96 rhythm, compressed on narrow
+     viewports — 96px section gaps cost real scroll at 390px. */
+  --sp-1: 8px;
+  --sp-2: 16px;
+  --sp-3: clamp(16px, calc(11px + 1.26vw), 24px);
+  --sp-4: clamp(20px, calc(14px + 1.74vw), 32px);
+  --sp-5: clamp(28px, calc(22px + 2.52vw), 48px);
+  --sp-6: clamp(36px, calc(30px + 3.31vw), 64px);
+  --sp-7: clamp(44px, calc(41px + 5.36vw), 96px);
 }
 .gutter { padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
 .label { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
@@ -73,5 +104,17 @@ html.page-leaving main {
 @media (min-width: 1024px) {
   :root { --page-zoom: 0.85; }
   .zoom { zoom: 0.85; }
+  /* Pin the scale so desktop is unaffected by the fluid definitions above.
+     --label/--tap/--sp-1/--sp-2 are constants and need no pinning. */
+  :root {
+    --text-s: 14px;
+    --text: 20px;
+    --text-l: 24px;
+    --sp-3: 24px;
+    --sp-4: 32px;
+    --sp-5: 48px;
+    --sp-6: 64px;
+    --sp-7: 96px;
+  }
 }
 @media (prefers-reduced-motion: reduce) { main, .filter-list { animation: none !important; } }
