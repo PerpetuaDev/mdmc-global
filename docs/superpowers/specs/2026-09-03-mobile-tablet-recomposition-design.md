@@ -65,7 +65,7 @@ assertions. Layout has never had a checker, which is how the above accumulated.
 | Scope | Full re-composition below 1024 |
 | Mobile nav | Drawer / full-screen menu, carrying supermenu content |
 | Tiers | Two: mobile <=700, tablet 701–1023; drawer below 1024 |
-| Mobile hero | 4:3 thumbnail, uncropped, all 6 projects |
+| Mobile hero | 16:9 thumbnail frame, all 6 projects (revised — see §4) |
 | Slide divergence | Accepted — 6 on mobile, 3 on desktop; resolves when real heroes land |
 | Audit script | Committed as a permanent regression check |
 
@@ -190,27 +190,59 @@ dictionaries, so all four trees (`/`, `/en`, `/ja`, `/jp`) are covered.
 
 `src/views/HomeView.astro`, `src/lib/content.js`.
 
-Below 1024:
+**The "all 6 projects have 4:3 thumbnails" premise was WRONG.** Corrected
+2026-09-03 during execution by measuring the assets:
 
-- frame becomes **4:3**, uncropped
-- the `height: calc(100svh / var(--page-zoom) - 266.7px)` fold rule is dropped.
-  That 266.7px encodes desktop header metrics and is meaningless against a
-  one-row header. The accompanying re-measure script is desktop-only.
-- source swaps from `heroImage` (2600x1200) to the project **thumbnail** (4:3)
+| asset | natural | ratio |
+|---|---|---|
+| zenrise_tours_website_web_hero | 2600x1200 | 2.17 |
+| youki_prototype_web_hero | 2600x1200 | 2.17 |
+| myocp_booking_website_hero | 2600x1200 | 2.17 |
+| zenrise_branding_thumb | 2500x1875 | 1.33 |
+| ocp_brand_identity_thumb | 1680x632 | 2.66 |
+| dtb_website_hero | 2007x1338 | 1.50 |
 
-The swap uses a single `<picture>` with `media`, so the browser downloads **one**
-image per slide rather than both.
+Only one is 4:3. The original finding inferred "4:3 thumbnails" from the
+work-grid cards, which crop a wide asset into a 4:3 box. Because the sources
+span 1.33 to 2.66, **no fixed frame ratio is crop-free** and the "crop: 0%"
+promise was unachievable.
 
-**Slide-set divergence.** Mobile shows all 6 projects; desktop shows the 3 with
-a `heroImage`, as `heroSlidesOf()` already enforces. Six slides render; the
-three without a hero are hidden at >=1024.
+Below 1024 the frame is therefore a fixed **16:9**, chosen on the measured
+spread: worst case shows 67% of an image, the dominant 2.17 screenshots show
+82%, against **27%** for the portrait box it replaces (measured 0.264 before,
+0.821 after). A fixed ratio also keeps the frame height stable so the page
+does not reflow as slides rotate.
 
-Consequence for the cycling script: it currently counts slide elements, so it
-must count **visible** slides and re-evaluate on resize. This is the most
-delicate part of the pass and gets its own plan step and unit test.
+Also below 1024:
 
-The existing `heroSlidesOf()` test in `content.test.js` stays green; a new
-sibling helper for the thumbnail set is added with its own tests.
+- the `height: calc(100svh / var(--page-zoom) - 266.7px)` fold rule is
+  dropped. That 266.7px encodes desktop header metrics and is meaningless
+  against a narrow header. `sizeHero()` is guarded to desktop and clears any
+  inline height it left behind when a resize crosses down.
+- **two pre-existing `!important` rules had to be removed to let the frame
+  size at all**: `.hero-frame { height: 62svh !important }` in the 700px block
+  and `.hero-frame { min-height: 480px !important }` in a later 1023px block.
+  Both sat after the new rule in source order with equal specificity, so they
+  won the cascade and pinned the frame portrait (332x480, ratio 0.69).
+- the source swaps from `heroImage` to the project `thumbnail`, via a single
+  `<picture>` with `<source media="(min-width: 1024px)">` so the browser
+  downloads one image per slide. Measured payload: desktop 7 unique images
+  before and after; **mobile drops 7 to 6**, because the hero slides now reuse
+  files the work grid already needs.
+- **a contrast scrim was added.** The overlay is hardcoded `color: #000` over
+  arbitrary project imagery, so on a dark thumbnail the title and the left
+  arrow vanished entirely. A soft white bottom gradient restores contrast
+  without touching the type. This is pre-existing and also latent on desktop;
+  desktop is left alone and the issue reported rather than silently changed.
+
+**Slide-set divergence.** Mobile shows all 6 projects; desktop shows the 3
+with a `heroImage`, hidden below by CSS (`display: none`, not opacity, so the
+cycling script can count them). Verified: 6 visible at 390 and 768, 3 at 1440.
+
+The cycling script counts **visible** slides and rebuilds on resize, resets
+every slide (one hidden at this width may carry `opacity: 1` from the other
+side of the boundary), and restarts its timer on a manual advance. Overlay
+title and active slide verified in sync across three advances.
 
 ## 5. Typography and composition fixes
 

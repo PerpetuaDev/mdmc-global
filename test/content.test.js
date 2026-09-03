@@ -8,6 +8,7 @@ import {
   normalizeJob,
   ARTICLE_KIND_LABELS,
   heroSlidesOf,
+  thumbSlidesOf,
 } from '../src/lib/content.js'
 import { assignSlugs } from '../src/lib/normalize.js'
 
@@ -368,5 +369,53 @@ describe('heroSlidesOf', () => {
   it('returns fewer than 4 when not enough projects have heroes', () => {
     const projects = [proj('a', hero), proj('b', null), proj('c', null)]
     expect(heroSlidesOf(projects).map((p) => p.slug)).toEqual(['a'])
+  })
+})
+
+describe('thumbSlidesOf', () => {
+  const p = (slug, thumb, hero) => ({ slug, thumbnail: thumb, heroImage: hero })
+
+  it('returns projects that have a thumbnail', () => {
+    const out = thumbSlidesOf([p('a', 'a.jpg'), p('b', 'b.jpg')])
+    expect(out.map((x) => x.slug)).toEqual(['a', 'b'])
+  })
+
+  it('skips projects with no thumbnail', () => {
+    const out = thumbSlidesOf([p('a', 'a.jpg'), p('b', null), p('c', 'c.jpg')])
+    expect(out.map((x) => x.slug)).toEqual(['a', 'c'])
+  })
+
+  it('does not require a heroImage — that is the whole point', () => {
+    expect(thumbSlidesOf([p('a', 'a.jpg', null)])).toHaveLength(1)
+  })
+
+  it('caps at six by default', () => {
+    const many = Array.from({ length: 9 }, (_, i) => p(`p${i}`, 't.jpg'))
+    expect(thumbSlidesOf(many)).toHaveLength(6)
+  })
+
+  it('honours an explicit count', () => {
+    const many = Array.from({ length: 9 }, (_, i) => p(`p${i}`, 't.jpg'))
+    expect(thumbSlidesOf(many, 3)).toHaveLength(3)
+  })
+
+  it('tolerates nullish input', () => {
+    expect(thumbSlidesOf(null)).toEqual([])
+    expect(thumbSlidesOf(undefined)).toEqual([])
+  })
+
+  it('is a superset of heroSlidesOf when every project has both', () => {
+    const both = [p('a', 'a.jpg', 'A.jpg'), p('b', 'b.jpg', 'B.jpg')]
+    expect(thumbSlidesOf(both).length).toBeGreaterThanOrEqual(heroSlidesOf(both).length)
+  })
+
+  it('includes hero-less projects that heroSlidesOf excludes', () => {
+    // The real shape: 3 of 6 projects have hero art, all 6 have thumbnails.
+    const projects = [
+      p('a', 'a.jpg', 'A.jpg'), p('b', 'b.jpg', null), p('c', 'c.jpg', 'C.jpg'),
+      p('d', 'd.jpg', null), p('e', 'e.jpg', 'E.jpg'), p('f', 'f.jpg', null),
+    ]
+    expect(heroSlidesOf(projects).map((x) => x.slug)).toEqual(['a', 'c', 'e'])
+    expect(thumbSlidesOf(projects).map((x) => x.slug)).toEqual(['a', 'b', 'c', 'd', 'e', 'f'])
   })
 })

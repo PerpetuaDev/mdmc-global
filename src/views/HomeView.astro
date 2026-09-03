@@ -11,7 +11,7 @@
 // 6000ms auto-advance, workCols = 2, thumbRatio = 16 / 9).
 import WorkCard from "../components/WorkCard.astro";
 import { makeT, pickLocalized, makeLinks, interpolate } from "../lib/i18n.js";
-import { heroSlidesOf } from "../lib/content.js";
+import { thumbSlidesOf } from "../lib/content.js";
 import { unwrapAuthoredBreaks } from "../lib/text.js";
 
 interface Props {
@@ -24,8 +24,13 @@ interface Props {
 const { locale = "en", site = "co", projects, redirectMap } = Astro.props as Props;
 const links = makeLinks(site, locale);
 const t = makeT(locale);
-const heroSlides = heroSlidesOf(projects);
-const first = heroSlides[0];
+// Below 1024 the slideshow runs on 4:3 thumbnails, so ALL six projects are
+// eligible; at >=1024 the three without hero art are hidden by CSS, leaving
+// the same three heroSlidesOf() used to allow. One <picture> per slide means
+// the browser downloads one image, not both. Slide 0 (zenrise-website) has
+// hero art, so the server-rendered initial slide is correct at both widths.
+const thumbSlides = thumbSlidesOf(projects);
+const first = thumbSlides[0];
 
 // home.manifesto.1/2 store their line breaks as literal '\n'; split into
 // segments rendered around literal <br> tags below (see i18n.js). Each
@@ -81,7 +86,7 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
 <main style="animation: pageIn .6s var(--ease)">
   <section style="padding: 40px var(--gutter-r) 0 var(--gutter-l)">
     <div class="hero-frame">
-      {heroSlides.map((p, i) => (
+      {thumbSlides.map((p, i) => (
         <a
           href={links.internal(`/work/${p.slug}/`)}
           data-slide
@@ -90,11 +95,14 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
           aria-label={interpolate(t("a11y.openProject"), { title: pickLocalized(locale, p, "title") })}
           aria-hidden={i === 0 ? "false" : "true"}
           tabindex="-1"
-          class="hero-slide"
+          class:list={["hero-slide", { "is-thumb-only": !p.heroImage }]}
           style={`opacity: ${i === 0 ? "1" : "0"}; pointer-events: ${i === 0 ? "auto" : "none"}`}
         >
-          {p.heroImage ? (
-            <img src={p.heroImage.url} alt={p.heroImage.alt || pickLocalized(locale, p, "title")} />
+          {p.thumbnail ? (
+            <picture>
+              {p.heroImage && <source media="(min-width: 1024px)" srcset={p.heroImage.url} />}
+              <img src={p.thumbnail.url} alt={p.thumbnail.alt || pickLocalized(locale, p, "title")} />
+            </picture>
           ) : (
             <div class="hero-placeholder" aria-hidden="true"></div>
           )}
@@ -145,6 +153,48 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
      these does not move the frame. */
   /* Desktop keeps the authored line breaks; below 1024 the flowing copy
      takes over. See the note beside manifesto1Flow in the frontmatter. */
+  @media (min-width: 1024px) {
+    /* Desktop keeps the hero-art-only set — heroSlidesOf()'s guard, now
+       expressed in CSS because the DOM carries the wider thumbnail set.
+       display:none (not opacity) so the cycling script can count it. */
+    .hero-slide.is-thumb-only { display: none; }
+  }
+
+  @media (max-width: 1023px) {
+    .hero-frame {
+      /* The desktop fold rule (100svh/--page-zoom - 266.7px) encodes desktop
+         header metrics and is meaningless against a narrow header, so the
+         frame is a fixed 16:9 box. sizeHero() is guarded to match.
+
+         16:9 is chosen from the assets as they actually are, measured
+         2026-09-03: the six thumbnails run 1.33, 1.50, 2.17 (x3) and 2.66,
+         so NO fixed ratio is crop-free — the spec's "all 4:3" premise was
+         wrong. At 16:9 the worst case shows 67% of an image and the dominant
+         2.17 screenshots show 82%, against 27% for the portrait box this
+         replaces. A fixed ratio also keeps the frame height stable, so the
+         page does not reflow as slides rotate. */
+      height: auto !important;
+      min-height: 0 !important;
+      aspect-ratio: 16 / 9;
+    }
+    /* The overlay is currentColor/#000 over arbitrary project imagery, so on
+       a dark thumbnail the title and arrows disappeared entirely (the left
+       arrow was invisible against the Youki photo). A soft scrim restores
+       contrast without changing the type. Desktop has the same latent issue
+       but is out of scope for this pass — reported, not silently changed. */
+    .hero-frame::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 45%;
+      background: linear-gradient(to top, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
+      pointer-events: none;
+      z-index: 1;
+    }
+  }
+
   .manifesto-flow { display: none; }
   @media (max-width: 1023px) {
     .manifesto-lined { display: none; }
@@ -170,11 +220,17 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
     /* !important also on the scoped-class overrides: this block sits above
        the base rules in source order, and equal-specificity scoped rules
        later in the sheet would otherwise win the cascade. */
-    .hero-frame { min-height: 480px !important; }
+    /* The old tablet floor (min-height: 480px !important) is gone: it sat
+       later in source than the 16:9 block above with equal specificity, so it
+       won the cascade and pinned the frame to 480px tall — which is why the
+       frame measured 332x480 (0.69) at 390 instead of 16:9. The aspect-ratio
+       governs the frame's height at every width below 1024 now. */
     .home-manifesto { padding: 104px var(--gutter-r) 120px var(--gutter-l) !important; font-size: 26px !important; }
   }
   @media (max-width: 700px) {
-    .hero-frame { height: 62svh !important; min-height: 340px !important; }
+    /* .hero-frame sizing lives in the max-width:1023px block above — a
+       62svh height here (!important, and later in source) overrode it and
+       kept the frame portrait at 390px. */
     .home-manifesto { padding: 80px var(--gutter-r) 96px var(--gutter-l) !important; font-size: 21px !important; }
     .home-workgrid > div { grid-template-columns: 1fr !important; row-gap: 48px !important; }
     .hero-overlay { left: 16px !important; right: 16px !important; bottom: 14px !important; }
@@ -241,28 +297,62 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
   }
 </style>
 <script>
-  const slides = [...document.querySelectorAll('[data-slide]')]
+  // The DOM carries the mobile slide set (every project with a thumbnail);
+  // at >=1024 CSS hides the ones without hero art. So the cycle must run over
+  // VISIBLE slides and be rebuilt whenever a resize crosses that boundary —
+  // counting all of them would fade to a display:none slide for six seconds.
+  const allSlides = [...document.querySelectorAll('[data-slide]')]
   const name = document.querySelector('[data-hero-name]')
+  let slides = []
   let i = 0
+  let timer = null
+
+  const visibleSlides = () => allSlides.filter((s) => getComputedStyle(s).display !== 'none')
+
   function show(n) {
     if (!slides.length) return
     i = (n + slides.length) % slides.length
-    slides.forEach((s, j) => {
-      const active = j === i
-      s.style.opacity = active ? '1' : '0'
-      s.style.pointerEvents = active ? 'auto' : 'none'
-      s.setAttribute('aria-hidden', active ? 'false' : 'true')
+    // Reset every slide, not just the visible set: one hidden at this width
+    // may still carry opacity:1 from the other side of the boundary.
+    allSlides.forEach((s) => {
+      s.style.opacity = '0'
+      s.style.pointerEvents = 'none'
+      s.setAttribute('aria-hidden', 'true')
     })
+    const active = slides[i]
+    active.style.opacity = '1'
+    active.style.pointerEvents = 'auto'
+    active.setAttribute('aria-hidden', 'false')
     if (name) {
-      name.textContent = slides[i].dataset.title ?? ''
-      name.href = slides[i].dataset.href ?? '#'
+      name.textContent = active.dataset.title ?? ''
+      name.href = active.dataset.href ?? '#'
     }
   }
-  document.querySelector('[data-hero-prev]')?.addEventListener('click', () => show(i - 1))
-  document.querySelector('[data-hero-next]')?.addEventListener('click', () => show(i + 1))
-  const auto = !matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (auto && slides.length > 1) setInterval(() => show(i + 1), 6000)
-  if (slides.length) show(0)
+
+  function rebuild() {
+    const next = visibleSlides()
+    const countChanged = next.length !== slides.length
+    slides = next
+    if (countChanged || i >= slides.length) i = 0
+    if (slides.length) show(i)
+    if (timer) clearInterval(timer)
+    const auto = !matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (auto && slides.length > 1) timer = setInterval(() => show(i + 1), 6000)
+  }
+
+  // A manual advance restarts the timer so the slide does not jump again a
+  // moment later.
+  function step(delta) {
+    show(i + delta)
+    if (timer) clearInterval(timer)
+    const auto = !matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (auto && slides.length > 1) timer = setInterval(() => show(i + 1), 6000)
+  }
+
+  document.querySelector('[data-hero-prev]')?.addEventListener('click', () => step(-1))
+  document.querySelector('[data-hero-next]')?.addEventListener('click', () => step(1))
+  rebuild()
+  addEventListener('resize', rebuild)
 
   // Fold rule: gap below the image (to viewport bottom) === gap above it
   // (logo bottom -> image top). The CSS calc already lands within a pixel;
@@ -283,6 +373,11 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
   function sizeHero() {
     if (!frame || !logo) return
     frame.style.height = ''
+    // The fold rule is a zoom-world concept. Below 1024 the frame is a 4:3
+    // box sized by CSS, so this must not write a height over it — and the
+    // clear above matters when resizing DOWN across the boundary, which would
+    // otherwise leave a stale desktop pixel height inline.
+    if (!matchMedia('(min-width: 1024px)').matches) return
     const zoomEl = document.querySelector('.zoom')
     const zoom = zoomEl ? parseFloat(getComputedStyle(zoomEl).zoom) || 1 : 1
     const logoBottom = pageTopCss(logo) + logo.offsetHeight
