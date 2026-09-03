@@ -17,7 +17,7 @@
 //   node scripts/audit-responsive.mjs --diff desktop.json --widths 1024,1100,1440
 //   node scripts/audit-responsive.mjs --widths 390 --prefix /ja
 import { spawn } from 'node:child_process'
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, readdirSync, readlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -72,11 +72,52 @@ export function evaluateGates(page) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
+// Reap leftover profiles at LAUNCH. Deleting at shutdown is a losing race:
+// Chrome's child processes keep the directory busy after the parent exits, so
+// rmSync fails, the failure is (correctly) swallowed, and the profile stays —
+// 931MB accumulated across one session before this existed.
+//
+// Liveness is decided by Chrome's own SingletonLock, a symlink whose target
+// is "<host>-<pid>". If that pid is gone the profile is definitively
+// abandoned. A wall-clock cutoff was tried first and was wrong in both
+// directions: back-to-back runs fell inside it and still accumulated, and a
+// shorter window would have risked deleting a live concurrent run's profile
+// (unlinking files a running Chrome still holds open).
+function reapStaleProfiles(keep) {
+  let freed = 0
+  try {
+    for (const name of readdirSync(tmpdir())) {
+      if (!name.startsWith('mdmc-audit-')) continue
+      const path = join(tmpdir(), name)
+      if (path === keep) continue
+      try {
+        let alive = false
+        try {
+          const pid = Number(readlinkSync(join(path, 'SingletonLock')).split('-').pop())
+          if (Number.isInteger(pid) && pid > 0) {
+            try { process.kill(pid, 0); alive = true } catch { alive = false }
+          }
+        } catch { /* no lock -> never started, or already cleaned */ }
+        if (alive) continue
+        rmSync(path, { recursive: true, force: true, maxRetries: 3, retryDelay: 150 })
+        freed++
+      } catch { /* gone already, or not ours to remove */ }
+    }
+  } catch { /* no tmpdir listing — nothing to reap */ }
+  if (freed) console.log(`(reaped ${freed} abandoned chrome profile${freed > 1 ? 's' : ''})`)
+}
+
 export class Chrome {
   static async launch(port = 9222) {
     const profile = mkdtempSync(join(tmpdir(), 'mdmc-audit-'))
+    reapStaleProfiles(profile)
     const proc = spawn('google-chrome-stable', [
       '--headless=new', '--disable-gpu', '--no-sandbox', '--hide-scrollbars',
+      // 46MB of the old 47MB profile was optimization_guide_model_store —
+      // ML models this audit never uses. Not downloading them is the real
+      // fix; the profile is now well under a megabyte.
+      '--disable-features=OptimizationGuideModelDownloading,OptimizationHints,Translate',
+      '--disable-component-update', '--no-first-run', '--no-default-browser-check',
       `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, 'about:blank',
     ], { stdio: 'ignore' })
     let wsUrl
@@ -131,17 +172,25 @@ export class Chrome {
     return result?.result?.value
   }
 
-  close() {
+  async close() {
     try { this.ws.close() } catch {}
+    // WAIT for the process to actually exit before removing its profile.
+    // kill() only sends the signal, so the earlier version raced Chrome's
+    // flush, hit ENOTEMPTY on Default/, swallowed it, and left ~9MB behind
+    // per run — 931MB accumulated across one session's runs. Retries alone
+    // were not enough because Chrome kept writing for longer than they
+    // covered. Capped so a wedged browser cannot hang the audit.
+    const exited = new Promise((res) => {
+      this.proc.once('exit', res)
+      setTimeout(res, 4000)
+    })
     this.proc.kill()
-    // proc.kill() is async, so Chrome may still be flushing its profile when
-    // we try to remove it (ENOTEMPTY on Default/). Retry a little, and never
-    // let cleanup throw — a leftover temp dir is harmless, losing a completed
-    // audit run to a teardown error is not.
+    await exited
     try {
       rmSync(this.profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
     } catch {
-      // left in /tmp; the OS will reap it
+      // Still cannot remove it — leave it rather than fail a completed run.
+      // Stale dirs are safe to delete: rm -rf /tmp/mdmc-audit-*
     }
   }
 }
@@ -277,7 +326,7 @@ async function run() {
       runs.push({ width, results })
     }
   } finally {
-    chrome.close()
+    await chrome.close()
   }
 
   if (snapshotTo) {
