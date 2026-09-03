@@ -4,7 +4,7 @@
 
 **Goal:** Give mobile (<700px) and tablet (700–1023px) their own compositions — a touch-reachable drawer nav, an uncropped hero, a fluid type/space scale, and 44px tap targets — without moving desktop (>=1024px) by a single pixel.
 
-**Architecture:** Token-first. A type/space scale lands in `src/styles/global.css`, fluid below 1024px and pinned to today's exact px at and above it, so desktop cannot move by construction. Component blocks are then re-expressed against those tokens, and the nine ad-hoc breakpoints collapse onto two (`max-width: 1023px`, `max-width: 699px`). A committed CDP-driven audit script measures real rendered geometry and is the gate for every CSS task.
+**Architecture:** Token-first. A type/space scale lands in `src/styles/global.css`, fluid below 1024px and pinned to today's exact px at and above it, so desktop cannot move by construction. Component blocks are then re-expressed against those tokens, and the nine ad-hoc breakpoints collapse onto two (`max-width: 1023px`, `max-width: 700px`). A committed CDP-driven audit script measures real rendered geometry and is the gate for every CSS task.
 
 **Tech Stack:** Astro 5.18 (SSG), vanilla CSS in per-component `<style>` blocks, vitest 269 tests over `src/lib`, Node 22 (global `WebSocket`, no CDP dependency needed), headless `google-chrome-stable`.
 
@@ -14,7 +14,10 @@
 
 - **Desktop (>=1024px) must not change.** Every token pins to its current literal px at `min-width: 1024px`. Proven by geometry snapshot diff at 1024, 1100 and 1440 — not by inspection.
 - **Only exact matches adopt a token:** `12 -> --label`, `14 -> --text-s`, `20 -> --text`, `24 -> --text-l`. Sizes 13, 16, 17, 18, 19, 21, 22, 26, 28 keep literal px; where one reads too large on mobile it gets its own `clamp()` whose **upper bound is its current px**.
-- **Two breakpoints only:** `@media (max-width: 1023px)` and `@media (max-width: 699px)`. Exception: the four `max-width: 1100px` rules straddle the desktop boundary and are split, never folded.
+- **Two breakpoints only:** `@media (max-width: 1023px)` and `@media (max-width: 700px)` — both already the only ones in the codebase.
+  **Corrected during execution:** the plan originally claimed nine strays plus four `max-width: 1100px` rules straddling the desktop
+  boundary. Neither exists — the grep behind that finding counted `max-width` CSS *properties* (element measure caps), not media queries.
+  Task 3 is therefore void. Write into the two existing blocks; use `700px`, not `699px`.
 - **Audit gates, all must read zero:** horizontal overflow, text below 12px, interactive boxes below 44px.
 - **Four trees:** every user-visible string goes through `t()` and existing `a11y.*` keys, in both dictionaries, covering `/`, `/en`, `/ja`, `/jp`.
 - **Strapi is read-only in this pass.** No content edits; the 3 missing `hero_image` assets stay missing.
@@ -541,92 +544,46 @@ The display tier is untouched: its five heading clamp()s are already fluid."
 
 ---
 
-### Task 3: Breakpoint consolidation
+### Task 3: Breakpoint consolidation — VOID (no work required)
 
-**Files:**
-- Modify: `src/components/ProjectHeader.astro:86`, `PullQuote.astro:44`, `StoryView.astro:231`, `WorkCard.astro:78`, `src/pages/404.astro:16,22`, `src/views/AboutJpView.astro:47`, `AboutView.astro:40`, `ArticleView.astro:95,117`, `CareersView.astro:40`, `ContactView.astro:316`, `HomeView.astro:112`, `JobView.astro:144,230`
+**Superseded 2026-09-03 during execution.** Verified before starting:
 
-**Interfaces:**
-- Consumes: Task 2 tokens (not yet used, but the two-block grammar is what Task 4 writes into).
-- Produces: exactly two breakpoints site-wide, `max-width: 1023px` and `max-width: 699px`, plus explicitly-justified desktop-side rules for the 1100px band.
+```
+$ grep -rhno --include='*.astro' --include='*.css' '@media[^{]*' src/ | sort | uniq -c
+     16 @media (max-width: 700px)
+      7 @media (max-width: 1023px)
+      2 @media (prefers-reduced-motion: reduce)
+      1 @media (min-width: 1024px)
+```
 
-- [ ] **Step 1: Inventory every stray with its current effect**
+The codebase already uses exactly the two-tier grammar. There are no stray
+breakpoints to consolidate and no `max-width: 1100px` media query, so the
+desktop-boundary split — the riskiest step in this plan — is not needed.
+
+The original finding came from a grep that counted `max-width` **CSS
+properties** (`.work-card-desc { max-width: 460px }`, `<div style="max-width:
+880px">`) rather than media queries. Those are content measure caps and are
+legitimate.
+
+The other half of that finding *was* real, and understated: `!important` is
+**173** occurrences (the original count was of lines), and **154 of them sit
+inside `@media` blocks** — confirming that responsive overrides are beating
+inline styles, exactly as the spec's §7 describes.
+
+Boundary note: `max-width: 700px` is inclusive, so tablet is 701–1023. The
+spec's original `699px` was arbitrary; moving 16 media queries by one pixel is
+churn with a real typo risk and no visual consequence. **700px stands.**
+
+- [ ] **Step 1: Confirm the inventory, then skip**
+
+Run the grep above. If it shows anything other than the four lines listed,
+stop — the assumption behind skipping this task no longer holds.
+
+- [ ] **Step 2: Commit the corrected spec and plan (no `src/` change)**
 
 ```bash
-grep -rn --include='*.astro' -E "max-width: *(1100|900|880|820|720|640|560|460|400)px" src/
-```
-
-For each, record in a scratch note: file, line, the width, and which of the two target blocks it belongs in. Rules:
-- `900, 880, 820, 720` -> `max-width: 1023px` (tablet). These all sit inside the tablet band already.
-- `640, 560, 460, 400` -> `max-width: 699px` (mobile).
-- `1100` -> **split** (Step 3).
-
-- [ ] **Step 2: Move the eight non-1100 strays**
-
-For each, change the media query width to its target and merge into an existing
-block for that component if one is already present. **Copy the declarations
-verbatim** — do not retype them, and do not tidy them. Shape of the change
-(selectors and values will differ per file; use whatever is actually there):
-
-```css
-/* before */
-@media (max-width: 720px) { <existing selector> { <existing declarations> } }
-
-/* after — same declarations, moved onto the tablet breakpoint and merged
-   into this component's existing max-width:1023px block if it has one */
-@media (max-width: 1023px) {
-  /* …declarations already in this block… */
-  <existing selector> { <existing declarations> }
-}
-```
-
-Do not change any declaration values in this task. Only the query widths and block merging. Value changes belong to Task 4, so that a geometry diff here is unambiguously a breakpoint mistake.
-
-- [ ] **Step 3: Split the four 1100px rules**
-
-Each `max-width: 1100px` block currently applies to 1024–1100 (desktop zoom world) **and** everything below. Folding it into `1023px` would remove it from 1024–1100 and change desktop. Split each into two blocks with the same declarations:
-
-```css
-/* before */
-@media (max-width: 1100px) { .foo { padding-left: 40px; } }
-
-/* after — desktop band keeps the rule verbatim; tablet-and-below gets it too */
-@media (min-width: 1024px) and (max-width: 1100px) { .foo { padding-left: 40px; } }
-@media (max-width: 1023px)                        { .foo { padding-left: 40px; } }
-```
-
-Add a comment on each desktop-side block noting it exists to preserve the 1024–1100 band and must not be folded.
-
-- [ ] **Step 4: Verify desktop is untouched and mobile is unchanged**
-
-```bash
-node scripts/audit-responsive.mjs --diff .audit/desktop-baseline.json --widths 1024,1100,1440
-node scripts/audit-responsive.mjs --widths 390,768 --json .audit/after-t3.json
-```
-
-Expected: `no desktop geometry diffs` — the 1100 split is the risky part and this is what proves it. Mobile violation counts identical to `.audit/before-mobile.json`, because no values changed.
-
-- [ ] **Step 5: Confirm only two breakpoints remain**
-
-```bash
-grep -rho --include='*.astro' --include='*.css' "max-width: *[0-9]*px" src/ | sort | uniq -c
-```
-
-Expected: only `max-width: 1023px` and `max-width: 699px`, plus the four `max-width: 1100px` desktop-side rules (which will be paired with `min-width: 1024px`). Anything else is a miss.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add src/
-git commit -S -m "Collapse nine ad-hoc breakpoints onto the two-tier grammar
-
-1023px for tablet, 699px for mobile. No declaration values change here, so
-any geometry diff would be a breakpoint mistake — verified none at
-1024/1100/1440 and unchanged mobile gate counts.
-
-The four max-width:1100px rules are split rather than folded: they span
-1024-1100, inside the desktop zoom world, so folding them into 1023px
-would have changed desktop."
+git add docs/superpowers/
+git commit -S -m "Correct the breakpoint finding: there are no stray breakpoints"
 ```
 
 ---
@@ -1234,7 +1191,7 @@ hides the hero-less ones. Desktop geometry verified unchanged."
 
 - [ ] **Step 1: Make the jump-links a list on mobile**
 
-The four studio jump-links currently wrap into a lumpy 2x2 cluster. In `ContactView.astro`'s `max-width: 699px` block:
+The four studio jump-links currently wrap into a lumpy 2x2 cluster. In `ContactView.astro`'s `max-width: 700px` block:
 
 ```css
     .contact-jumps {
@@ -1256,15 +1213,15 @@ If the container has no class, add `class="contact-jumps"` to it rather than sty
 
 - [ ] **Step 2: Give tablet its two-column grids**
 
-Tablet currently inherits mobile's single column, which wastes a 768px measure. In `WorkIndexView.astro` and `NewsIndexView.astro`, inside `max-width: 1023px` (and *not* inside `max-width: 699px`):
+Tablet currently inherits mobile's single column, which wastes a 768px measure. In `WorkIndexView.astro` and `NewsIndexView.astro`, inside `max-width: 1023px` (and *not* inside `max-width: 700px`):
 
 ```css
     /* Tablet earns two columns — at 768 a single column leaves the measure
-       half empty. Mobile stays one column via the 699px block below. */
+       half empty. Mobile stays one column via the 700px block below. */
     .work-grid, .news-grid { grid-template-columns: 1fr 1fr !important; gap: var(--sp-5) var(--sp-4) !important; }
 ```
 
-Confirm the existing `max-width: 699px` block still forces one column; if it does not, add it.
+Confirm the existing `max-width: 700px` block still forces one column; if it does not, add it.
 
 - [ ] **Step 3: Apply the compressed spacing rhythm**
 
@@ -1484,7 +1441,7 @@ In `NavDrawer.astro`'s `<style>`: hide the trigger and dialog at `min-width: 102
   }
 ```
 
-In `Header.astro`, mount the drawer and collapse the header below 1024. Replace the `max-width: 1023px` and `max-width: 699px` header blocks with a single one-row treatment:
+In `Header.astro`, mount the drawer and collapse the header below 1024. Replace the `max-width: 1023px` and `max-width: 700px` header blocks with a single one-row treatment:
 
 ```css
   @media (max-width: 1023px) {
