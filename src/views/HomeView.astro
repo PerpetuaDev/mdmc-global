@@ -84,7 +84,7 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
   </script>
 
 <main style="animation: pageIn .6s var(--ease)">
-  <section style="padding: 40px var(--gutter-r) 0 var(--gutter-l)">
+  <section class="home-hero-section" style="padding: 40px var(--gutter-r) 0 var(--gutter-l)">
     <div class="hero-frame">
       {thumbSlides.map((p, i) => (
         <a
@@ -161,6 +161,12 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
   }
 
   @media (max-width: 1023px) {
+    /* Full-bleed: the hero is the only element on the site that breaks the
+       gutter, so the override is scoped to its own section. */
+    .home-hero-section {
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
     .hero-frame {
       /* The desktop fold rule (100svh/--page-zoom - 266.7px) encodes desktop
          header metrics and is meaningless against a narrow header, so the
@@ -175,7 +181,19 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
          page does not reflow as slides rotate. */
       height: auto !important;
       min-height: 0 !important;
-      aspect-ratio: 16 / 9;
+      /* 3:4 portrait, full-bleed (user decision 2026-09-03). Taller and
+         edge-to-edge gives the hero real presence on a phone, at the cost of
+         crop: against these assets (1.33 / 1.50 / 2.17 x3 / 2.66) a 0.75
+         frame shows roughly 35% of a 2.17 screenshot. The real fix is
+         portrait-cropped hero art in Strapi. */
+      aspect-ratio: 3 / 4;
+      /* 3:4 unbounded would make the frame taller than the viewport on a
+         tablet — 768x1024 at 768, and 1364px tall at 1023. Phones are
+         unaffected (520px at a 390x844 viewport, so exactly 3:4); wider
+         viewports get as much height as 3:4 allows without swallowing the
+         whole screen. svh needs no --page-zoom division here: the zoom
+         world starts at 1024. */
+      max-height: 80svh;
     }
     /* The overlay is currentColor/#000 over arbitrary project imagery, so on
        a dark thumbnail the title and arrows disappeared entirely (the left
@@ -188,7 +206,9 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
       left: 0;
       right: 0;
       bottom: 0;
-      height: 45%;
+      /* Capped: 45% of a portrait frame is far more white than the overlay
+         needs, and it washed out the middle of the image. */
+      height: clamp(96px, 28%, 200px);
       background: linear-gradient(to top, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0));
       pointer-events: none;
       z-index: 1;
