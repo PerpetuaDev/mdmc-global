@@ -309,6 +309,16 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
      225px nav offset; mobile goes two-row (logo + locale trigger up top, nav
      on its own row). Inline layout styles on the elements win the cascade,
      hence the !important overrides here, scoped to this component. */
+  /* The wordmark shrinks with the header. The inline height:22px on the img
+     is from the desktop handoff, hence !important. Aspect ratio is held by
+     the element's own aspect-ratio + width:auto, so only height is set. */
+  @media (max-width: 1023px) {
+    header[data-header] img[alt="MDMC"] { height: 18px !important; }
+  }
+  @media (max-width: 700px) {
+    header[data-header] img[alt="MDMC"] { height: 16px !important; }
+  }
+
   /* --- Drawer (2026-09-03) ------------------------------------------------
      Desktop never renders the trigger or the dialog; below 1024 the header
      collapses to wordmark + hamburger and everything else moves inside. */
@@ -436,8 +446,12 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
 
   @media (max-width: 1023px) {
     header[data-header] {
-      padding-top: 36px !important;
-      padding-bottom: 24px !important;
+      /* Compact header (2026-09-03). The hamburger's 44px tap floor sets the
+         content height, so the reduction comes out of padding: 36/24 was
+         sized for the two-row layout that no longer exists below 1024.
+         Header goes 104px -> 70px at 768. */
+      padding-top: 12px !important;
+      padding-bottom: 10px !important;
       /* Drop the 1fr spacer track and make the nav's own track the flexible
          one — the ja nav (私たちについて…) is wider than a tablet leaves
          room for, and only a minmax(0,1fr) track lets it shrink. */
@@ -460,9 +474,10 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
   @media (max-width: 700px) {
     header[data-header] {
       grid-template-columns: auto 1fr !important;
-      row-gap: 18px;
-      padding-top: 24px !important;
-      padding-bottom: 16px !important;
+      /* row-gap was for the old two-row header (nav on its own row); the nav
+         lives in the drawer now, so there is no second row to space. */
+      padding-top: 8px !important;
+      padding-bottom: 8px !important;
       font-size: 17px !important;
     }
     header[data-header] > nav {
