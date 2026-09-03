@@ -185,7 +185,7 @@ const headlineLines = t("contact.headline").split("\n");
     .studio-fold { padding-top: 96px !important; }
     .studio-grid { grid-template-columns: minmax(0, 1fr) !important; gap: 32px !important; }
     .studio-grid .studio-image { order: -1 !important; }
-    .studio-address { font-size: 20px !important; }
+    .studio-address { font-size: var(--text) !important; }
     .form-section { padding-top: 112px !important; padding-bottom: 96px !important; }
     .form-header { flex-wrap: wrap; gap: 12px 32px !important; }
     .form-row { grid-template-columns: minmax(0, 1fr) !important; gap: 12px !important; padding: 20px 0 !important; }
@@ -248,7 +248,7 @@ const headlineLines = t("contact.headline").split("\n");
 
   .studio-contact-links {
     margin-top: 32px;
-    font-size: 20px;
+    font-size: var(--text);
     line-height: 1.6;
   }
 
@@ -298,7 +298,7 @@ const headlineLines = t("contact.headline").split("\n");
     width: 100%;
     border: 0;
     background: transparent;
-    font-size: 20px;
+    font-size: var(--text);
     letter-spacing: -0.005em;
     padding: 0;
     border-radius: 0;
@@ -327,7 +327,7 @@ const headlineLines = t("contact.headline").split("\n");
   }
 
   .contact-confirm {
-    font-size: 20px;
+    font-size: var(--text);
     padding: 28px 0;
     border-top: 1px solid var(--hairline);
   }

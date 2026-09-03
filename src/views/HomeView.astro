@@ -97,7 +97,7 @@ const manifesto2 = t("home.manifesto.2").split("\n").map(escAmp);
         <a
           href={first ? links.internal(`/work/${first.slug}/`) : "#"}
           data-hero-name
-          style="pointer-events: auto; font-size: 20px; color: #000"
+          style="pointer-events: auto; font-size: var(--text); color: #000"
         >{first ? pickLocalized(locale, first, "title") : undefined}</a>
         <div role="group" aria-label={t("a11y.browseProjects")} style="pointer-events: auto; display: inline-flex; align-items: center; gap: 12px; transform: translateY(5px)">
           <button type="button" data-hero-prev aria-label={t("a11y.prevSlide")} class="hero-arrow hero-arrow-prev">←</button>

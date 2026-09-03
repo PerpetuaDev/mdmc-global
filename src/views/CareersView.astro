@@ -70,29 +70,29 @@ const t = makeT(locale);
       {jobs.map((job) => (
         <li>
           <a class="job-row" href={links.internal(`/careers/${job.slug}/`)} style="display: grid; grid-template-columns: minmax(0, 420px) 200px 160px 1fr; gap: 48px; align-items: center; padding: 28px 0; border-top: 1px solid rgba(0,0,0,0.12); border-bottom: 1px solid rgba(0,0,0,0.12); text-decoration: none; color: inherit; transition: opacity 0.2s ease">
-            <h3 style="font-size: 24px; font-weight: 500; letter-spacing: -0.005em; margin: 0">
+            <h3 style="font-size: var(--text-l); font-weight: 500; letter-spacing: -0.005em; margin: 0">
               {pickLocalized(locale, job, "title")}
             </h3>
             <div>
-              <div class="label" style="font-size: 11px">{t("careers.meta.studio")}</div>
+              <div class="label">{t("careers.meta.studio")}</div>
               <div style="margin-top: 6px; font-size: 17px">
                 {locale === "ja" ? (job.locationLabelJa ?? job.locationLabel) : job.locationLabel}
               </div>
             </div>
             <div>
-              <div class="label" style="font-size: 11px">{t("careers.meta.type")}</div>
+              <div class="label">{t("careers.meta.type")}</div>
               <div style="margin-top: 6px; font-size: 17px">
                 {locale === "ja" ? (job.typeLabelJa ?? job.typeLabel) : job.typeLabel}
               </div>
             </div>
-            <span class="job-arrow" aria-hidden="true" style="justify-self: end; font-family: 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; font-size: 20px">→</span>
+            <span class="job-arrow" aria-hidden="true" style="justify-self: end; font-family: 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400; font-size: var(--text)">→</span>
           </a>
         </li>
       ))}
     </ul>
 
     {/* CTA to contact */}
-    <a href={`mailto:${contactEmail}`} style="margin-top: 88px; display: inline-flex; align-items: center; gap: 8px; font-size: 20px; padding: 6px 0; border-bottom: 1px solid transparent; text-decoration: none; color: inherit; transition: border-color 0.2s ease">{t("careers.speculativeCta")}
+    <a href={`mailto:${contactEmail}`} style="margin-top: 88px; display: inline-flex; align-items: center; gap: 8px; font-size: var(--text); padding: 6px 0; border-bottom: 1px solid transparent; text-decoration: none; color: inherit; transition: border-color 0.2s ease">{t("careers.speculativeCta")}
       <span style="font-family: 'Söhne', 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 400">→</span>
     </a>
   </section>

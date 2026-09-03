@@ -19,7 +19,7 @@ html {
 html, body {
   background: #fff; color: #000;
   font-family: "Söhne", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 20px; line-height: 1.4;
+  font-size: var(--text); line-height: 1.4;
   -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
 body { min-height: 100vh; overflow-x: hidden; }
@@ -68,12 +68,12 @@ input, textarea { font: inherit; }
   --sp-7: clamp(44px, calc(41px + 5.36vw), 96px);
 }
 .gutter { padding-left: var(--gutter-l); padding-right: var(--gutter-r); }
-.label { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+.label { font-size: var(--label); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
 /* Meta-line separator: Söhne's own interpunct (U+00B7) with double-space air
    on each side — replaces the katakana ・ in EN contexts, which Söhne lacks
    and which therefore rendered from the JP fallback fonts. JP copy keeps ・. */
 .meta-dot { margin: 0 0.5em; }
-.cta { display: inline-flex; align-items: center; gap: 8px; font-size: 20px; padding: 6px 0; border-bottom: 1px solid transparent; transition: border-color .2s ease; }
+.cta { display: inline-flex; align-items: center; gap: 8px; font-size: var(--text); padding: 6px 0; border-bottom: 1px solid transparent; transition: border-color .2s ease; }
 .cta:hover { border-bottom-color: currentColor; }
 .arrow { font-weight: 400; }
 @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }

@@ -75,7 +75,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
   data-header
   data-page-locale={locale}
   data-page-site={site}
-  style="position: relative; z-index: 100; background: #fff; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; padding: 64px var(--gutter-r) 36px var(--gutter-l); font-size: 20px"
+  style="position: relative; z-index: 100; background: #fff; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; padding: 64px var(--gutter-r) 36px var(--gutter-l); font-size: var(--text)"
 >
   <a href={href("/")} aria-label={t("a11y.homeLink")} style="display: flex; align-items: center; gap: 14px; justify-self: start">
     {/* width/height attrs reserve the box pre-decode; the data-URI src makes
@@ -117,7 +117,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
       style="padding: 6px 0; font-size: 16px; color: #000; white-space: nowrap; display: inline-flex; align-items: baseline; gap: 10px"
     >
       <span data-locale-label data-region-labels={regionLabelsJson}>{defaultRegionLabel}</span>
-      <span data-locale-code style="font-size: 10px; letter-spacing: 0.14em; color: var(--muted); position: relative; top: -1px">{defaultLocale.toUpperCase()}</span>
+      <span data-locale-code style="font-size: var(--label); letter-spacing: 0.14em; color: var(--muted); position: relative; top: -1px">{defaultLocale.toUpperCase()}</span>
     </button>
   </div>
 
@@ -132,7 +132,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
         <ul style="list-style: none">
           {workItems.map((p) => (
             <li style="margin-top: 10px">
-              <a href={href(`/work/${p.slug}/`)} class="mega-link" style="font-size: 20px">{pickLocalized(locale, p, "title")}</a>
+              <a href={href(`/work/${p.slug}/`)} class="mega-link" style="font-size: var(--text)">{pickLocalized(locale, p, "title")}</a>
             </li>
           ))}
         </ul>
@@ -143,7 +143,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
         <ul style="list-style: none">
           {newsItems.map((n) => (
             <li style="margin-top: 10px">
-              <a href={href(`/news/${n.slug}/`)} class="mega-link" style="font-size: 20px">{pickLocalized(locale, n, "title")}</a>
+              <a href={href(`/news/${n.slug}/`)} class="mega-link" style="font-size: var(--text)">{pickLocalized(locale, n, "title")}</a>
             </li>
           ))}
         </ul>
@@ -154,8 +154,8 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
           <div style="flex: 0 0 335px" class="label">{t("nav.about")}</div>
         </div>
         <ul style="list-style: none">
-          <li style="margin-top: 10px"><a href={href("/about/")} class="mega-link" style="font-size: 20px">{t("nav.about")}</a></li>
-          <li style="margin-top: 10px"><a href={href("/careers/")} class="mega-link" style="font-size: 20px">{t("nav.careers")}</a></li>
+          <li style="margin-top: 10px"><a href={href("/about/")} class="mega-link" style="font-size: var(--text)">{t("nav.about")}</a></li>
+          <li style="margin-top: 10px"><a href={href("/careers/")} class="mega-link" style="font-size: var(--text)">{t("nav.careers")}</a></li>
         </ul>
       </div>
 
@@ -172,14 +172,14 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
                       data-region={r.code}
                       data-region-link
                       class="mega-link locale-btn"
-                      style="display: block; width: 100%; text-align: right; font-size: 20px"
+                      style="display: block; width: 100%; text-align: right; font-size: var(--text)"
                     >{r.label}</a>
                   ) : (
                     <button
                       type="button"
                       data-region={r.code}
                       class:list={["mega-link", "locale-btn", { "is-active": r.code === defaultRegion }]}
-                      style="display: block; width: 100%; text-align: right; font-size: 20px"
+                      style="display: block; width: 100%; text-align: right; font-size: var(--text)"
                     >{r.label}</button>
                   )}
                 </li>
@@ -196,7 +196,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
                     data-locale={l.code}
                     data-locale-link
                     class:list={["mega-link", "locale-btn", { "is-active": l.code === defaultLocale }]}
-                    style="display: block; width: 100%; text-align: right; font-size: 20px"
+                    style="display: block; width: 100%; text-align: right; font-size: var(--text)"
                   >{l.label}</a>
                 </li>
               ))}
@@ -259,7 +259,7 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
       gap: 12px 22px !important;
       flex-wrap: wrap;
     }
-    header[data-header] .locale-trigger { font-size: 14px !important; grid-column: 2; }
+    header[data-header] .locale-trigger { font-size: var(--text-s) !important; grid-column: 2; }
     /* Locale panel: the right-aligned 260px+180px column pair overflows a
        phone — stack the two lists, still right-aligned. */
     [data-panel="locale"] > div { flex-direction: column !important; gap: 36px !important; align-items: flex-end; }
