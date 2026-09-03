@@ -117,6 +117,23 @@ html.page-leaving main {
     --sp-7: 96px;
   }
 }
+/* Tighter page margins below 1024 (2026-09-03). The desktop gutters are
+   deliberately asymmetric (left 8.6458vw to 220px, right 5.94vw to 152px),
+   which at 390px resolves to 33.7px left against a 24px right floor — that
+   reads as lopsided rather than intentional at phone width, and airy against
+   a 42px header. Below 1024 both sides share one tighter ramp.
+
+   This does step at the 1024 boundary (about 47px to 88px on the left). That
+   is accepted: 1024 is where the whole composition changes over — inline nav
+   becomes a drawer, the zoom world begins — so the gutters changing with it
+   reads as intentional rather than as a glitch. */
+@media (max-width: 1023px) {
+  :root {
+    --gutter-l: clamp(18px, 4.6vw, 48px);
+    --gutter-r: clamp(18px, 4.6vw, 48px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) { main, .filter-list { animation: none !important; } }
 
 /* Touch ergonomics (2026-09-03). Below the zoom world, interactive text needs
