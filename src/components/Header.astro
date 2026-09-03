@@ -313,10 +313,10 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
      is from the desktop handoff, hence !important. Aspect ratio is held by
      the element's own aspect-ratio + width:auto, so only height is set. */
   @media (max-width: 1023px) {
-    header[data-header] img[alt="MDMC"] { height: 18px !important; }
+    header[data-header] img[alt="MDMC"] { height: var(--logo-h) !important; }
   }
   @media (max-width: 700px) {
-    header[data-header] img[alt="MDMC"] { height: 16px !important; }
+    header[data-header] img[alt="MDMC"] { height: var(--logo-h) !important; }
     /* (44 - 16) / 2 */
     header[data-header] > a { margin-block: -14px; }
   }
@@ -344,12 +344,22 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
          overhangs is invisible padding; the 1px bars stay well inside.
          (The 44px figure is Apple HIG / WCAG 2.5.5 AAA — WCAG 2.5.8 AA is
          24x24 — so it is a chosen floor, not a requirement.) */
-      position: absolute;
-      right: var(--gutter-r);
-      top: 50%;
-      transform: translateY(-50%);
+      /* Stays in flow, in the wordmark's own grid row, and uses the SAME
+         negative-margin trick the wordmark link does: a 44px box whose
+         margin box collapses to --logo-h. Both items therefore present
+         identical 16px margin boxes to `align-items: center`, so their
+         centres coincide exactly and the header row height is still the
+         wordmark's.
+
+         Absolute positioning was tried first (top: calc(--hdr-pt +
+         --logo-h/2)) and landed 1px high: centring a 16px margin box inside
+         a 44px border box leaves an odd remainder, and the two elements
+         rounded it in opposite directions. Sharing one mechanism removes the
+         disagreement instead of correcting it with a magic pixel. */
+      justify-self: end;
       min-width: var(--tap);
       min-height: var(--tap);
+      margin-block: calc((var(--logo-h) - var(--tap)) / 2);
     }
     .drawer-bar {
       display: block;
@@ -475,8 +485,12 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
          Header goes 104px -> 70px at 768. */
       /* Asymmetric on purpose: the wordmark sat 14px off the top of the
          screen, which is cramped against a status bar. Weight moves to the
-         top and the total height is unchanged (20 + 18 + 8 = 46). */
-      padding-top: 20px !important;
+         top and the total height is unchanged (20 + 18 + 8 = 46).
+         --hdr-pt/--logo-h are the single source of truth for the padding,
+         the wordmark height and the hamburger's vertical anchor. */
+      --hdr-pt: 20px;
+      --logo-h: 18px;
+      padding-top: var(--hdr-pt) !important;
       padding-bottom: 8px !important;
       /* Drop the 1fr spacer track and make the nav's own track the flexible
          one — the ja nav (私たちについて…) is wider than a tablet leaves
@@ -504,7 +518,9 @@ const defaultRegionLabel = regionRows.find((r) => r.code === defaultRegion)?.lab
          lives in the drawer now, so there is no second row to space. */
       /* Same 24px of total padding as the symmetric 12/12 it replaces, so
          the header height is unchanged — the weight just moves to the top. */
-      padding-top: 18px !important;
+      --hdr-pt: 18px;
+      --logo-h: 16px;
+      padding-top: var(--hdr-pt) !important;
       padding-bottom: 6px !important;
       font-size: 17px !important;
     }
