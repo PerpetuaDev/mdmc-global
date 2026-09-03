@@ -92,6 +92,7 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
           href={links.internal(`/work/${p.slug}/`)}
           data-slide
           data-title={pickLocalized(locale, p, "title")}
+          data-dark-hero={p.darkHero ? "true" : undefined}
           data-href={links.internal(`/work/${p.slug}/`)}
           aria-label={interpolate(t("a11y.openProject"), { title: pickLocalized(locale, p, "title") })}
           aria-hidden={i === 0 ? "false" : "true"}
@@ -102,7 +103,7 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
           {p.thumbnail ? (
             <picture>
               {p.heroImage && <source media="(min-width: 1024px)" srcset={p.heroImage.url} />}
-              <img src={p.thumbnail.url} alt={p.thumbnail.alt || pickLocalized(locale, p, "title")} />
+              <img src={p.thumbnail.url} alt={p.thumbnail.alt || pickLocalized(locale, p, "title")} crossorigin="anonymous" />
             </picture>
           ) : (
             <div class="hero-placeholder" aria-hidden="true"></div>
@@ -161,6 +162,11 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
        expressed in CSS because the DOM carries the wider thumbnail set.
        display:none (not opacity) so the cycling script can count it. */
     .hero-slide.is-thumb-only { display: none; }
+  }
+
+  @media (max-width: 1023px) {
+    /* Tighter than the desktop 32/24 inset, in step with the reduced header. */
+    .hero-overlay { left: 20px; right: 20px; bottom: 16px; }
   }
 
   @media (max-width: 1023px) {
@@ -242,19 +248,10 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
        is left behind for assistive tech. Tablet keeps them. */
     .hero-overlay [role="group"] { display: none !important; }
 
-    /* With the scrim removed, a #000 title over arbitrary project art was
-       unreadable on the dark slides — the exact problem the scrim had been
-       covering. So on phones the title becomes a caption BELOW the image,
-       which is the pattern the site already uses on work cards (image,
-       then title). No scrim needed, legible on any artwork. */
-    .hero-overlay {
-      position: static !important;
-      left: auto !important;
-      right: auto !important;
-      bottom: auto !important;
-      padding: var(--sp-2) var(--gutter-r) 0 var(--gutter-l);
-      pointer-events: auto;
-    }
+    /* Caption sits over the image again, bottom-left, tighter than the 16/14
+       it used before. Legibility comes from luminance detection rather than a
+       scrim — see the sampling in the script below. */
+    .hero-overlay { left: 12px !important; right: 12px !important; bottom: 10px !important; }
 
     /* .hero-frame sizing lives in the max-width:1023px block above — a
        62svh height here (!important, and later in source) overrode it and
@@ -303,6 +300,13 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
     height: 100%;
     object-fit: cover;
   }
+
+  /* Dark-artwork treatment. The overlay's colour is set on the container so
+     the title and the arrow glyphs flip together. */
+  .hero-overlay.is-dark,
+  .hero-overlay.is-dark a,
+  .hero-overlay.is-dark button { color: #fff !important; }
+  .hero-overlay.is-dark span[aria-hidden] { background: rgba(255,255,255,0.5) !important; }
 
   .hero-overlay {
     position: absolute;
@@ -362,6 +366,11 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
       name.textContent = active.dataset.title ?? ''
       name.href = active.dataset.href ?? '#'
     }
+    paintCaption(active)
+    // The first paint can land before the image has decoded, in which case
+    // captionIsOnDarkArt returns null and leaves the default; re-run on load.
+    const img = active.querySelector('img')
+    if (img && !img.complete) img.addEventListener('load', () => paintCaption(active), { once: true })
   }
 
   function rebuild() {
@@ -382,6 +391,77 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
     if (timer) clearInterval(timer)
     const auto = !matchMedia('(prefers-reduced-motion: reduce)').matches
     if (auto && slides.length > 1) timer = setInterval(() => show(i + 1), 6000)
+  }
+
+  // --- Light / dark caption (2026-09-03) ---------------------------------
+  // Strapi used to carry a dark_hero boolean for this; it was added in
+  // mdmc-strapi 990f3b3 and dropped in a5ed85f during the Astro-cutover
+  // schema cleanup. content.js still reads `dark_hero ?? false`, so a
+  // re-added field would flow through as an explicit override — until then
+  // this derives the answer from the artwork itself, which also means new
+  // projects need no editorial input.
+  //
+  // Samples ONLY the region actually visible behind the caption: the images
+  // are object-fit:cover, so the frame's bottom-left corner maps to some
+  // interior rect of the source, not to the source's own corner.
+  //
+  // Depends on the media CDN sending access-control-allow-origin (Strapi
+  // Cloud does, with `vary: Origin`) plus crossorigin="anonymous" on the img.
+  // Every failure path — taint, decode, no context — is caught and simply
+  // leaves the default dark-on-light treatment.
+  const overlay = document.querySelector('.hero-overlay')
+
+  function captionIsOnDarkArt(slide) {
+    try {
+      const img = slide.querySelector('img')
+      if (!img || !img.naturalWidth || !frame) return null
+      const fw = frame.clientWidth, fh = frame.clientHeight
+      const iw = img.naturalWidth, ih = img.naturalHeight
+      if (!fw || !fh) return null
+
+      // cover geometry: the source rect that the frame actually shows
+      const scale = Math.max(fw / iw, fh / ih)
+      const offX = (fw - iw * scale) / 2
+      const offY = (fh - ih * scale) / 2
+      const toSrc = (x, y) => [(x - offX) / scale, (y - offY) / scale]
+
+      // the caption's box in frame coordinates, clamped into the frame
+      const cs = getComputedStyle(overlay)
+      const padL = parseFloat(cs.left) || 12
+      const boxW = Math.min(fw - padL, 240)
+      const boxH = 44
+      const [sx, sy] = toSrc(padL, Math.max(0, fh - boxH - (parseFloat(cs.bottom) || 10)))
+      const [ex, ey] = toSrc(padL + boxW, fh)
+      const sw = Math.max(1, Math.min(iw - sx, ex - sx))
+      const sh = Math.max(1, Math.min(ih - sy, ey - sy))
+
+      const N = 12
+      const cv = document.createElement('canvas')
+      cv.width = N; cv.height = N
+      const ctx = cv.getContext('2d', { willReadFrequently: true })
+      if (!ctx) return null
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, N, N)
+      const px = ctx.getImageData(0, 0, N, N).data
+      let sum = 0
+      for (let i = 0; i < px.length; i += 4) {
+        // Rec. 601 luma, good enough for a legibility decision
+        sum += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]
+      }
+      return sum / (px.length / 4) < 140
+    } catch {
+      return null // tainted canvas, or the image is not decoded yet
+    }
+  }
+
+  function paintCaption(slide) {
+    if (!overlay || !slide) return
+    // An explicit CMS value, if the field ever comes back, wins outright.
+    const declared = slide.dataset.darkHero
+    const dark = declared === 'true' ? true
+      : declared === 'false' ? false
+      : captionIsOnDarkArt(slide)
+    if (dark === null) return // leave whatever is there rather than guess
+    overlay.classList.toggle('is-dark', dark)
   }
 
   document.querySelector('[data-hero-prev]')?.addEventListener('click', () => step(-1))
