@@ -2,7 +2,7 @@
 import "../styles/global.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
-import { loadContent } from "../lib/content.js";
+import { loadContent, heroSlidesOf } from "../lib/content.js";
 import { enPathOf, SITES } from "../lib/i18n.js";
 
 interface Props {
@@ -39,6 +39,27 @@ const enPath = enPathOf(site, resolvedLocale, Astro.url.pathname);
 const enAlternateUrl = SITES.co + enPath;
 const jaAlternateUrl = SITES.cojp + enPath;
 const canonicalUrl = resolvedLocale === "ja" ? jaAlternateUrl : enAlternateUrl;
+
+// Social share image. Project, article and job pages pass their own hero via
+// the ogImage prop; every other page — home, work, news, about, careers,
+// contact, 404 — had none at all, so sharing them anywhere rendered a bare
+// text card.
+//
+// The fallback is the newest hero on the home slideshow, taken from
+// heroSlidesOf() rather than re-deriving it: that is the same source of truth
+// the hero itself uses (projects arrive sort=date:desc, and the helper keeps
+// only those that actually have a hero_image), so the share card can never
+// drift from what the slideshow shows. It follows the slideshow automatically
+// as new work lands.
+//
+// Optional chaining throughout because it must degrade to no og:image rather
+// than break a build: heroSlidesOf can legitimately return an empty array if
+// no published project has a hero_image yet.
+const heroFallback = heroSlidesOf(projects)[0]?.heroImage;
+const resolvedOgImage = ogImage ?? heroFallback?.url;
+// Only the fallback has a known alt. A page-supplied ogImage is just a URL,
+// so there is nothing truthful to say about it.
+const resolvedOgImageAlt = ogImage ? undefined : heroFallback?.alt || undefined;
 ---
 
 <!DOCTYPE html>
@@ -51,7 +72,12 @@ const canonicalUrl = resolvedLocale === "ja" ? jaAlternateUrl : enAlternateUrl;
   <meta property="og:title" content={title}>
   <meta property="og:description" content={description}>
   <meta property="og:url" content={canonicalUrl}>
-  {ogImage && <meta property="og:image" content={ogImage}>}
+  {resolvedOgImage && <meta property="og:image" content={resolvedOgImage}>}
+  {resolvedOgImageAlt && <meta property="og:image:alt" content={resolvedOgImageAlt}>}
+  {/* Without this X renders og:image as a small square thumbnail; with it the
+      hero gets the full-width card the artwork is cropped for. Harmless
+      elsewhere — other platforms read the og: tags and ignore it. */}
+  {resolvedOgImage && <meta name="twitter:card" content="summary_large_image">}
   <link rel="canonical" href={canonicalUrl}>
   {!noHreflang && <link rel="alternate" hreflang="en" href={enAlternateUrl}>}
   {!noHreflang && <link rel="alternate" hreflang="ja" href={jaAlternateUrl}>}
