@@ -259,6 +259,7 @@ const t = makeT(locale);
 </style>
 
 <script>
+  import { track, marketContext } from "../lib/analytics.js";
   // Application form: tracks the 'apply' Turnstile token from the shared
   // mdmc:turnstile CustomEvent, submits multipart FormData to the legacy
   // /api/apply endpoint, and never lets a submission attempt throw
@@ -383,6 +384,10 @@ const t = makeT(locale);
         isSubmitting = false;
 
         if (ok) {
+          // Deliberately NOT generate_lead. This is a job applicant, and
+          // importing it into Google Ads alongside sales enquiries would
+          // teach smart bidding to buy clicks from people looking for work.
+          track('job_application', { form: 'apply', ...marketContext() });
           const confirmLine = document.createElement('p');
           confirmLine.className = 'apply-confirm';
           confirmLine.textContent = form.dataset.msgOk || "Thank you — we'll be in touch.";

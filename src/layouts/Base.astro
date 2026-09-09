@@ -70,10 +70,20 @@ const resolvedOgImageAlt = ogImage ? undefined : heroFallback?.alt || undefined;
 const structuredData = jsonLd(
   organizationGraph({ origin: SITES[site], description, locale: resolvedLocale })
 );
+
+// NOTE for anyone editing the template below: `<html>` must be the FIRST
+// thing after the frontmatter. Putting even a JSX comment ahead of it stops
+// Astro recognising the document root, and it silently emits the page with no
+// <html> or <head> wrapper at all — which costs `lang`, `data-site` and the
+// document structure. Caught in the build output, 2026-09-09.
+//
+// data-site on <html> exposes the region axis to client scripts: the header
+// derives region from localStorage, but an analytics event also needs to know
+// which DOMAIN it fired on, because on co.jp the domain IS the region.
 ---
 
 <!DOCTYPE html>
-<html lang={resolvedLocale}>
+<html lang={resolvedLocale} data-site={site}>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -160,6 +170,8 @@ const structuredData = jsonLd(
     <Footer locale={resolvedLocale} site={site} />
   </div>
   <script>
+    import { track, marketContext } from "../lib/analytics.js";
+
     // Fade the outgoing page's content before same-origin navigations, for
     // browsers WITHOUT cross-document View Transitions (those get the CSS
     // @view-transition crossfade in global.css instead). The incoming page's
@@ -184,6 +196,30 @@ const structuredData = jsonLd(
     // A bfcache restore brings the faded page back — always clear the state.
     addEventListener("pageshow", () => {
       document.documentElement.classList.remove("page-leaving");
+    });
+
+    // Secondary conversions: emailing or calling a studio directly. Plenty of
+    // B2B enquiries never touch the form — the footer, the contact folds, the
+    // JP About page and the careers page expose 285 mailto: and 93 tel: links
+    // between them — so without this a paid click that converts by email
+    // looks like a bounce.
+    //
+    // Delegated at the document so it covers every one of those links,
+    // including the ones the mobile drawer renders, with no per-component
+    // wiring. It only observes: no preventDefault, so the mail client or
+    // dialler opens exactly as before, and track() swallows any failure.
+    document.addEventListener("click", (e) => {
+      const a = e.target instanceof Element ? e.target.closest('a[href^="mailto:"], a[href^="tel:"]') : null;
+      if (!a) return;
+      const href = a.getAttribute("href") || "";
+      const isEmail = href.startsWith("mailto:");
+      track("contact_click", {
+        method: isEmail ? "email" : "phone",
+        // A studio address or published office number — business contact
+        // details, not the visitor's, so nothing personal is sent.
+        target: href.replace(/^(mailto:|tel:)/, ""),
+        ...marketContext(),
+      });
     });
   </script>
 </body>

@@ -366,6 +366,7 @@ const headlineLines = t("contact.headline").split("\n");
 </style>
 
 <script>
+  import { track, marketContext } from "../lib/analytics.js";
   // Contact page behavior: anchor/CTA smooth-scroll with a fixed −96px
   // offset (never scrollIntoView, per README's Interactions & Behavior
   // section), the per-studio "Send us a message" recipient hand-off, this
@@ -565,6 +566,11 @@ const headlineLines = t("contact.headline").split("\n");
         isSubmitting = false;
 
         if (ok) {
+          // Primary conversion. Fired only on a confirmed 2xx from the
+          // endpoint, so it counts enquiries that actually arrived rather
+          // than submit-button clicks. track() swallows everything, so a
+          // blocked tag can never cost us the confirmation below.
+          track('generate_lead', { form: 'contact', ...marketContext() });
           const confirmLine = document.createElement('p');
           confirmLine.className = 'contact-confirm';
           confirmLine.textContent = form.dataset.msgOk || "Thank you — we'll be in touch.";
