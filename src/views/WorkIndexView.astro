@@ -53,7 +53,7 @@ const specialties = [...new Set(projects.flatMap(specialtiesOf))].sort();
 <main style="animation: pageIn .6s var(--ease)">
   <section class="gutter" style="padding-top: 80px; padding-bottom: 160px;">
     <div style="margin-bottom: 36px">
-      <h2 class="work-h2">{t("work.title")}</h2>
+      <h1 class="work-h2">{t("work.title")}</h1>
 
       <div class="filter-triggers">
         <button
@@ -108,7 +108,7 @@ const specialties = [...new Set(projects.flatMap(specialtiesOf))].sort();
           data-regions={p.regions.join("|")}
           data-specialties={specialtiesOf(p).join("|")}
         >
-          <WorkCard project={p} headingLevel="h3" locale={locale} site={site} />
+          <WorkCard project={p} headingLevel="h2" locale={locale} site={site} />
         </div>
       ))}
     </div>
