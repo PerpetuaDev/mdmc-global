@@ -76,6 +76,40 @@ const canonicalUrl = resolvedLocale === "ja" ? jaAlternateUrl : enAlternateUrl;
   <link rel="preload" href="/fonts/sohne-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/sohne-500.woff2" as="font" type="font/woff2" crossorigin>
   <title>{title}</title>
+  <!-- Google Analytics 4 (gtag.js), one property across BOTH domains.
+       Wired here for the same reason the favicon is: every page in all four
+       trees renders through this layout, and the ja-proxy Worker passes the
+       HTML through unchanged, so co.jp is measured by the same tag. Register
+       mdmc.co.jp under this stream's "Configure your domains" in GA4 so a
+       region hop stitches into one session instead of starting a second.
+
+       `is:inline` is required. Without it Astro treats this as a component
+       script — bundling, hoisting and rewriting it — and the tag stops being
+       the tag Google expects.
+
+       The official snippet is loaded via an allowlist rather than pasted
+       verbatim, so localhost and any preview build neither load gtag nor
+       report a hit. It sends nothing off the two real hostnames. The
+       behaviour on those hostnames is identical to the pasted snippet:
+       dataLayer, gtag('js', <date>), gtag('config', <id>). This is a static
+       multi-page site, so each navigation is a real document load and fires
+       its own page_view; there is no SPA route-change handling to add. -->
+  <script is:inline>
+    (function () {
+      var ID = "G-9TWMV1SZMR";
+      var HOSTS = ["mdmc.co", "www.mdmc.co", "mdmc.co.jp", "www.mdmc.co.jp"];
+      if (HOSTS.indexOf(location.hostname) === -1) return;
+      var s = document.createElement("script");
+      s.async = true;
+      s.src = "https://www.googletagmanager.com/gtag/js?id=" + ID;
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      window.gtag = gtag;
+      gtag("js", new Date());
+      gtag("config", ID);
+    })();
+  </script>
 </head>
 <body>
   <div class="zoom">
