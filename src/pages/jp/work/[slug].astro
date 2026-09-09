@@ -10,7 +10,7 @@ import Base from "../../../layouts/Base.astro";
 import ProjectView from "../../../views/ProjectView.astro";
 import { loadContent } from "../../../lib/content.js";
 import { nextProject } from "../../../lib/normalize.js";
-import { pageTitle } from "../../../lib/i18n.js";
+import { pickLocalized, pageTitle } from "../../../lib/i18n.js";
 
 export async function getStaticPaths() {
   const { projects } = await loadContent();
@@ -21,10 +21,10 @@ export async function getStaticPaths() {
 }
 
 const { project, next } = Astro.props;
-const projectDescription = project.description || "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
+const projectDescription = pickLocalized("ja", project, "description") || "MDMC is an integrated design & digital strategy agency working across New Zealand, Australia and Japan.";
 const ogImage = project.heroImage?.url || project.thumbnail?.url;
 ---
 
-<Base title={pageTitle("cojp", "ja", project.title)} active="work" description={projectDescription} ogImage={ogImage} locale="ja" site="cojp">
+<Base title={pageTitle("cojp", "ja", pickLocalized("ja", project, "title"))} active="work" description={projectDescription} ogImage={ogImage} locale="ja" site="cojp">
   <ProjectView locale="ja" site="cojp" project={project} next={next} />
 </Base>
