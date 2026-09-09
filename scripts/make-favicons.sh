@@ -33,17 +33,23 @@
 #    and carries no prefers-color-scheme rule. Every raster is flattened onto
 #    white to match. One identity in every context.
 #
-# WHY THE SMALL RASTERS ARE NOT A PLAIN DOWNSCALE
-# -----------------------------------------------
-# A naive resize gives the thin strokes partial pixel coverage and
-# antialiases them toward grey. So each raster size gets its strokes
-# thickened BEFORE the downscale — in negated space, where ink is white,
-# because dilating the black-on-white original would eat the strokes instead
-# of growing them — and its midtones pushed back toward black afterwards.
-# Radii are much gentler than the wordmark version needed, since the glyphs
-# are now large enough to survive on their own; overdoing it closes the D's
-# counter and welds the letters together. Tuned by rendering candidates at
-# true size and comparing them.
+# WHY THE RASTERS ARE A PLAIN DOWNSCALE
+# -------------------------------------
+# Earlier revisions thickened the strokes before the downscale and pushed the
+# midtones back toward black afterwards. That existed for the HORIZONTAL
+# wordmark, whose ~3px glyph rows at 16px genuinely antialiased to a uniform
+# grey smudge without it. The stacked lockup does not need it and is actively
+# hurt by it: measured against the same artwork rasterised from favicon.svg,
+# the compensated .ico carried 1.72x the ink at 16px, 1.24x at 32px and 1.12x
+# at 48px — which reads as bold and muddy in any browser that picks the .ico
+# over the .svg (Chrome does; Firefox prefers the .svg, which is why the two
+# disagreed).
+#
+# A plain Catrom downscale lands within +2 to +3 ink of the vector at every
+# size, so raster and vector now render at the same weight whichever one a
+# browser reaches for. If a future brand mark is thin enough to need
+# compensation again, dilate in NEGATED space — dilating black-on-white eats
+# strokes instead of growing them.
 
 set -euo pipefail
 
@@ -76,9 +82,6 @@ echo "  ink fills $(( IW * 100 / SW ))% x $(( IH * 100 / SH ))%; margins L=$IX R
 if [ "$SW" != "$SH" ]; then
   echo "WARNING: source is not square (${SW}x${SH}); icons will be letterboxed" >&2
 fi
-
-# Negated copy: ink is white here, which is the space the dilations run in.
-magick "$WORK/sq.png" -negate "$WORK/sqi.png"
 
 # --- 2. Vector favicon.svg --------------------------------------------------
 # Traced to real paths so the scalable icon stays crisp at any size. 5 contours
@@ -126,22 +129,15 @@ PY
 # (applied in negated space, hence the bright end moving, not the dark).
 # No -extent: the source is already square, so the aspect is preserved and
 # the wordmark stays where it was composed.
-ico_size() { # $1 = px, $2 = dilate radius, $3 = level ceiling
-  magick "$WORK/sqi.png" \
-    -morphology Dilate "Disk:$2" \
+ico_size() { # $1 = px
+  magick "$WORK/sq.png" \
     -filter Catrom -resize "${1}x${1}!" \
-    -level "0%,$3%" \
-    -negate \
     -background white -alpha remove -alpha off \
     "$WORK/ico-$1.png"
 }
-# Radii compared at true size. Past Disk:6 at 16px the D's counter fills in
-# and the stacked letters weld together, so the compensation stays light and
-# the level ceiling does the rest of the work (lower ceiling = darker ink,
-# since it is applied in the negated space).
-ico_size 16 3 60
-ico_size 32 2 75
-ico_size 48 1 85
+ico_size 16
+ico_size 32
+ico_size 48
 magick "$WORK/ico-16.png" "$WORK/ico-32.png" "$WORK/ico-48.png" "$OUT/favicon.ico"
 
 # --- 4. apple-touch-icon.png (180) ------------------------------------------
