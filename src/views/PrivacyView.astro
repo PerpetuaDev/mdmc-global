@@ -1,0 +1,404 @@
+---
+// Privacy & Terms — New Zealand.
+//
+// Written against what the site ACTUALLY does as of 2026-09-09, verified
+// rather than assumed:
+//   - Cookies were read out of a real browser session on /contact/ (the page
+//     that loads Turnstile as well as GA4): _ga, _ga_9TWMV1SZMR, cf_clearance.
+//     localStorage is EMPTY on first load — mdmc.region is only written if a
+//     visitor actually picks a studio.
+//   - Third-party hosts contacted on that page load: googletagmanager.com,
+//     analytics.google.com, stats.g.doubleclick.net, www.google.co.jp,
+//     challenges.cloudflare.com, static.cloudflareinsights.com.
+//   - NEITHER form endpoint persists anything. mdmc-strapi's contact and apply
+//     controllers only call mg.messages.create(); apply's single database read
+//     is a job lookup to resolve the recipient. Enquiries and applications
+//     exist as email, not as rows.
+//   - Mailgun is constructed with no `url` override, so it is the US region.
+//   - Application files are read from the upload temp and attached to the
+//     mail; they are not written to storage.
+//
+// Governing law is New Zealand (Privacy Act 2020). This document is therefore
+// NOT translated into Japanese: a Japanese policy has to be written against
+// the APPI (個人情報保護法), which has different notice and consent
+// requirements, and a translation of NZ law would be inaccurate rather than
+// merely awkward. co.jp needs its own document.
+//
+// Anything only the business can confirm is marked [TO CONFIRM] rather than
+// guessed — including the registered company name, which is deliberately not
+// asserted here for the same reason legalName is absent from the JSON-LD.
+import { makeT } from "../lib/i18n.js";
+
+interface Props {
+  locale?: "en" | "ja";
+  site?: "co" | "cojp";
+}
+const { locale = "en" } = Astro.props as Props;
+const t = makeT(locale);
+
+const updated = "9 September 2026";
+---
+
+<main style="animation: pageIn .6s var(--ease)">
+  <section class="legal-hero" style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
+    <h1 class="legal-title">Privacy &amp; Terms</h1>
+    <p class="legal-meta label">Last updated {updated} · New Zealand</p>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">Summary</h2>
+    <div class="legal-body">
+      <p>
+        MDMC is a design and digital strategy studio. This site exists to show our
+        work and let you get in touch — there are no accounts, no payments and no
+        logins on it.
+      </p>
+      <p>
+        In short: we collect what you type into our contact or job-application
+        form, we use Google Analytics to understand how the site is used, and we
+        use Cloudflare Turnstile to keep spam out of our forms. Enquiries reach us
+        as email; we do not store them in a database on this site. We never sell
+        your information.
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">Who we are</h2>
+    <div class="legal-body">
+      <p>
+        This privacy policy is issued by Finlayson Holdings New Zealand Limited,
+        trading as MDMC, whose New Zealand studio is at Level&nbsp;2,
+        47 Salisbury St, Christchurch Central, Christchurch 8013.
+      </p>
+      <p>
+        For anything in this document, or to ask about your personal information,
+        email <a href="mailto:nz@mdmc.co">nz@mdmc.co</a> or call
+        <a href="tel:+6436600336">+64 3 660 0336</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">Information we collect</h2>
+    <div class="legal-body">
+      <p><strong>When you use our contact form</strong> we collect your name and
+        email address, and — if you choose to fill them in — your company and an
+        indication of budget, along with your message.</p>
+      <p><strong>When you apply for a role</strong> we collect your name, email
+        address, your message, a portfolio or LinkedIn link if you provide one,
+        and any CV or cover letter you attach (.pdf, .doc or .docx, up to 15MB in
+        total).</p>
+      <p><strong>Automatically, as you browse</strong>, our analytics collects
+        pages viewed, approximate location derived from your IP address, device
+        and browser type, referring site, and a small number of specific actions:
+        sending an enquiry, and clicking one of our email or phone links. We use
+        this to understand which work and which markets people care about.</p>
+      <p><strong>To protect our forms</strong>, Cloudflare Turnstile receives your
+        IP address and signals about your browser in order to tell a person from
+        an automated script. It runs only on pages with a form.</p>
+      <p>We do not ask for, and have no use for, information about your health,
+        finances, ethnicity, or beliefs. Please don't send it to us.</p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">How we use it, and why</h2>
+    <div class="legal-body">
+      <p>
+        We use what you send us to reply to you and, if it leads somewhere, to
+        discuss and carry out work. We use analytics to improve the site and to
+        measure our advertising. We use Turnstile to keep our inboxes usable.
+      </p>
+      <p>
+        If you email us, we will email you back. We do not add enquirers to a
+        marketing list, and we do not send unsolicited commercial messages —
+        consistent with the Unsolicited Electronic Messages Act 2007.
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">Advertising</h2>
+    <div class="legal-body">
+      <p>
+        We advertise MDMC on Google, and we measure whether those ads lead to
+        real enquiries.
+      </p>
+      <p>
+        Our Google Analytics property has <strong>Google Signals</strong>
+        enabled. If you are signed in to a Google account and have ads
+        personalisation turned on for it, this allows Google to associate your
+        visit here with that account. It lets us see whether an ad led to an
+        enquiry even when the two happened on different devices, understand the
+        broad demographics and interests of people looking at our work, and
+        show our ads again to people who have visited this site before —
+        commonly called remarketing.
+      </p>
+      <p>
+        We only ever see this as aggregated reporting and audience sizes. We
+        cannot see, and Google does not give us, the identity of any individual
+        visitor.
+      </p>
+      <p>
+        You can turn this off without leaving our site. Google's
+        <a href="https://myadcenter.google.com" rel="noopener">My Ad Center</a>
+        controls ads personalisation on your Google account, and Google's
+        <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">Analytics
+        opt-out browser add-on</a> stops Google Analytics collecting anything
+        from your browser at all. Blocking cookies in your browser also works.
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">Where it goes</h2>
+    <div class="legal-body">
+      <p>
+        Your enquiry or application is passed to our email provider and delivered
+        to a studio inbox. It is <strong>not written to a database on this
+        site</strong>. Attachments travel with the email and are not stored
+        separately.
+      </p>
+      <p>
+        We rely on the following providers, all of which are located outside New
+        Zealand — principally in the United States. Sending your information to
+        them is an overseas disclosure under the Privacy Act 2020, and by using
+        this site or our forms you understand that it takes place:
+      </p>
+      <ul>
+        <li><strong>Google</strong> — Google Analytics, and Google Workspace, which
+          holds our inboxes. Analytics also contacts a Google advertising endpoint,
+          which is how we measure ad campaigns.</li>
+        <li><strong>Cloudflare</strong> — DNS, security and content delivery for
+          both of our domains, the Turnstile anti-spam check, and Cloudflare's own
+          traffic measurement.</li>
+        <li><strong>Mailgun</strong> (Sinch) — delivery of the email your form
+          becomes, in its United States region.</li>
+        <li><strong>Strapi Cloud</strong> — our content management system, which
+          also hosts the endpoint your form posts to.</li>
+        <li><strong>GitHub</strong> — hosting of the site's pages.</li>
+      </ul>
+      <p>
+        We do not sell personal information, and we do not share it with anyone
+        else except where we are required to by law.
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">Cookies</h2>
+    <div class="legal-body">
+      <p>
+        This site sets the following cookies on our own domains. We set no
+        advertising cookies ourselves — but see Advertising above: Google may
+        set or read its own cookies on Google domains as part of the analytics
+        and ads measurement described there.
+      </p>
+      <ul>
+        <li><code>_ga</code> and <code>_ga_9TWMV1SZMR</code> — Google Analytics.
+          These distinguish one visitor from another so that repeat visits are not
+          counted as new people.</li>
+        <li><code>cf_clearance</code> — set by Cloudflare when a security or
+          anti-spam check is performed, so that you are not challenged
+          repeatedly.</li>
+      </ul>
+      <p>
+        We also store one preference in your browser, under
+        <code>mdmc.region</code>: which of our studios you last chose to view.
+        It is written only if you actually pick one, it never leaves your browser,
+        and clearing your site data removes it.
+      </p>
+      <p>
+        You can block or delete cookies in your browser settings. The site will
+        continue to work; only the analytics will be incomplete.
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">How long we keep it</h2>
+    <div class="legal-body">
+      <p>
+        In Google Analytics, event data — the record of pages viewed and
+        actions taken — is retained for <strong>2 months</strong>, and
+        user-level data for <strong>14 months</strong>, after which Google
+        deletes it.
+      </p>
+      <p>
+        Enquiries and job applications stay in our email for as long as we
+        need them for the purpose you sent them — to reply to you, and where
+        it leads to work, for our project and business records. We review them
+        periodically and delete what we no longer need.
+      </p>
+      <p>
+        We keep information only as long as we need it for the purpose we
+        collected it for, and then delete it.
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">Your rights</h2>
+    <div class="legal-body">
+      <p>
+        Under the Privacy Act 2020 you have the right to ask us for a copy of the
+        personal information we hold about you, and to ask us to correct it if it
+        is wrong. Email <a href="mailto:nz@mdmc.co">nz@mdmc.co</a> and we will
+        respond within 20 working days, as the Act requires.
+      </p>
+      <p>
+        If you are not satisfied with how we have handled your information or your
+        request, you can complain to the Office of the Privacy Commissioner at
+        <a href="https://www.privacy.org.nz" rel="noopener">privacy.org.nz</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">Security</h2>
+    <div class="legal-body">
+      <p>
+        This site is served over HTTPS, and our forms are protected against
+        automated abuse. No transmission over the internet can be guaranteed
+        completely secure, so please do not send us anything highly sensitive
+        through a web form.
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">Terms of use</h2>
+    <div class="legal-body">
+      <p>
+        <strong>About this site.</strong> The content here is provided for
+        information. It describes work we have done and services we offer, and it
+        is not an offer, a quote, or professional advice you should act on without
+        talking to us first.
+      </p>
+      <p>
+        <strong>Our work and our clients'.</strong> The design, text, and code of
+        this site are ours. Client work shown here is published with our clients'
+        agreement, and the trade marks, logos and product names in it belong to
+        those clients. Nothing here grants you a licence to reuse any of it.
+      </p>
+      <p>
+        <strong>Acceptable use.</strong> Please don't attempt to interfere with the
+        site, submit anything unlawful or misleading through our forms, or use
+        automated means to extract our content at a scale that affects the site's
+        operation.
+      </p>
+      <p>
+        <strong>Links out.</strong> Where we link to another site, we don't control
+        it and aren't responsible for it.
+      </p>
+      <p>
+        <strong>Availability and accuracy.</strong> We take care to keep this site
+        accurate and available, but we don't promise it will be either at all
+        times, and we may change or remove content without notice.
+      </p>
+      <p>
+        <strong>Liability.</strong> To the extent the law allows, we are not liable
+        for loss arising from your use of this site or from reliance on its
+        content. Nothing in these terms limits rights you have under New Zealand
+        law that cannot be excluded, including under the Consumer Guarantees Act
+        1993 and the Fair Trading Act 1986 where those apply to you.
+      </p>
+      <p>
+        <strong>Governing law.</strong> These terms and this privacy policy are
+        governed by New Zealand law, and the New Zealand courts have
+        non-exclusive jurisdiction over any dispute about them.
+      </p>
+      <p>
+        <strong>Changes.</strong> We may update this page. The date at the top
+        tells you when it last changed.
+      </p>
+    </div>
+  </section>
+</main>
+
+<style>
+  .legal-title {
+    font-size: clamp(40px, 4.4vw, 64px);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    max-width: 900px;
+  }
+
+  .legal-meta {
+    margin-top: 24px;
+  }
+
+  /* Same 240 + 720 label/prose grammar the About page uses, so a legal page
+     still reads as part of the site rather than a bolted-on document. */
+  .legal-fold {
+    padding: 80px var(--gutter-r) 0 var(--gutter-l);
+    display: grid;
+    grid-template-columns: 240px minmax(0, 720px);
+    gap: 48px;
+  }
+
+  .legal-fold:last-of-type {
+    padding-bottom: 160px;
+  }
+
+  .legal-fold .label {
+    padding-top: 8px;
+  }
+
+  .legal-body {
+    font-size: var(--text-l);
+    line-height: 1.5;
+  }
+
+  .legal-body p + p,
+  .legal-body ul + p,
+  .legal-body p + ul {
+    margin-top: 1.1em;
+  }
+
+  .legal-body ul {
+    padding-left: 1.2em;
+  }
+
+  .legal-body li + li {
+    margin-top: 0.5em;
+  }
+
+  .legal-body a {
+    border-bottom: 1px solid var(--faint);
+  }
+
+  .legal-body a:hover {
+    border-bottom-color: currentColor;
+  }
+
+  .legal-body code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+  }
+
+  /* Deliberately conspicuous: these are facts only the business can supply,
+     and shipping the page with them still reading [TO CONFIRM] should look
+     like an error, not like body copy. */
+  .legal-todo {
+    background: #ffec99;
+    color: #000;
+    padding: 0 0.2em;
+  }
+
+  @media (max-width: 1023px) {
+    .legal-fold {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 16px !important;
+      padding-top: var(--sp-6) !important;
+    }
+    .legal-body { font-size: var(--text) !important; }
+  }
+
+  @media (max-width: 700px) {
+    .legal-hero { padding-top: var(--sp-6) !important; }
+    .legal-fold:last-of-type { padding-bottom: var(--sp-7) !important; }
+  }
+</style>

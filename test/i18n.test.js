@@ -307,9 +307,18 @@ describe('STRINGS: footer.* (ported verbatim)', () => {
     expect(STRINGS.en['footer.cta.action']).toBe("Let's talk.")
     expect(`${STRINGS.en['footer.cta.label']} ${STRINGS.en['footer.cta.action']}`).toBe("Have a project in mind? Let's talk.")
   })
-  it('footer.copy', () => {
-    expect(STRINGS.en['footer.copy']).toBe('© 2026 MDMC Group Inc.')
-    expect(STRINGS.ja['footer.copy']).toBe('© 2026 MDMC Group Inc.')
+  it('footer.copy names the NZ entity, and is site-keyed not language-keyed', () => {
+    // Changed 2026-09-09 from "MDMC Group Inc." — writing the NZ privacy
+    // policy established the issuing entity as Finlayson Holdings New Zealand
+    // Limited, and "Inc." is not a New Zealand company suffix, so the old
+    // value named a company that does not exist in this jurisdiction. The
+    // footer carries the short form; the policy carries the full legal name.
+    expect(STRINGS.en['footer.copy']).toBe('© 2026 Finlayson Holdings New Zealand')
+    // Same value in both dicts on purpose: this string is keyed on SITE, not
+    // language, so mdmc.co credits the NZ entity on its Japanese pages too.
+    expect(STRINGS.ja['footer.copy']).toBe(STRINGS.en['footer.copy'])
+    // co.jp is a different entity and must not follow it.
+    expect(STRINGS.en['footer.copyJp']).toBe('© 2026 Finlayson Holdings Japan Inc.')
   })
   it('lang.en / lang.ja', () => {
     expect(STRINGS.en['lang.en']).toBe('English')

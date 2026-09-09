@@ -134,7 +134,7 @@ export const STRINGS = {
     // --- footer.* (ported verbatim) ---
     'footer.cta.label': 'Have a project in mind?',
     'footer.cta.action': "Let's talk.",
-    'footer.copy': '© 2026 MDMC Group Inc.',
+    'footer.copy': '© 2026 Finlayson Holdings New Zealand',
     // Site-keyed (not language-keyed): mdmc.co.jp is operated by the JP
     // entity, so its footer credits it on both languages — same value in
     // both dicts, like footer.copy. (Old site keyed this on language;
@@ -208,7 +208,7 @@ export const STRINGS = {
 
     'footer.cta.label': 'ご検討中のプロジェクトはありますか?',
     'footer.cta.action': '話しましょう。',
-    'footer.copy': '© 2026 MDMC Group Inc.',
+    'footer.copy': '© 2026 Finlayson Holdings New Zealand',
     'footer.copyJp': '© 2026 Finlayson Holdings Japan Inc.',
 
     // ------------------------------------------------------------------

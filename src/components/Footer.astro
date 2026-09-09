@@ -142,7 +142,12 @@ const sendMessageHtml = `\n${t("contact.form.sendUsAMessage")} `;
   <div class="footer-bottom">
     <span class="footer-bottom-left">
       <span>{site === "cojp" ? t("footer.copyJp") : t("footer.copy")}</span>
-      <a href="#" class="footer-link">{t("footer.privacyTerms")}</a>
+      {/* Was a dead href="#" on every page. Points at the EN document on
+          whichever DOMAIN you are on — deliberately NOT links.internal(),
+          which would resolve to /ja/privacy/ on a Japanese page and 404. The
+          policy is NZ-law and EN-only on purpose; co.jp needs its own APPI
+          document, at which point this becomes locale-aware. */}
+      <a href={site === "cojp" ? "/en/privacy/" : "/privacy/"} class="footer-link">{t("footer.privacyTerms")}</a>
     </span>
     <span class="footer-bottom-right">
       <button type="button" class="footer-link" data-footer-locale data-locale-part="region" data-region-labels={regionLabelsJson}>{regionLabel(site === "cojp" ? "Japan" : "New Zealand")}</button>
