@@ -18,6 +18,24 @@ describe('ja-proxy mapPath', () => {
     expect(mapPath('/favicon.svg')).toEqual({ kind: 'asset', to: '/favicon.svg' })
   })
 
+  // The whole favicon set lives at the origin root and is referenced by
+  // absolute path from Base.astro, so co.jp only shows icons if each of these
+  // maps to a verbatim origin fetch. They do only because the last segment
+  // carries a dot — which is easy to break by reaching for a prettier,
+  // extensionless URL.
+  it('passes the favicon set through to the origin root', () => {
+    for (const path of [
+      '/favicon.svg',
+      '/favicon.ico',
+      '/apple-touch-icon.png',
+      '/icon-192.png',
+      '/icon-512.png',
+      '/site.webmanifest',
+    ]) {
+      expect(mapPath(path)).toEqual({ kind: 'asset', to: path })
+    }
+  })
+
   it('normalizes extensionless paths to trailing slash', () => {
     expect(mapPath('/work')).toEqual({ kind: 'redirect', to: '/work/' })
     expect(mapPath('/contact')).toEqual({ kind: 'redirect', to: '/contact/' })
