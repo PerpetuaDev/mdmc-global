@@ -8,9 +8,12 @@ describe('cojpUrlOf', () => {
     expect(cojpUrlOf('/jp/work/zenrise-website/')).toBe('https://mdmc.co.jp/work/zenrise-website/')
   })
 
-  it('passes the /en tree through, since co.jp serves it at the same prefix', () => {
-    expect(cojpUrlOf('/en/')).toBe('https://mdmc.co.jp/en/')
-    expect(cojpUrlOf('/en/contact/')).toBe('https://mdmc.co.jp/en/contact/')
+  it('excludes co.jp’s own /en tree, which canonicalises to mdmc.co', () => {
+    // A sitemap lists only self-canonical URLs. co.jp/en/* consolidates to
+    // mdmc.co, so listing it here would point Google at addresses that send
+    // its attention elsewhere.
+    expect(cojpUrlOf('/en/')).toBeNull()
+    expect(cojpUrlOf('/en/contact/')).toBeNull()
   })
 
   it('excludes mdmc.co’s own surfaces — they are covered by @astrojs/sitemap', () => {
@@ -36,17 +39,22 @@ describe('cojpUrlOf', () => {
     const all = ['/jp/', '/jp/news/', '/en/', '/en/news/', '/', '/ja/', '/work/']
     for (const u of cojpUrlsFrom(all)) expect(u.startsWith('https://mdmc.co.jp/')).toBe(true)
   })
+
+  it('emits ONLY the /jp tree, so the two sitemaps never overlap', () => {
+    expect(cojpUrlsFrom(['/jp/', '/jp/work/', '/en/', '/en/work/', '/', '/ja/', '/work/']))
+      .toEqual(['https://mdmc.co.jp/', 'https://mdmc.co.jp/work/'])
+  })
 })
 
 describe('cojpUrlsFrom', () => {
   it('de-duplicates and sorts so the file only changes when the site does', () => {
-    const a = cojpUrlsFrom(['/jp/work/', '/jp/', '/jp/work/', '/en/'])
+    const a = cojpUrlsFrom(['/jp/work/', '/jp/', '/jp/work/', '/jp/news/'])
     expect(a).toEqual([
       'https://mdmc.co.jp/',
-      'https://mdmc.co.jp/en/',
+      'https://mdmc.co.jp/news/',
       'https://mdmc.co.jp/work/',
     ])
-    expect(cojpUrlsFrom(['/jp/', '/en/'])).toEqual(cojpUrlsFrom(['/en/', '/jp/']))
+    expect(cojpUrlsFrom(['/jp/', '/jp/news/'])).toEqual(cojpUrlsFrom(['/jp/news/', '/jp/']))
   })
 })
 

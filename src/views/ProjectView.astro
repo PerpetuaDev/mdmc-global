@@ -18,6 +18,7 @@
 import ProjectHeader from "../components/ProjectHeader.astro";
 import GalleryStack from "../components/GalleryStack.astro";
 import StoryView from "../components/StoryView.astro";
+import { pickLocalized } from "../lib/i18n.js";
 
 interface Props {
   locale?: "en" | "ja";
@@ -48,6 +49,7 @@ const hasStory = Boolean(story);
     <GalleryStack
       gallery={project.gallery}
       heroImage={project.heroImage}
+      title={pickLocalized(locale, project, "title")}
       pullQuote={pullQuote}
       pullQuoteAttribution={pullQuoteAttribution}
     />
@@ -58,6 +60,7 @@ const hasStory = Boolean(story);
         story={story}
         gallery={project.gallery}
         heroImage={project.heroImage}
+        title={pickLocalized(locale, project, "title")}
         pullQuote={pullQuote}
         pullQuoteAttribution={pullQuoteAttribution}
         next={next}

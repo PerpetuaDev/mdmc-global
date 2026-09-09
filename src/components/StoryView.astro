@@ -79,6 +79,8 @@ interface Props {
   next: NextProject | null;
   locale?: "en" | "ja";
   site?: "co" | "cojp";
+  // Localised project title, used only as the hero's alt fallback.
+  title?: string;
 }
 
 const {
@@ -87,6 +89,7 @@ const {
   heroImage = null,
   pullQuote = null,
   pullQuoteAttribution = null,
+  title = '',
   next = null,
   locale = "en", site = "co",
 } = Astro.props as Props;
@@ -101,6 +104,14 @@ const slots: GallerySlot[] =
     : heroImage
       ? [{ url: heroImage.url, alt: heroImage.alt, kind: 'hero', caption: null }]
       : [];
+
+// Alt text for a gallery slot. No Strapi media item currently has
+// alternativeText, so slot.alt is '' for every image — and alt="" on a
+// project's own photography tells a screen reader it is decorative when it is
+// the main content. Prefer the slot's caption when there is one (real
+// descriptive copy), else the project title. Both fall away the moment
+// alternativeText is filled in, which is where the real fix belongs.
+const altFor = (slot) => slot.alt || slot.caption || title;
 
 let heroSeen = false;
 const stackItems = slots.map((slot) => {
@@ -131,7 +142,7 @@ const sections = [
     {stackItems.map(({ slot, isHeroFirst }) => (
       <div>
         <div class={`story-frame ${FRAME_CLASS[slot.kind]}`}>
-          <img src={slot.url} alt={slot.alt} data-image-id={isHeroFirst ? 'hero' : undefined} />
+          <img src={slot.url} alt={altFor(slot)} data-image-id={isHeroFirst ? 'hero' : undefined} />
         </div>
         {slot.caption && <div class="story-caption">{slot.caption}</div>}
       </div>
@@ -157,7 +168,7 @@ const sections = [
       <span class="label">{t('project.next')}</span>
     </div>
     <div class="next-project-frame">
-      {next.heroImage && <img src={next.heroImage.url} alt={next.heroImage.alt} />}
+      {next.heroImage && <img src={next.heroImage.url} alt={next.heroImage.alt || pickLocalized(locale, next, 'title')} />}
     </div>
     <div class="next-project-foot">
       <span class="next-project-title">{pickLocalized(locale, next, 'title')}</span>

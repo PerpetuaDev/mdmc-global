@@ -4,6 +4,7 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { loadContent, heroSlidesOf } from "../lib/content.js";
 import { enPathOf, SITES } from "../lib/i18n.js";
+import { organizationGraph, jsonLd } from "../lib/structured-data.js";
 
 interface Props {
   title: string;
@@ -60,6 +61,15 @@ const resolvedOgImage = ogImage ?? heroFallback?.url;
 // Only the fallback has a known alt. A page-supplied ogImage is just a URL,
 // so there is nothing truthful to say about it.
 const resolvedOgImageAlt = ogImage ? undefined : heroFallback?.alt || undefined;
+
+// schema.org graph: one Organization plus one ProfessionalService per studio,
+// so search engines read MDMC as a single business operating from
+// Christchurch, North Sydney and Yokohama rather than three pages that happen
+// to list addresses. Emitted site-wide from here for the same reason the
+// favicon and og:image are — one wiring point covers all four trees.
+const structuredData = jsonLd(
+  organizationGraph({ origin: SITES[site], description, locale: resolvedLocale })
+);
 ---
 
 <!DOCTYPE html>
@@ -79,6 +89,12 @@ const resolvedOgImageAlt = ogImage ? undefined : heroFallback?.alt || undefined;
       elsewhere — other platforms read the og: tags and ignore it. */}
   {resolvedOgImage && <meta name="twitter:card" content="summary_large_image">}
   <link rel="canonical" href={canonicalUrl}>
+  {/* schema.org graph — see structured-data.js. is:inline keeps Astro from
+      treating this as a component script; set:html emits the JSON verbatim
+      rather than HTML-escaping the quotes into &quot;, which would make it
+      unparseable. structured-data.js asserts the payload contains no
+      </script sequence, the one real injection risk of inlining JSON-LD. */}
+  <script type="application/ld+json" is:inline set:html={structuredData} />
   {!noHreflang && <link rel="alternate" hreflang="en" href={enAlternateUrl}>}
   {!noHreflang && <link rel="alternate" hreflang="ja" href={jaAlternateUrl}>}
   {!noHreflang && <link rel="alternate" hreflang="x-default" href={enAlternateUrl}>}

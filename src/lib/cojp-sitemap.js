@@ -7,14 +7,16 @@
 // the CANONICAL host for every Japanese page on the site, so those were
 // discoverable only by crawling.
 //
-// This builds co.jp's own sitemap from the two origin trees the Worker serves
-// there, so every URL in it is a real, canonical co.jp address:
+// This builds co.jp's own sitemap from the one origin tree that is
+// SELF-CANONICAL on the Japan domain:
 //
-//   origin /jp/…  ->  https://mdmc.co.jp/…      (Japanese, co.jp's root)
-//   origin /en/…  ->  https://mdmc.co.jp/en/…   (English on the Japan domain)
+//   origin /jp/…  ->  https://mdmc.co.jp/…   (Japanese, co.jp's root)
 //
-// The root EN tree and /ja/ are deliberately absent: they are mdmc.co's
-// surfaces and already covered by @astrojs/sitemap's output.
+// Nothing else belongs in it. A sitemap should list only self-canonical URLs,
+// and co.jp/en/* canonicalises to mdmc.co (English consolidates there), so
+// listing it would just point Google at addresses that redirect its attention
+// elsewhere — the same reason mdmc.co's sitemap drops /ja/. Between the two
+// sitemaps every canonical URL on the site is listed exactly once.
 
 const ORIGIN = 'https://mdmc.co.jp'
 
@@ -33,8 +35,8 @@ export function cojpUrlOf(pathname) {
 
   if (p === '/jp/') return `${ORIGIN}/`
   if (p.startsWith('/jp/')) return ORIGIN + p.slice('/jp'.length)
-  // /en/ is served at the same prefix on co.jp, so it passes through as-is.
-  if (p === '/en/' || p.startsWith('/en/')) return ORIGIN + p
+  // Everything else — the root EN tree, /ja/, and co.jp's own /en/ — either
+  // belongs to mdmc.co or canonicalises there. See the header note.
   return null
 }
 

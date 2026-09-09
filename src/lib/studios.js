@@ -53,6 +53,16 @@ export const STUDIOS = [
     email: 'nz@mdmc.co',
     phone: '+64 3 660 0336',
     image: '/images/studios/nz.webp',
+    // Structured breakdown of addressLines above, for schema.org PostalAddress
+    // (see structured-data.js). Kept beside the source address so the two
+    // cannot drift; addressRegion is omitted rather than guessed where the
+    // transcribed address does not state one.
+    postal: {
+      streetAddress: 'Level 2, 47 Salisbury St, Christchurch Central',
+      addressLocality: 'Christchurch',
+      postalCode: '8013',
+      addressCountry: 'NZ',
+    },
   },
   {
     id: 'au',
@@ -63,6 +73,13 @@ export const STUDIOS = [
     email: 'au@mdmc.co',
     phone: null,
     image: '/images/studios/au.webp',
+    postal: {
+      streetAddress: '100 Arthur Street, Level 10',
+      addressLocality: 'North Sydney',
+      addressRegion: 'NSW',
+      postalCode: '2060',
+      addressCountry: 'AU',
+    },
   },
   {
     id: 'jp',
@@ -80,6 +97,13 @@ export const STUDIOS = [
     email: 'contact@mdmc.co.jp',
     phone: null,
     image: '/images/studios/jp.webp',
+    postal: {
+      streetAddress: 'Nisankai J-2, Brick South KITANAKA BRICK & WHITE, 5-57-2 Kitanakadori, Naka-ku',
+      addressLocality: 'Yokohama',
+      addressRegion: 'Kanagawa',
+      postalCode: '231-0003',
+      addressCountry: 'JP',
+    },
     // Japanese-format address (user-confirmed 2026-08-20, same source as
     // the JA About page). Only the JP studio has one — NZ/AU postal
     // addresses stay in Latin script on every locale, standard practice

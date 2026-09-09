@@ -37,6 +37,8 @@ interface Props {
   heroImage: { url: string; alt: string } | null;
   pullQuote: string | null;
   pullQuoteAttribution: string | null;
+  // Localised project title, used only as the hero's alt fallback below.
+  title?: string;
 }
 
 const {
@@ -44,6 +46,7 @@ const {
   heroImage = null,
   pullQuote = null,
   pullQuoteAttribution = null,
+  title = '',
 } = Astro.props as Props;
 
 const slots: GallerySlot[] =
@@ -52,6 +55,14 @@ const slots: GallerySlot[] =
     : heroImage
       ? [{ url: heroImage.url, alt: heroImage.alt, kind: 'hero', caption: null }]
       : [];
+
+// Alt text for a gallery slot. No Strapi media item currently has
+// alternativeText, so slot.alt is '' for every image — and alt="" on a
+// project's own photography tells a screen reader it is decorative when it is
+// the main content. Prefer the slot's caption when there is one (real
+// descriptive copy), else the project title. Both fall away the moment
+// alternativeText is filled in, which is where the real fix belongs.
+const altFor = (slot) => slot.alt || slot.caption || title;
 
 // Group consecutive `two_up` slots into 2-col pairs; every other kind (and
 // an odd trailing two_up) renders as its own full-width row. Only the
@@ -84,7 +95,7 @@ for (let i = 0; i < slots.length; i++) {
           {row.slots.map((s) => (
             <div>
               <div class="gallery-frame gallery-frame-4-3">
-                <img src={s.url} alt={s.alt} />
+                <img src={s.url} alt={altFor(s)} />
               </div>
               {s.caption && <div class="gallery-caption">{s.caption}</div>}
             </div>
@@ -93,28 +104,28 @@ for (let i = 0; i < slots.length; i++) {
       ) : row.kind === 'hero' ? (
         <div>
           <div class="gallery-frame gallery-frame-16-9">
-            <img src={row.slot.url} alt={row.slot.alt} data-image-id={row.isHeroFirst ? 'hero' : undefined} />
+            <img src={row.slot.url} alt={altFor(row.slot)} data-image-id={row.isHeroFirst ? 'hero' : undefined} />
           </div>
           {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
         </div>
       ) : row.kind === 'two_up' ? (
         <div>
           <div class="gallery-frame gallery-frame-4-3">
-            <img src={row.slot.url} alt={row.slot.alt} />
+            <img src={row.slot.url} alt={altFor(row.slot)} />
           </div>
           {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
         </div>
       ) : row.kind === 'square' ? (
         <div>
           <div class="gallery-frame gallery-frame-1-1">
-            <img src={row.slot.url} alt={row.slot.alt} />
+            <img src={row.slot.url} alt={altFor(row.slot)} />
           </div>
           {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
         </div>
       ) : (
         <div>
           <div class="gallery-full-bleed">
-            <img src={row.slot.url} alt={row.slot.alt} />
+            <img src={row.slot.url} alt={altFor(row.slot)} />
           </div>
           {row.slot.caption && <div class="gallery-caption">{row.slot.caption}</div>}
         </div>

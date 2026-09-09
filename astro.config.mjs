@@ -32,10 +32,23 @@ export default defineConfig({
   devToolbar: { enabled: false },
   integrations: [
     sitemap({
-      // /jp and /en are the mdmc.co.jp surfaces (served through the Worker)
-      // built at this origin — duplicates by design, consolidated via
-      // canonical tags, so they stay out of mdmc.co's sitemap.
-      filter: (page) => !page.startsWith('https://mdmc.co/jp/') && !page.startsWith('https://mdmc.co/en/'),
+      // A sitemap should list only SELF-CANONICAL URLs, and of the four built
+      // trees exactly one is self-canonical on mdmc.co:
+      //
+      //   /      -> canonical self                 KEEP
+      //   /ja/   -> canonical https://mdmc.co.jp/  drop (co.jp's sitemap has it)
+      //   /jp/   -> a co.jp surface, not public here
+      //   /en/   -> canonical https://mdmc.co/…    drop (it is a co.jp surface
+      //             whose canonical is already the / tree listed here)
+      //
+      // /jp and /en were already excluded as co.jp surfaces. /ja/ is dropped
+      // too (2026-09-09): it consolidates to co.jp, so listing its 22 URLs
+      // here only asked Google to crawl 22 addresses that all point away.
+      // Between the two sitemaps every canonical is listed exactly once.
+      filter: (page) =>
+        !page.startsWith('https://mdmc.co/jp/') &&
+        !page.startsWith('https://mdmc.co/en/') &&
+        !page.startsWith('https://mdmc.co/ja/'),
     }),
     cojpSitemap(),
   ],
