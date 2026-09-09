@@ -1,0 +1,26 @@
+---
+// 個人情報保護方針・利用規約 — mdmc.co.jp root tree (served by the Worker at
+// co.jp/privacy/, built here at origin /jp/privacy/).
+//
+// This is the JAPAN entity's document under the APPI — a distinct document,
+// not a translation of the NZ one. See PrivacyJpView.astro's header for what
+// differs and why. The NZ policy deliberately does NOT appear on this domain:
+// mdmc.co.jp is operated by Finlayson Holdings Japan Inc., so serving a New
+// Zealand policy naming the NZ entity here would have been wrong, and
+// src/pages/en/privacy/ was removed for that reason.
+import Base from "../../../layouts/Base.astro";
+import PrivacyJpView from "../../../views/PrivacyJpView.astro";
+import { pageTitle } from "../../../lib/i18n.js";
+---
+
+{/* Claude-drafted JA — pending the native review pass, and it matters more
+    here than in marketing copy. */}
+<Base
+  title={pageTitle("cojp", "ja", "個人情報保護方針・利用規約")}
+  description="フィンレイソン ・ ホールディングス ・ ジャパン株式会社（MDMC Japan）の個人情報の取り扱い、Cookieおよび広告に関する方針、ならびに本ウェブサイトの利用規約。"
+  locale="ja"
+  site="cojp"
+  noHreflang
+>
+  <PrivacyJpView locale="ja" site="cojp" />
+</Base>

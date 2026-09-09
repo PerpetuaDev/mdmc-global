@@ -1,0 +1,405 @@
+---
+// 個人情報保護方針・利用規約 — mdmc.co.jp (Finlayson Holdings Japan Inc.)
+//
+// A DISTINCT DOCUMENT, not a translation of PrivacyView.astro. Same
+// relationship AboutJpView has to AboutView: the ja surface gets its own
+// composition because the underlying obligations differ, not because the
+// wording does.
+//
+// Written against the APPI (個人情報の保護に関する法律), which differs from the
+// NZ Privacy Act in ways that change the STRUCTURE of the document, not just
+// its language:
+//   - 利用目的 must be specified and publicly announced (法17条・21条). It is
+//     the central obligation, so it gets its own section rather than being
+//     folded into "how we use it".
+//   - 保有個人データ disclosures (法32条) require the operator's name, address
+//     AND the representative's name — hence 代表者 appears, which the NZ
+//     document has no equivalent of.
+//   - 委託 (entrustment) is NOT 第三者提供 under 法27条5項1号, so processors
+//     are described as 委託先 rather than as third parties we "disclose" to.
+//   - BUT 外国にある第三者への提供 (法28条) applies to overseas entrustment
+//     regardless, and requires information about the destination country's
+//     regime — so the US position is stated explicitly. This is the single
+//     biggest structural difference from the NZ document.
+//   - Rights are 開示・訂正・利用停止・消去 (法33〜35条), not "access and
+//     correction", and the supervisory body is the 個人情報保護委員会.
+//   - Advertising email is governed by 特定電子メール法, not the NZ
+//     Unsolicited Electronic Messages Act.
+//   - 特定商取引法 does NOT apply: this site sells nothing and takes no
+//     payment, so no 特商法 disclosure is included.
+//
+// Entity facts are the user-confirmed ones already published on the ja About
+// page (src/lib/about-jp-data.js, confirmed 2026-08-20): 商号, 代表者,
+// 本社所在地. Contact address is contact@mdmc.co.jp per studios.js.
+//
+// The Japanese here is Claude-drafted and joins the pending native-review
+// list. It is a legal document, so that review matters more than it does for
+// the marketing copy.
+import { makeT } from "../lib/i18n.js";
+
+interface Props {
+  locale?: "en" | "ja";
+  site?: "co" | "cojp";
+}
+const { locale = "ja" } = Astro.props as Props;
+const t = makeT(locale);
+
+const updated = "2026年9月9日";
+---
+
+<main style="animation: pageIn .6s var(--ease)">
+  <section class="legal-hero" style="padding: 80px var(--gutter-r) 0 var(--gutter-l)">
+    <h1 class="legal-title">個人情報保護方針・利用規約</h1>
+    <p class="legal-meta label">最終更新日 {updated}</p>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">はじめに</h2>
+    <div class="legal-body">
+      <p>
+        フィンレイソン ・ ホールディングス ・ ジャパン株式会社（MDMC Japan事業部、
+        以下「当社」）は、デザインおよびデジタル戦略に関する事業を行っています。
+        本ウェブサイトは当社の実績をご紹介し、お問い合わせをお受けするためのもので、
+        会員登録や決済の機能はありません。
+      </p>
+      <p>
+        当社は、個人情報の保護に関する法律（以下「個人情報保護法」）その他の関係法令
+        を遵守し、以下のとおり個人情報を取り扱います。
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">事業者情報</h2>
+    <div class="legal-body">
+      <dl class="legal-dl">
+        <dt>商号</dt>
+        <dd>フィンレイソン ・ ホールディングス ・ ジャパン株式会社<br>（Finlayson Holdings Japan Inc.）</dd>
+        <dt>代表者</dt>
+        <dd>フィンレイソン・リアム（代表取締役）</dd>
+        <dt>所在地</dt>
+        <dd>〒231-0003 神奈川県横浜市中区北仲通5-57-2<br>KITANAKA BRICK &amp; WHITE Brick South<br>ニサンカイ J-2</dd>
+        <dt>連絡先</dt>
+        <dd><a href="mailto:contact@mdmc.co.jp">contact@mdmc.co.jp</a></dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">取得する個人情報</h2>
+    <div class="legal-body">
+      <p>
+        <strong>お問い合わせフォーム</strong>では、お名前、メールアドレス、および
+        任意でご記入いただく会社名・ご予算の目安と、お問い合わせ内容を取得します。
+      </p>
+      <p>
+        <strong>採用応募フォーム</strong>では、お名前、メールアドレス、ご応募内容、
+        任意でご記入いただくポートフォリオまたはLinkedInのURL、および添付いただく
+        履歴書・職務経歴書等のファイル（.pdf、.doc、.docx、合計15MBまで）を取得します。
+      </p>
+      <p>
+        <strong>閲覧に伴い自動的に</strong>、アクセス解析により、閲覧ページ、IPアドレス
+        から推定される大まかな地域、端末およびブラウザの種類、参照元サイト、ならびに
+        お問い合わせの送信・メールアドレスや電話番号のリンクのクリックといった特定の
+        操作を取得します。
+      </p>
+      <p>
+        <strong>フォームの保護のため</strong>、Cloudflare Turnstile が、人によるアクセス
+        と自動化されたプログラムによるアクセスを判別する目的で、IPアドレスおよび
+        ブラウザに関する情報を取得します。フォームのあるページでのみ動作します。
+      </p>
+      <p>
+        当社は、健康、財産、人種・信条等に関する情報（要配慮個人情報を含みます）を
+        お尋ねすることはなく、その必要もありません。フォームからお送りにならないよう
+        お願いいたします。
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">利用目的</h2>
+    <div class="legal-body">
+      <p>当社は、取得した個人情報を次の目的で利用します。</p>
+      <ol>
+        <li>お問い合わせへの回答および必要なご連絡のため</li>
+        <li>お問い合わせを踏まえた業務のご相談、お見積り、および受託業務の遂行のため</li>
+        <li>採用選考および採用に関するご連絡のため</li>
+        <li>本ウェブサイトの改善、および当社の広告の効果測定のため</li>
+        <li>迷惑行為・不正アクセスの防止のため</li>
+      </ol>
+      <p>
+        上記の目的の範囲を超えて利用する場合は、あらかじめご本人の同意をいただきます。
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">第三者提供および委託</h2>
+    <div class="legal-body">
+      <p>
+        当社は、法令に基づく場合を除き、個人情報を第三者に提供することはありません。
+        個人情報を販売することも一切ありません。
+      </p>
+      <p>
+        ただし、上記の利用目的の達成に必要な範囲で、外部の事業者に取り扱いを委託して
+        います。委託先は次のとおりです。
+      </p>
+      <ul>
+        <li><strong>Google</strong> — アクセス解析（Google アナリティクス）および
+          当社のメール（Google Workspace）</li>
+        <li><strong>Cloudflare</strong> — DNS・セキュリティ・コンテンツ配信、
+          Turnstile による迷惑投稿対策、および同社によるアクセス測定</li>
+        <li><strong>Mailgun</strong>（Sinch） — フォーム送信内容のメール配信</li>
+        <li><strong>Strapi Cloud</strong> — コンテンツ管理システム、および
+          フォームの送信先となるサーバー</li>
+        <li><strong>GitHub</strong> — 本ウェブサイトの配信</li>
+      </ul>
+      <p>
+        フォームにご記入いただいた内容は、メールとして当社の受信箱に届きます。
+        <strong>本ウェブサイトのデータベースには保存されません。</strong>
+        添付ファイルもメールに添付されるのみで、別途保管されることはありません。
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">外国にある第三者への提供</h2>
+    <div class="legal-body">
+      <p>
+        上記の委託先はいずれも日本国外に所在し、主として<strong>アメリカ合衆国</strong>
+        にあります。したがって、当社が個人情報の取り扱いをこれらの事業者に委託すること
+        は、個人情報保護法第28条にいう外国にある第三者への提供にあたります。
+      </p>
+      <p>
+        アメリカ合衆国には、日本の個人情報保護法に相当する包括的な個人情報保護に関する
+        法制度はなく、分野別の法令および州法によって規律されています。各委託先は、
+        自らのプライバシーポリシーおよび当社との契約に基づき、個人データの安全管理措置
+        を講じています。
+      </p>
+      <p>
+        本ウェブサイトのフォームをご利用いただくことにより、上記の外国にある第三者への
+        提供に同意いただいたものとして取り扱います。ご同意いただけない場合は、フォーム
+        をご利用にならず、
+        <a href="mailto:contact@mdmc.co.jp">contact@mdmc.co.jp</a>
+        まで直接メールでご連絡ください。
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">Cookie等および広告</h2>
+    <div class="legal-body">
+      <p>本ウェブサイトは、当社のドメインにおいて次の Cookie を使用します。</p>
+      <ul>
+        <li><code>_ga</code>、<code>_ga_9TWMV1SZMR</code> — Google アナリティクス。
+          同一の閲覧者による再訪問を新規の閲覧者として数えないために使用します。</li>
+        <li><code>cf_clearance</code> — Cloudflare によるセキュリティ・迷惑投稿対策の
+          確認が行われた際に設定され、確認が繰り返されることを防ぎます。</li>
+      </ul>
+      <p>
+        また、お客様のブラウザに <code>mdmc.region</code> として、最後に選択された
+        スタジオの表示設定を保存します。これは実際に選択された場合にのみ保存され、
+        ブラウザの外に送信されることはなく、サイトデータを削除すれば消去されます。
+      </p>
+      <p>
+        当社は Google 広告を利用しており、その効果を測定しています。当社の Google
+        アナリティクスでは <strong>Google シグナル</strong>を有効にしています。
+        Google アカウントにログインし、かつ広告のカスタマイズを有効にされている場合、
+        Google は本ウェブサイトの閲覧を当該アカウントと関連付けることがあります。
+        これにより当社は、異なる端末をまたいだ場合でも広告からお問い合わせに至ったか
+        を測定し、閲覧者の大まかな属性や関心を把握し、一度
+        本ウェブサイトを訪問された方に対して再度広告を表示（リマーケティング）する
+        ことができます。
+      </p>
+      <p>
+        当社が確認できるのは集計された統計情報および広告配信対象の規模のみであり、
+        個々の閲覧者を特定できる情報を Google から受け取ることはありません。
+      </p>
+      <p>
+        これらの設定は、
+        <a href="https://myadcenter.google.com" rel="noopener">Google の広告設定</a>
+        から広告のカスタマイズを無効にすることで停止できます。
+        <a href="https://tools.google.com/dlpage/gaoptout" rel="noopener">Google
+        アナリティクス オプトアウト アドオン</a>
+        をご利用いただくか、ブラウザの設定で Cookie を無効にすることでも停止できます。
+        Cookie を無効にしても本ウェブサイトはご利用いただけます。
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">保存期間</h2>
+    <div class="legal-body">
+      <p>
+        Google アナリティクスにおいて、イベントデータ（閲覧されたページや操作の記録）
+        は<strong>2か月</strong>、ユーザー単位のデータは<strong>14か月</strong>保存され、
+        その後 Google により削除されます。
+      </p>
+      <p>
+        お問い合わせおよび採用応募の内容は、お送りいただいた目的のために必要な期間
+        — ご回答のため、また業務に至った場合には案件および業務上の記録として —
+        当社のメール内に保存します。定期的に見直し、必要のなくなったものは削除します。
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">開示等のご請求</h2>
+    <div class="legal-body">
+      <p>
+        ご本人またはその代理人は、当社が保有する個人データについて、
+        <strong>利用目的の通知、開示、訂正・追加・削除、利用停止・消去、
+        第三者提供の停止</strong>を請求することができます。
+      </p>
+      <p>
+        <a href="mailto:contact@mdmc.co.jp">contact@mdmc.co.jp</a>
+        までご連絡ください。ご本人であることを確認させていただいたうえで、
+        法令に定める期間内に対応いたします。手数料はいただきません。
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">お問い合わせ・苦情の申出先</h2>
+    <div class="legal-body">
+      <p>
+        個人情報の取り扱いに関するお問い合わせおよび苦情は、
+        <a href="mailto:contact@mdmc.co.jp">contact@mdmc.co.jp</a>
+        までお申し出ください。
+      </p>
+      <p>
+        当社の対応にご納得いただけない場合は、個人情報保護委員会
+        （<a href="https://www.ppc.go.jp" rel="noopener">ppc.go.jp</a>）
+        にご相談いただくこともできます。
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">安全管理措置および広告メール</h2>
+    <div class="legal-body">
+      <p>
+        本ウェブサイトは HTTPS により暗号化して配信しており、フォームには自動化された
+        不正利用への対策を講じています。インターネットを通じた通信の安全性を完全に
+        保証することはできませんので、機微な情報をフォームからお送りになることは
+        お控えください。
+      </p>
+      <p>
+        当社は、お問い合わせをいただいた方を広告配信の名簿に加えることはなく、
+        ご承諾のない広告宣伝メールをお送りすることもありません
+        （特定電子メールの送信の適正化等に関する法律に基づく取り扱いです）。
+      </p>
+    </div>
+  </section>
+
+  <section class="legal-fold">
+    <h2 class="label">利用規約</h2>
+    <div class="legal-body">
+      <p>
+        <strong>本ウェブサイトについて。</strong>
+        本ウェブサイトの内容は情報提供を目的とするものです。当社の実績およびご提供
+        できる業務を紹介するものであり、契約の申込み、確定した見積り、または個別の
+        ご相談を経ない専門的な助言ではありません。
+      </p>
+      <p>
+        <strong>知的財産。</strong>
+        本ウェブサイトのデザイン、文章およびソースコードは当社に帰属します。
+        掲載しているクライアントワークは各クライアントの了解を得て公開しているもので、
+        そこに含まれる商標、ロゴおよび製品名は各権利者に帰属します。本ウェブサイトの
+        内容を利用する権利を許諾するものではありません。
+      </p>
+      <p>
+        <strong>禁止事項。</strong>
+        本ウェブサイトの運営を妨げる行為、フォームから違法または虚偽の内容を送信する
+        行為、および運営に影響を及ぼす規模で自動的に情報を取得する行為はお控えください。
+      </p>
+      <p>
+        <strong>外部サイトへのリンク。</strong>
+        当社が他のウェブサイトへリンクしている場合、当該サイトは当社の管理下になく、
+        その内容について責任を負いません。
+      </p>
+      <p>
+        <strong>免責。</strong>
+        当社は本ウェブサイトの正確性および可用性の維持に努めますが、これらを常に
+        保証するものではなく、予告なく内容を変更または削除することがあります。
+        法令の認める範囲において、本ウェブサイトのご利用またはその内容への信頼に
+        起因する損害について責任を負いません。
+      </p>
+      <p>
+        <strong>準拠法および管轄。</strong>
+        本方針および本規約は日本法に準拠し、これらに関する紛争については
+        横浜地方裁判所を第一審の専属的合意管轄裁判所とします。
+      </p>
+      <p>
+        <strong>改定。</strong>
+        本方針および本規約は変更されることがあります。変更した場合は、冒頭の最終更新日
+        を改めます。
+      </p>
+    </div>
+  </section>
+</main>
+
+<style>
+  .legal-title {
+    font-size: clamp(32px, 3.6vw, 52px);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    max-width: 900px;
+  }
+
+  .legal-meta { margin-top: 24px; }
+
+  /* Same 240 + 720 label/prose grammar the About pages use. */
+  .legal-fold {
+    padding: 80px var(--gutter-r) 0 var(--gutter-l);
+    display: grid;
+    grid-template-columns: 240px minmax(0, 720px);
+    gap: 48px;
+  }
+
+  .legal-fold:last-of-type { padding-bottom: 160px; }
+  .legal-fold .label { padding-top: 8px; }
+
+  .legal-body {
+    font-size: var(--text);
+    /* Japanese needs more leading than the Latin prose scale gives it. */
+    line-height: 1.9;
+  }
+
+  .legal-body p + p,
+  .legal-body ul + p,
+  .legal-body ol + p,
+  .legal-body p + ul,
+  .legal-body p + ol,
+  .legal-body p + .legal-dl { margin-top: 1.1em; }
+
+  .legal-body ul, .legal-body ol { padding-left: 1.4em; }
+  .legal-body li + li { margin-top: 0.5em; }
+
+  .legal-dl { display: grid; grid-template-columns: 7em minmax(0, 1fr); gap: 12px 24px; }
+  .legal-dl dt { color: var(--muted); }
+
+  .legal-body a { border-bottom: 1px solid var(--faint); }
+  .legal-body a:hover { border-bottom-color: currentColor; }
+
+  .legal-body code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85em;
+  }
+
+  @media (max-width: 1023px) {
+    .legal-fold {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: 16px !important;
+      padding-top: var(--sp-6) !important;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .legal-hero { padding-top: var(--sp-6) !important; }
+    .legal-fold:last-of-type { padding-bottom: var(--sp-7) !important; }
+    .legal-dl { grid-template-columns: minmax(0, 1fr) !important; gap: 4px 0 !important; }
+    .legal-dl dd { margin-bottom: 12px; }
+  }
+</style>
