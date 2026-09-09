@@ -60,10 +60,10 @@ const canonicalUrl = resolvedLocale === "ja" ? jaAlternateUrl : enAlternateUrl;
        design/brand/. This is the ONLY place it is wired: every page in all
        four trees (/, /ja/, /jp/, /en/) renders through this layout, and the
        ja-proxy Worker passes dotted root paths straight to the origin, so
-       mdmc.co.jp picks the same files up. The SVG carries a
-       prefers-color-scheme rule and inverts to white on dark browser chrome
-       (verified in Chrome); an .ico cannot, so it keeps its white paper for
-       Safari — which ignores SVG icons — and for bookmark/history lists. -->
+       mdmc.co.jp picks the same files up. Every icon is a white square with
+       black text in BOTH colour schemes — the SVG paints its own white
+       background and carries no prefers-color-scheme rule, so it matches the
+       .ico rather than inverting away from it. -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
