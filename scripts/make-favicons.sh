@@ -4,38 +4,46 @@
 #
 #   ./scripts/make-favicons.sh
 #
-# Source of truth is design/brand/mdmc-favicon.jpg — the supplied artwork:
-# the MDMC wordmark sitting near the BOTTOM of a white square. Everything
-# below is derived from it, so re-running this after the brand changes is the
-# whole update procedure. Nothing here touches the network.
+# Source of truth is design/brand/mdmc-favicon.jpg — the supplied artwork: the
+# MDMC letters stacked as a 2x2 lockup (MD over MC), centred in a white
+# square. Everything below is derived from it, so re-running this after the
+# brand changes is the whole update procedure. Nothing here touches the
+# network.
 #
 # Requires: ImageMagick 7 (`magick`), python3 with opencv (`cv2`) + numpy.
 #
+# WHY THE ARTWORK IS STACKED
+# --------------------------
+# The first version of this icon was the horizontal wordmark, which is
+# ~4.23:1. Letterboxed into a square that leaves the glyphs about 3px tall at
+# 16px — an illegible smudge, confirmed in practice. The 2x2 lockup is 0.93:1,
+# so the same box gives roughly 6px glyph rows at 16px and 12px at 32px, and
+# the letters actually read. Do not "simplify" this back to one line.
+#
 # TWO DESIGN DECISIONS ARE THE USER'S, AND NEITHER IS A BUG
 # ---------------------------------------------------------
-# 1. THE SQUARE IS USED AS COMPOSED. The wordmark's low placement is
-#    deliberate, so the artwork is never trimmed to its ink or re-centred —
-#    every asset keeps the source's own margins and its bottom alignment.
-#    An earlier revision trimmed and vertically centred it; that was wrong.
+# 1. THE SQUARE IS USED AS COMPOSED. The artwork is never trimmed to its ink
+#    or re-scaled to fill the frame — every asset keeps the source's own
+#    margins, which are deliberate and exactly symmetric (240px left/right,
+#    195px top/bottom, so the ink fills 71% x 77%). Filling the box would buy
+#    ~2px of glyph height at 16px and is still not worth overriding the
+#    composition. An early revision trimmed and re-centred; that was wrong.
 # 2. ALWAYS A WHITE SQUARE WITH BLACK TEXT, in light AND dark mode. So the
 #    SVG paints an explicit white background rather than being transparent,
 #    and carries no prefers-color-scheme rule. Every raster is flattened onto
 #    white to match. One identity in every context.
 #
-# The full wordmark is also used at EVERY size rather than an M monogram for
-# the small ones. At 16px it does not read as letterforms — a known and
-# accepted trade-off for carrying one consistent mark everywhere.
-#
 # WHY THE SMALL RASTERS ARE NOT A PLAIN DOWNSCALE
 # -----------------------------------------------
-# The wordmark is ~4.23:1 and occupies only the lower fifth of the square, so
-# at 16px it lands about 3px tall. A naive resize gives every one of those
-# pixels partial ink coverage and antialiases the lot to a uniform grey
-# smudge. So each raster size gets its strokes thickened BEFORE the downscale
-# — in negated space, where ink is white, because dilating the black-on-white
-# original would eat the strokes instead of growing them — and its midtones
-# pushed back toward black afterwards. Radii were tuned by rendering
-# candidates at true size and comparing them.
+# A naive resize gives the thin strokes partial pixel coverage and
+# antialiases them toward grey. So each raster size gets its strokes
+# thickened BEFORE the downscale — in negated space, where ink is white,
+# because dilating the black-on-white original would eat the strokes instead
+# of growing them — and its midtones pushed back toward black afterwards.
+# Radii are much gentler than the wordmark version needed, since the glyphs
+# are now large enough to survive on their own; overdoing it closes the D's
+# counter and welds the letters together. Tuned by rendering candidates at
+# true size and comparing them.
 
 set -euo pipefail
 
@@ -63,7 +71,7 @@ read -r IW IH IX IY < <(
     sed -E 's/[x+]/ /g'
 )
 echo "square: ${SW}x${SH}; ink ${IW}x${IH} at +${IX}+${IY}"
-echo "  ink sits $(( SH - IY - IH ))px off the bottom, $(( IY * 100 / SH ))% down the square"
+echo "  ink fills $(( IW * 100 / SW ))% x $(( IH * 100 / SH ))%; margins L=$IX R=$(( SW - IX - IW )) T=$IY B=$(( SH - IY - IH ))"
 
 if [ "$SW" != "$SH" ]; then
   echo "WARNING: source is not square (${SW}x${SH}); icons will be letterboxed" >&2
@@ -127,13 +135,13 @@ ico_size() { # $1 = px, $2 = dilate radius, $3 = level ceiling
     -background white -alpha remove -alpha off \
     "$WORK/ico-$1.png"
 }
-# 16px is deliberately NOT the densest option available. Heavier dilation
-# (Disk:11, Disk:14) renders darker but merges the four letters into a single
-# bar; Disk:8 keeps visible gaps between them, and that letter rhythm is the
-# only legibility cue left at this size. Compared at true size before picking.
-ico_size 16 8  60
-ico_size 32 6  75
-ico_size 48 3  85
+# Radii compared at true size. Past Disk:6 at 16px the D's counter fills in
+# and the stacked letters weld together, so the compensation stays light and
+# the level ceiling does the rest of the work (lower ceiling = darker ink,
+# since it is applied in the negated space).
+ico_size 16 3 60
+ico_size 32 2 75
+ico_size 48 1 85
 magick "$WORK/ico-16.png" "$WORK/ico-32.png" "$WORK/ico-48.png" "$OUT/favicon.ico"
 
 # --- 4. apple-touch-icon.png (180) ------------------------------------------
