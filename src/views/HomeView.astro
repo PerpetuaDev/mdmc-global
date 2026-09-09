@@ -130,12 +130,19 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
 
   <section class="home-manifesto" style="padding: 143px var(--gutter-r) 168px calc(var(--gutter-l) + 150px); font-size: 32px; line-height: 1.4; letter-spacing: -0.005em">
     <div style="max-width: 880px">
+      {/* The manifesto's opening line is the page's h1 — it is the only real
+          heading the home page has, and before this the page started at h3.
+          It is retagged in BOTH variants: they are a responsive pair (one is
+          display:none at any given width, see the media queries below), so
+          this is one visible h1 per viewport rather than two competing
+          headings. The .manifesto-h1 class is required, NOT cosmetic — see
+          its rule for why. */}
       <div class="manifesto-lined">
-        <p><Fragment set:html={manifesto1[0]} /> <br><Fragment set:html={manifesto1[1]} /></p>
+        <h1 class="manifesto-h1"><Fragment set:html={manifesto1[0]} /> <br><Fragment set:html={manifesto1[1]} /></h1>
         <p style="margin-top: 1.5em"><Fragment set:html={manifesto2[0]} /> <br><Fragment set:html={manifesto2[1]} /> <br><Fragment set:html={manifesto2[2]} /></p>
       </div>
       <div class="manifesto-flow">
-        <p><Fragment set:html={manifesto1Flow} /></p>
+        <h1 class="manifesto-h1"><Fragment set:html={manifesto1Flow} /></h1>
         <p style="margin-top: 1.5em"><Fragment set:html={manifesto2Flow} /></p>
       </div>
     </div>
@@ -143,7 +150,9 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
 
   <section class="home-workgrid" style="padding: 0 var(--gutter-r) 160px var(--gutter-l)">
     <div style="display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 26px; row-gap: 64px">
-      {projects.map((p) => <WorkCard project={p} locale={locale} site={site} />)}
+      {/* h2, not the component's h3 default: the manifesto above is now the
+          page's h1, so h3 here would skip a level. */}
+      {projects.map((p) => <WorkCard project={p} headingLevel="h2" locale={locale} site={site} />)}
     </div>
   </section>
 </main>
@@ -207,6 +216,22 @@ const manifesto2Flow = escAmp(unwrapAuthoredBreaks(t("home.manifesto.2")));
          world starts at 1024. */
       max-height: 80svh;
     }
+  }
+
+  /* Keeps the h1 rendering exactly as the <p> it replaced. This is load-bearing,
+     not tidying: the global reset (* { margin: 0; padding: 0 }) does NOT reset
+     font-size or font-weight, so without this an h1 falls to the UA default of
+     2em bold — 64px here.
+     `inherit` rather than a literal 32px on purpose. The size lives on
+     .home-manifesto, which the responsive blocks below step down to 26px at
+     1023 and 21px at 700; inheriting tracks all three, while hardcoding the
+     desktop value would silently break both smaller breakpoints. Verified
+     against live before/after computed styles at every breakpoint. */
+  .manifesto-h1 {
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
   }
 
   .manifesto-flow { display: none; }

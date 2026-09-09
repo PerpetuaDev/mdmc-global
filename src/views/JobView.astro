@@ -55,7 +55,10 @@ const t = makeT(locale);
   </section>
 
   <section class="role-section">
-    <h3 class="label" style="padding-top: 8px">{t("careers.job.about")}</h3>
+    {/* h2, matching the "Apply" heading below: both are section labels at the
+        same level under the job title's h1, and this one was an h3, which
+        skipped a level. .label pins the type, so the tag is cosmetic here. */}
+    <h2 class="label" style="padding-top: 8px">{t("careers.job.about")}</h2>
     <div class="role-body">
       {(pickLocalized(locale, job, "body") ?? job.body).map((para) => (
         <p>{para}</p>
