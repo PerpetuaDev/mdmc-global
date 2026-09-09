@@ -91,6 +91,13 @@ const description = pickLocalized(locale, project, "description");
        elsewhere on the site. */
     border-bottom: 1px solid transparent;
     transition: border-color .2s ease;
+    /* Sets the gap between the text and the underline. 6px is the site's
+       figure — .nav-link and the global .cta both use `padding: 6px 0`, so
+       the CTA's underline now sits the same distance below its text as the
+       nav's does. Only the BOTTOM is padded: top padding would push the CTA
+       away from the description above it, and the gap there is already
+       correct at margin-top: 20px. */
+    padding-bottom: 6px;
   }
 
   /* Triggered by the CARD, not the CTA: the whole card is one <a>, so the

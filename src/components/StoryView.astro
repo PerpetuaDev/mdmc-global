@@ -308,9 +308,11 @@ const sections = [
     display: inline-flex;
     align-items: baseline;
     gap: 8px;
-    /* Same omission as WorkCard's — see the note there. */
+    /* Same omission as WorkCard's — see the note there, including why only
+       the bottom is padded. */
     border-bottom: 1px solid transparent;
     transition: border-color .2s ease;
+    padding-bottom: 6px;
   }
 
   .next-project:hover .next-project-cta,
