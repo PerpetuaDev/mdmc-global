@@ -7,10 +7,11 @@
 import Base from "../../../layouts/Base.astro";
 import AboutJpView from "../../../views/AboutJpView.astro";
 import { loadContent } from "../../../lib/content.js";
+import { pageTitle } from "../../../lib/i18n.js";
 
 const { aboutJapan } = await loadContent();
 ---
 
-<Base title="会社概要 — MDMC" active="about" locale="ja" site="cojp" description="MDMCはニュージーランド・オーストラリア・日本の3拠点で活動するデザイン&デジタル戦略ファームです。横浜スタジオの会社概要とアクセスのご案内。">
+<Base title={pageTitle("cojp", "ja", "会社概要")} active="about" locale="ja" site="cojp" description="MDMCはニュージーランド・オーストラリア・日本の3拠点で活動するデザイン&デジタル戦略ファームです。横浜スタジオの会社概要とアクセスのご案内。">
   <AboutJpView locale="ja" site="cojp" aboutJapan={aboutJapan} />
 </Base>

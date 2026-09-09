@@ -6,6 +6,7 @@
 import Base from "../layouts/Base.astro";
 import HomeView from "../views/HomeView.astro";
 import { loadContent } from "../lib/content.js";
+import { pageTitle } from "../lib/i18n.js";
 
 const { projects, articles, jobs } = await loadContent();
 
@@ -20,7 +21,7 @@ const redirectMap = {
 };
 ---
 
-<Base title="Integrated strategy & design | MDMC" active="home">
+<Base title={pageTitle("co", "en", "Integrated strategy & design")} active="home">
   <!--
     Legacy hash-URL redirect shim — CANONICAL implementation + tests live in
     src/lib/legacy-redirects.js (legacyRedirect). The actual inline script

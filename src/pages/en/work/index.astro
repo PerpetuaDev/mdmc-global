@@ -7,10 +7,11 @@
 import Base from "../../../layouts/Base.astro";
 import WorkIndexView from "../../../views/WorkIndexView.astro";
 import { loadContent } from "../../../lib/content.js";
+import { pageTitle } from "../../../lib/i18n.js";
 
 const { projects } = await loadContent();
 ---
 
-<Base title="Work — MDMC" active="work" description="Selected work by MDMC — an integrated design & digital strategy agency." locale="en" site="cojp">
+<Base title={pageTitle("cojp", "en", "Work")} active="work" description="Selected work by MDMC — an integrated design & digital strategy agency." locale="en" site="cojp">
   <WorkIndexView locale="en" site="cojp" projects={projects} />
 </Base>

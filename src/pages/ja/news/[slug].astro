@@ -6,6 +6,7 @@
 import Base from "../../../layouts/Base.astro";
 import ArticleView from "../../../views/ArticleView.astro";
 import { loadContent } from "../../../lib/content.js";
+import { pageTitle } from "../../../lib/i18n.js";
 
 export async function getStaticPaths() {
   const { articles } = await loadContent();
@@ -24,6 +25,6 @@ const articleDescription = article.excerpt || "MDMC is an integrated design & di
 const ogImage = article.heroImage?.url;
 ---
 
-<Base title={`${article.title} — MDMC`} active="news" description={articleDescription} ogImage={ogImage} locale="ja">
+<Base title={pageTitle("co", "ja", article.title)} active="news" description={articleDescription} ogImage={ogImage} locale="ja">
   <ArticleView locale="ja" article={article} linkedProject={linkedProject} />
 </Base>

@@ -5,6 +5,7 @@
 import Base from "../../layouts/Base.astro";
 import AboutView from "../../views/AboutView.astro";
 import { loadContent } from "../../lib/content.js";
+import { pageTitle } from "../../lib/i18n.js";
 
 const { about } = await loadContent();
 
@@ -13,6 +14,6 @@ const lede = about?.lede ?? "";
 const description = lede ? lede.substring(0, 160) : undefined;
 ---
 
-<Base title="About — MDMC" active="about" description={description}>
+<Base title={pageTitle("co", "en", "About")} active="about" description={description}>
   <AboutView locale="en" site="co" about={about} />
 </Base>

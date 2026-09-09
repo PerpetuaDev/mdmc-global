@@ -378,6 +378,47 @@ export function makeLinks(site, lang) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Page titles (2026-09-09). One definition for the whole site so the
+// separator and the brand suffix cannot drift across 33 page files.
+//
+// Two axes, and they are deliberately different ones:
+//
+//   SEPARATOR follows the LANGUAGE. Japanese takes ｜ (U+FF5C FULLWIDTH
+//   VERTICAL LINE), the idiomatic separator in Japanese titles; English takes
+//   the ASCII pipe with spaces. Note ｜ is NOT the chōonpu ー (U+30FC) that
+//   sits inside クリエイティブ — in a separator slot that reads as a vowel
+//   extension rather than a divider.
+//
+//   BRAND SUFFIX follows the DOMAIN, not the language. mdmc.co is the Global
+//   surface (it serves both NZ and AU, which share one URL because region is
+//   a client-side preference) so it carries no country; mdmc.co.jp is the
+//   Japan surface and names it. That is what makes "MDMC Global" and "MDMC
+//   Japan" two distinct search targets — see the 9/09 home-title work.
+// ---------------------------------------------------------------------------
+
+const BRAND = {
+  co: { en: 'MDMC', ja: 'MDMC' },
+  cojp: { en: 'MDMC Japan', ja: 'MDMC日本' },
+}
+
+export function titleSeparator(lang) {
+  return lang === 'ja' ? '｜' : ' | '
+}
+
+export function brandSuffix(site, lang) {
+  return (BRAND[site] ?? BRAND.co)[lang === 'ja' ? 'ja' : 'en']
+}
+
+// `label` is the page's own name, already localised ('Work', 'ワーク') or a
+// content title. Passing an empty label yields the bare brand, so a caller
+// that has nothing to prepend does not emit a dangling separator.
+export function pageTitle(site, lang, label) {
+  const brand = brandSuffix(site, lang)
+  if (!label) return brand
+  return `${label}${titleSeparator(lang)}${brand}`
+}
+
 // EN-shaped path of a page from its origin pathname + rendering context.
 export function enPathOf(site, lang, pathname) {
   const prefix = originPrefix(site, lang)

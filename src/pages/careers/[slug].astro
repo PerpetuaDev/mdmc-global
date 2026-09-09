@@ -10,6 +10,7 @@
 import Base from "../../layouts/Base.astro";
 import JobView from "../../views/JobView.astro";
 import { loadContent } from "../../lib/content.js";
+import { pageTitle } from "../../lib/i18n.js";
 
 export async function getStaticPaths() {
   const { jobs } = await loadContent();
@@ -36,6 +37,6 @@ const { job } = Astro.props as {
 const ogImage = job.heroImage?.url;
 ---
 
-<Base title={`${job.title} — MDMC`} description={job.excerpt || undefined} ogImage={ogImage}>
+<Base title={pageTitle("co", "en", job.title)} description={job.excerpt || undefined} ogImage={ogImage}>
   <JobView locale="en" job={job} />
 </Base>

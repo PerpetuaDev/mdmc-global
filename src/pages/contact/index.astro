@@ -6,10 +6,11 @@
 import Base from "../../layouts/Base.astro";
 import ContactView from "../../views/ContactView.astro";
 import { STUDIOS } from "../../lib/studios.js";
+import { pageTitle } from "../../lib/i18n.js";
 ---
 
 <Base
-  title="Contact — MDMC"
+  title={pageTitle("co", "en", "Contact")}
   active="contact"
   description="Tell us what you're working on — MDMC works from New Zealand, Australia and Japan."
 >

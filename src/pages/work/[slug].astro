@@ -6,6 +6,7 @@ import Base from "../../layouts/Base.astro";
 import ProjectView from "../../views/ProjectView.astro";
 import { loadContent } from "../../lib/content.js";
 import { nextProject } from "../../lib/normalize.js";
+import { pageTitle } from "../../lib/i18n.js";
 
 export async function getStaticPaths() {
   const { projects } = await loadContent();
@@ -20,6 +21,6 @@ const projectDescription = project.description || "MDMC is an integrated design 
 const ogImage = project.heroImage?.url || project.thumbnail?.url;
 ---
 
-<Base title={`${project.title} — MDMC`} active="work" description={projectDescription} ogImage={ogImage}>
+<Base title={pageTitle("co", "en", project.title)} active="work" description={projectDescription} ogImage={ogImage}>
   <ProjectView locale="en" project={project} next={next} />
 </Base>

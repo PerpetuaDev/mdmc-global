@@ -7,6 +7,7 @@
 import Base from "../../layouts/Base.astro";
 import CareersView from "../../views/CareersView.astro";
 import { loadContent } from "../../lib/content.js";
+import { pageTitle } from "../../lib/i18n.js";
 
 const { career, jobs } = await loadContent();
 
@@ -16,6 +17,6 @@ const heroImage = career?.heroImage;
 const contactEmail = career?.contactEmail ?? "careers@mdmc.co";
 ---
 
-<Base title="Careers — MDMC" description={intro[0] || undefined}>
+<Base title={pageTitle("co", "en", "Careers")} description={intro[0] || undefined}>
   <CareersView locale="en" headline={headline} intro={intro} heroImage={heroImage} contactEmail={contactEmail} jobs={jobs} />
 </Base>

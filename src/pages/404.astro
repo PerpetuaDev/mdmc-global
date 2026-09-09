@@ -6,9 +6,10 @@
 // single .cta back to home. Same .gutter section rhythm and pageIn entrance
 // as every other page.
 import Base from "../layouts/Base.astro";
+import { pageTitle } from "../lib/i18n.js";
 ---
 
-<Base title="Page not found — MDMC" noHreflang>
+<Base title={pageTitle("co", "en", "Page not found")} noHreflang>
   <main style="animation: pageIn .6s var(--ease)">
     {/* Longhand paddings only — the `padding` shorthand would reset the
         left/right sides that .gutter provides. */}

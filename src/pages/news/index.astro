@@ -14,12 +14,13 @@
 import Base from "../../layouts/Base.astro";
 import NewsIndexView from "../../views/NewsIndexView.astro";
 import { loadContent, ARTICLE_KIND_LABELS } from "../../lib/content.js";
+import { pageTitle } from "../../lib/i18n.js";
 
 const { articles } = await loadContent();
 
 const KINDS = Object.entries(ARTICLE_KIND_LABELS).map(([value, label]) => ({ value, label }));
 ---
 
-<Base title="News — MDMC" active="news" description="News and writing from MDMC.">
+<Base title={pageTitle("co", "en", "News")} active="news" description="News and writing from MDMC.">
   <NewsIndexView locale="en" articles={articles} kinds={KINDS} />
 </Base>

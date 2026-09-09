@@ -6,11 +6,12 @@
 import Base from "../../../layouts/Base.astro";
 import WorkIndexView from "../../../views/WorkIndexView.astro";
 import { loadContent } from "../../../lib/content.js";
+import { pageTitle } from "../../../lib/i18n.js";
 
 const { projects } = await loadContent();
 ---
 
 {/* title/description are PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
-<Base title="ワーク — MDMC" active="work" description="MDMCのワーク — デザインとデジタル戦略を横断する統合エージェンシーの実績をご紹介します。" locale="ja">
+<Base title={pageTitle("co", "ja", "ワーク")} active="work" description="MDMCのワーク — デザインとデジタル戦略を横断する統合エージェンシーの実績をご紹介します。" locale="ja">
   <WorkIndexView locale="ja" projects={projects} />
 </Base>

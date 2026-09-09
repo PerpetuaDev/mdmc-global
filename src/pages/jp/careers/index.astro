@@ -8,7 +8,7 @@
 // comment — unchanged here.
 import Base from "../../../layouts/Base.astro";
 import CareersView from "../../../views/CareersView.astro";
-import { pickLocalized } from "../../../lib/i18n.js";
+import { pickLocalized, pageTitle } from "../../../lib/i18n.js";
 import { loadContent } from "../../../lib/content.js";
 
 const { career, jobs } = await loadContent();
@@ -20,6 +20,6 @@ const contactEmail = career?.contactEmail ?? "careers@mdmc.co";
 ---
 
 {/* title is PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
-<Base title="採用情報 — MDMC" description={intro[0] || undefined} locale="ja" site="cojp">
+<Base title={pageTitle("cojp", "ja", "採用情報")} description={intro[0] || undefined} locale="ja" site="cojp">
   <CareersView locale="ja" site="cojp" headline={headline} intro={intro} heroImage={heroImage} contactEmail={contactEmail} jobs={jobs} />
 </Base>

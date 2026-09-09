@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { makeT, localePath, counterpartPath, LOCALES, STRINGS, SITES, sitePrefix, originPrefix, makeLinks, enPathOf, tMisses, pickLocalized, interpolate } from '../src/lib/i18n.js'
+import { makeT, localePath, counterpartPath, LOCALES, STRINGS, SITES, sitePrefix, originPrefix, makeLinks, enPathOf, tMisses, pickLocalized, interpolate, pageTitle, titleSeparator, brandSuffix } from '../src/lib/i18n.js'
 
 describe('makeT', () => {
   it('returns locale strings and falls back to en, then the key', () => {
@@ -421,3 +421,34 @@ describe('STRINGS.en: new redesign-only keys, exact match to live component lite
     expect(t('contact.studio')).toBe('スタジオ')
   })
 })
+
+describe('pageTitle', () => {
+  it('picks the separator by LANGUAGE and the brand suffix by DOMAIN', () => {
+    // mdmc.co is the Global surface: no country, whichever language.
+    expect(pageTitle('co', 'en', 'Careers')).toBe('Careers | MDMC')
+    expect(pageTitle('co', 'ja', '採用情報')).toBe('採用情報｜MDMC')
+    // mdmc.co.jp is the Japan surface and names it, in both languages.
+    expect(pageTitle('cojp', 'en', 'Careers')).toBe('Careers | MDMC Japan')
+    expect(pageTitle('cojp', 'ja', 'お問い合わせ')).toBe('お問い合わせ｜MDMC日本')
+  })
+
+  it('uses the fullwidth pipe for ja and the spaced ascii pipe for en', () => {
+    expect(titleSeparator('ja')).toBe('\uFF5C')
+    expect(titleSeparator('en')).toBe(' | ')
+    // Guard against the chōonpu, which is what a first draft of the JA home
+    // title actually used: U+30FC reads as a vowel extension, not a divider.
+    expect(titleSeparator('ja')).not.toBe('\u30FC')
+  })
+
+  it('returns the bare brand when there is no label to prepend', () => {
+    expect(pageTitle('co', 'en', '')).toBe('MDMC')
+    expect(pageTitle('cojp', 'ja', '')).toBe('MDMC日本')
+    expect(pageTitle('co', 'ja', undefined)).toBe('MDMC')
+  })
+
+  it('treats an unknown site as the Global surface rather than throwing', () => {
+    expect(pageTitle(undefined, 'en', 'Work')).toBe('Work | MDMC')
+    expect(brandSuffix('nonsense', 'ja')).toBe('MDMC')
+  })
+})
+

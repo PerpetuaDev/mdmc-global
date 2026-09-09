@@ -7,6 +7,7 @@
 import Base from "../../../layouts/Base.astro";
 import NewsIndexView from "../../../views/NewsIndexView.astro";
 import { loadContent, ARTICLE_KIND_LABELS_JA } from "../../../lib/content.js";
+import { pageTitle } from "../../../lib/i18n.js";
 
 const { articles } = await loadContent();
 
@@ -14,6 +15,6 @@ const KINDS = Object.entries(ARTICLE_KIND_LABELS_JA).map(([value, label]) => ({ 
 ---
 
 {/* title/description are PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
-<Base title="ニュース — MDMC" active="news" description="MDMCからのニュースと読みものをお届けします。" locale="ja" site="cojp">
+<Base title={pageTitle("cojp", "ja", "ニュース")} active="news" description="MDMCからのニュースと読みものをお届けします。" locale="ja" site="cojp">
   <NewsIndexView locale="ja" site="cojp" articles={articles} kinds={KINDS} />
 </Base>
