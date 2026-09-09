@@ -308,5 +308,13 @@ const sections = [
     display: inline-flex;
     align-items: baseline;
     gap: 8px;
+    /* Same omission as WorkCard's — see the note there. */
+    border-bottom: 1px solid transparent;
+    transition: border-color .2s ease;
+  }
+
+  .next-project:hover .next-project-cta,
+  .next-project:focus-visible .next-project-cta {
+    border-bottom-color: currentColor;
   }
 </style>

@@ -83,5 +83,21 @@ const description = pickLocalized(locale, project, "description");
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    /* The underline was simply missing: this had no border and no hover rule,
+       so "View project" never responded to hover on any card. Mechanism is the
+       global .cta class's — a transparent border reserved up front so the
+       underline costs no layout shift when it appears, transitioned rather
+       than snapping. It spans the arrow as well, which is what .cta does
+       elsewhere on the site. */
+    border-bottom: 1px solid transparent;
+    transition: border-color .2s ease;
+  }
+
+  /* Triggered by the CARD, not the CTA: the whole card is one <a>, so the
+     affordance belongs to hovering the card — matching the image effect
+     directly above. :focus-visible gives keyboard users the same cue. */
+  .work-card:hover .work-card-cta,
+  .work-card:focus-visible .work-card-cta {
+    border-bottom-color: currentColor;
   }
 </style>
