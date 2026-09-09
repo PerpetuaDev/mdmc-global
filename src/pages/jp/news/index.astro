@@ -15,6 +15,6 @@ const KINDS = Object.entries(ARTICLE_KIND_LABELS_JA).map(([value, label]) => ({ 
 ---
 
 {/* title/description are PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) */}
-<Base title={pageTitle("cojp", "ja", "ニュース")} active="news" description="MDMCからのニュースと読みものをお届けします。" locale="ja" site="cojp">
+<Base title={pageTitle("cojp", "ja", "ニュース")} active="news" description="MDMCのニュース、記事、ケーススタディ。デザインとデジタル戦略、リテール体験、各スタジオの最新情報をお届けします。" locale="ja" site="cojp">
   <NewsIndexView locale="ja" site="cojp" articles={articles} kinds={KINDS} />
 </Base>
