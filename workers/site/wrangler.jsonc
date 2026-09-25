@@ -1,0 +1,19 @@
+{
+  // mdmc-site — every MDMC domain from one Worker (docs/HOSTING.md).
+  // Routes are added at cutover (plan Tasks 6-7), never before: deploying
+  // with a route live would cut that domain over.
+  "name": "mdmc-site",
+  "main": "worker.js",
+  "compatibility_date": "2026-08-20",
+  "workers_dev": true,
+  "assets": {
+    "directory": "../../dist",
+    "binding": "ASSETS",
+    // The Worker decides everything: host → site, path → file, 404s.
+    "run_worker_first": true,
+    // The Worker names exact files (…/index.html, /404.html), so the
+    // binding must not rewrite or redirect paths itself.
+    "html_handling": "none",
+    "not_found_handling": "none"
+  }
+}
