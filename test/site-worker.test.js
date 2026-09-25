@@ -100,3 +100,150 @@ describe('mapPath — edge paths', () => {
     expect(mapPath('global', '/work/v1.2/')).toEqual({ kind: 'html', to: '/work/v1.2/' })
   })
 })
+
+import { handleRequest } from '../workers/site/worker.js'
+
+// A fake ASSETS binding over an in-memory file map. It records every request
+// it receives and honours If-None-Match the way the real binding does.
+function fakeAssets(files) {
+  const calls = []
+  return {
+    calls,
+    async fetch(req) {
+      calls.push(req)
+      const path = new URL(req.url).pathname
+      if (!(path in files)) return new Response('missing', { status: 404 })
+      if (req.headers.get('if-none-match') === '"v1"') return new Response(null, { status: 304 })
+      return new Response(req.method === 'HEAD' ? null : files[path], {
+        headers: { 'content-type': path.endsWith('.html') ? 'text/html' : 'text/plain', etag: '"v1"' },
+      })
+    },
+  }
+}
+
+const FILES = {
+  '/index.html': 'global home',
+  '/about/index.html': 'global about',
+  '/jp/index.html': 'jp home',
+  '/jp/about/index.html': 'jp about',
+  '/en/about/index.html': 'cojp en about',
+  '/404.html': 'not found page',
+  '/robots.txt': 'global robots',
+  '/favicon.svg': '<svg/>',
+}
+
+const req = (url, init) => new Request(url, init)
+
+describe('handleRequest', () => {
+  it('serves a directory URL from its index.html', async () => {
+    const env = { ASSETS: fakeAssets(FILES) }
+    const res = await handleRequest(req('https://mdmc.co/about/'), env)
+    expect(res.status).toBe(200)
+    expect(await res.text()).toBe('global about')
+    expect(new URL(env.ASSETS.calls[0].url).pathname).toBe('/about/index.html')
+  })
+
+  it('serves co.jp from the /jp tree and /en passthrough', async () => {
+    const env = { ASSETS: fakeAssets(FILES) }
+    expect(await (await handleRequest(req('https://mdmc.co.jp/'), env)).text()).toBe('jp home')
+    expect(await (await handleRequest(req('https://mdmc.co.jp/about/'), env)).text()).toBe('jp about')
+    expect(await (await handleRequest(req('https://mdmc.co.jp/en/about/'), env)).text()).toBe('cojp en about')
+  })
+
+  it('serves files from the dist root on both hosts', async () => {
+    const env = { ASSETS: fakeAssets(FILES) }
+    expect(await (await handleRequest(req('https://mdmc.co.jp/favicon.svg'), env)).text()).toBe('<svg/>')
+    expect(await (await handleRequest(req('https://mdmc.co/robots.txt'), env)).text()).toBe('global robots')
+  })
+
+  it('serves co.jp its inline robots.txt', async () => {
+    const res = await handleRequest(req('https://mdmc.co.jp/robots.txt'), { ASSETS: fakeAssets(FILES) })
+    expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+    expect(await res.text()).toBe('User-agent: *\nAllow: /\n')
+  })
+
+  it('returns the 404 page with status 404 for a missing page or file', async () => {
+    const env = { ASSETS: fakeAssets(FILES) }
+    for (const url of ['https://mdmc.co/nope/', 'https://mdmc.co.jp/nope/', 'https://mdmc.co/missing.png']) {
+      const res = await handleRequest(req(url), env)
+      expect(res.status).toBe(404)
+      expect(await res.text()).toBe('not found page')
+    }
+  })
+
+  // mdmc-ja-proxy answered the hidden sitemaps with a bare text 404, not the
+  // 404 page — the URL gate holds us to that.
+  it('hides the single-site sitemap on co.jp with a plain-text 404', async () => {
+    const res = await handleRequest(req('https://mdmc.co.jp/sitemap-index.xml'), { ASSETS: fakeAssets(FILES) })
+    expect(res.status).toBe(404)
+    expect(await res.text()).toBe('Not found')
+  })
+
+  it('strips conditional headers when serving the 404 page', async () => {
+    const env = { ASSETS: fakeAssets(FILES) }
+    const res = await handleRequest(req('https://mdmc.co/nope/', { headers: { 'if-none-match': '"v1"' } }), env)
+    expect(res.status).toBe(404)
+    expect(await res.text()).toBe('not found page')
+  })
+
+  it('passes a revalidation 304 through on a real page', async () => {
+    const env = { ASSETS: fakeAssets(FILES) }
+    const res = await handleRequest(req('https://mdmc.co/about/', { headers: { 'if-none-match': '"v1"' } }), env)
+    expect(res.status).toBe(304)
+  })
+
+  it("passes the visitor's method and headers through", async () => {
+    const env = { ASSETS: fakeAssets(FILES) }
+    const res = await handleRequest(req('https://mdmc.co/about/', { method: 'HEAD', headers: { 'accept-language': 'ja' } }), env)
+    expect(res.status).toBe(200)
+    expect(env.ASSETS.calls[0].method).toBe('HEAD')
+    expect(env.ASSETS.calls[0].headers.get('accept-language')).toBe('ja')
+  })
+
+  it('adds the trailing slash with a 301', async () => {
+    const res = await handleRequest(req('https://mdmc.co.jp/about'), { ASSETS: fakeAssets(FILES) })
+    expect(res.status).toBe(301)
+    expect(res.headers.get('location')).toBe('https://mdmc.co.jp/about/')
+  })
+
+  it('keeps the query string on redirects', async () => {
+    const env = { ASSETS: fakeAssets(FILES) }
+    const slash = await handleRequest(req('https://mdmc.co/work?utm_source=x&_gl=1*abc'), env)
+    expect(slash.headers.get('location')).toBe('https://mdmc.co/work/?utm_source=x&_gl=1*abc')
+    const www = await handleRequest(req('https://www.mdmc.co/about/?utm_source=x'), env)
+    expect(www.status).toBe(301)
+    expect(www.headers.get('location')).toBe('https://mdmc.co/about/?utm_source=x')
+  })
+
+  it('bounces /jp on co.jp', async () => {
+    const res = await handleRequest(req('https://mdmc.co.jp/jp/about/'), { ASSETS: fakeAssets(FILES) })
+    expect(res.status).toBe(301)
+    expect(res.headers.get('location')).toBe('https://mdmc.co.jp/about/')
+  })
+
+  it('sets the preview override cookie and strips ?site=', async () => {
+    const res = await handleRequest(req('https://mdmc-site.x.workers.dev/about/?site=jp&a=1'), { ASSETS: fakeAssets(FILES) })
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toBe('https://mdmc-site.x.workers.dev/about/?a=1')
+    expect(res.headers.get('set-cookie')).toBe('mdmc_site=jp; Path=/; SameSite=Lax')
+  })
+
+  it('serves the overridden site on preview', async () => {
+    const env = { ASSETS: fakeAssets(FILES) }
+    const res = await handleRequest(req('https://mdmc-site.x.workers.dev/about/', { headers: { cookie: 'mdmc_site=jp' } }), env)
+    expect(await res.text()).toBe('jp about')
+  })
+
+  it('ignores an invalid ?site= value without setting a cookie', async () => {
+    const res = await handleRequest(req('https://mdmc-site.x.workers.dev/?site=evil'), { ASSETS: fakeAssets(FILES) })
+    expect(res.status).toBe(302)
+    expect(res.headers.get('set-cookie')).toBeNull()
+  })
+
+  it('does not honour ?site= on production', async () => {
+    const env = { ASSETS: fakeAssets(FILES) }
+    const res = await handleRequest(req('https://mdmc.co/about/?site=jp', { headers: { cookie: 'mdmc_site=jp' } }), env)
+    expect(res.status).toBe(200)
+    expect(await res.text()).toBe('global about')
+  })
+})

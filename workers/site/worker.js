@@ -58,3 +58,67 @@ function mapJp(pathname) {
 export function mapPath(site, pathname) {
   return site === 'jp' ? mapJp(pathname) : mapGlobal(pathname)
 }
+
+export const WWW_REDIRECTS = { 'www.mdmc.co': 'mdmc.co' }
+
+// co.jp's robots.txt, verbatim from mdmc-ja-proxy: no Sitemap line, because
+// dist/robots.txt names mdmc.co's sitemap.
+const JP_ROBOTS = 'User-agent: *\nAllow: /\n'
+
+function assetRequest(request, path, init) {
+  const url = new URL(request.url)
+  url.pathname = path
+  url.search = ''
+  return init ? new Request(url, init) : new Request(url, request)
+}
+
+// A plain GET: a visitor revalidating a missing URL must get the 404 page's
+// body, never a body-less 304 re-labelled 404.
+async function notFound(request, env) {
+  const page = await env.ASSETS.fetch(assetRequest(request, '/404.html', { method: 'GET' }))
+  return new Response(request.method === 'HEAD' ? null : page.body, {
+    status: 404,
+    headers: { 'content-type': page.headers.get('content-type') ?? 'text/html' },
+  })
+}
+
+async function serveFile(request, env, path) {
+  const res = await env.ASSETS.fetch(assetRequest(request, path))
+  return res.status === 404 ? notFound(request, env) : res
+}
+
+export async function handleRequest(request, env) {
+  const url = new URL(request.url)
+
+  const apex = WWW_REDIRECTS[url.hostname]
+  if (apex) return Response.redirect(`https://${apex}${url.pathname}${url.search}`, 301)
+
+  const preview = isPreviewHost(url.hostname)
+  if (preview && url.searchParams.has('site')) {
+    const requested = url.searchParams.get('site')
+    url.searchParams.delete('site')
+    const headers = new Headers({ location: url.toString() })
+    if (SITE_IDS.has(requested)) headers.set('set-cookie', `${PREVIEW_COOKIE}=${requested}; Path=/; SameSite=Lax`)
+    return new Response(null, { status: 302, headers })
+  }
+
+  const site = resolveSite(url.hostname, preview ? request.headers.get('cookie') : null)
+  const mapped = mapPath(site, url.pathname)
+
+  switch (mapped.kind) {
+    case 'robots':
+      return new Response(JP_ROBOTS, { headers: { 'content-type': 'text/plain; charset=utf-8' } })
+    case 'none':
+      return new Response('Not found', { status: 404 })
+    case 'redirect':
+      return Response.redirect(`${url.origin}${mapped.to}${url.search}`, 301)
+    case 'asset':
+      return serveFile(request, env, mapped.to)
+    default:
+      return serveFile(request, env, mapped.to + 'index.html')
+  }
+}
+
+export default {
+  fetch: (request, env) => handleRequest(request, env),
+}
