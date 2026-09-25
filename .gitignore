@@ -12,3 +12,6 @@ design-screenshots/
 
 # Local responsive-audit measurements (scripts/audit-responsive.mjs)
 .audit/
+
+# wrangler dev local state
+.wrangler/
