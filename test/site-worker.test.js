@@ -247,3 +247,32 @@ describe('handleRequest', () => {
     expect(await res.text()).toBe('global about')
   })
 })
+
+// GitHub Pages sent max-age=600 on everything; the assets binding sends
+// max-age=0, which made browsers revalidate every file on every view.
+describe('cache headers', () => {
+  const env = () => ({ ASSETS: fakeAssets({ ...FILES, '/_astro/index.abc.css': 'css', '/fonts/a.woff2': 'font' }) })
+
+  it('marks hashed /_astro files immutable for a year', async () => {
+    const res = await handleRequest(req('https://mdmc.co/_astro/index.abc.css'), env())
+    expect(res.headers.get('cache-control')).toBe('public, max-age=31536000, immutable')
+  })
+
+  it('gives pages and unhashed files the 10 minutes GitHub Pages gave them', async () => {
+    for (const url of ['https://mdmc.co/about/', 'https://mdmc.co.jp/about/', 'https://mdmc.co/fonts/a.woff2']) {
+      const res = await handleRequest(req(url), env())
+      expect(res.headers.get('cache-control')).toBe('public, max-age=600')
+    }
+  })
+
+  it('refreshes freshness on a revalidation 304', async () => {
+    const res = await handleRequest(req('https://mdmc.co/about/', { headers: { 'if-none-match': '"v1"' } }), env())
+    expect(res.status).toBe(304)
+    expect(res.headers.get('cache-control')).toBe('public, max-age=600')
+  })
+
+  it('keeps the ETag', async () => {
+    const res = await handleRequest(req('https://mdmc.co/about/'), env())
+    expect(res.headers.get('etag')).toBe('"v1"')
+  })
+})

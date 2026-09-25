@@ -82,9 +82,20 @@ async function notFound(request, env) {
   })
 }
 
+// The assets binding sends max-age=0; GitHub Pages sent max-age=600, so
+// browsers re-checked every file on every view after the move. Astro's
+// /_astro/ files are content-hashed, so they can be cached for good.
+function cacheControlFor(path) {
+  return path.startsWith('/_astro/') ? 'public, max-age=31536000, immutable' : 'public, max-age=600'
+}
+
 async function serveFile(request, env, path) {
   const res = await env.ASSETS.fetch(assetRequest(request, path))
-  return res.status === 404 ? notFound(request, env) : res
+  if (res.status === 404) return notFound(request, env)
+  if (res.status !== 200 && res.status !== 304) return res
+  const out = new Response(res.body, res)
+  out.headers.set('cache-control', cacheControlFor(path))
+  return out
 }
 
 export async function handleRequest(request, env) {
