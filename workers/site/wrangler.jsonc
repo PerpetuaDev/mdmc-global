@@ -7,7 +7,9 @@
   "compatibility_date": "2026-08-20",
   "workers_dev": true,
   "routes": [
-    { "pattern": "mdmc.co.jp/*", "zone_name": "mdmc.co.jp" }
+    { "pattern": "mdmc.co.jp/*", "zone_name": "mdmc.co.jp" },
+    { "pattern": "mdmc.co/*", "zone_name": "mdmc.co" },
+    { "pattern": "www.mdmc.co/*", "zone_name": "mdmc.co" }
   ],
   "assets": {
     "directory": "../../dist",

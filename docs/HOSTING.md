@@ -34,7 +34,7 @@ status, redirect, title and canonical to `.audit/url-baseline.json`.
 | Domain | Served by | Since |
 |---|---|---|
 | mdmc.co.jp | mdmc-site | 2026-09-25 |
-| mdmc.co, www.mdmc.co | GitHub Pages | 2026-07 |
+| mdmc.co, www.mdmc.co | mdmc-site | 2026-09-25 |
 
 ## Credentials
 
@@ -62,3 +62,14 @@ routes in its config with new ids, so always look the id up first.
 
 (Then drop the mdmc.co.jp route from workers/site/wrangler.jsonc, or the next
 deploy tries to take it back.)
+
+**mdmc.co / www.mdmc.co** — delete the two routes; DNS still points at GitHub
+Pages, which keeps deploying until Phase 5. First remove the two mdmc.co
+routes from workers/site/wrangler.jsonc and push (or the next deploy
+re-creates them), then:
+
+    T=$(cat ~/.cloudflare-token-mdmc-workers); Z=efaa22332cc50dd8f1dffa127e8b3f39
+    for R in $(curl -s -H "Authorization: Bearer $T" https://api.cloudflare.com/client/v4/zones/$Z/workers/routes \
+        | jq -r '.result[] | select(.script=="mdmc-site") | .id'); do
+      curl -s -X DELETE -H "Authorization: Bearer $T" https://api.cloudflare.com/client/v4/zones/$Z/workers/routes/$R
+    done
