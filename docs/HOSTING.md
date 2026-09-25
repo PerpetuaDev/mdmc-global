@@ -48,7 +48,31 @@ Write** once the move is finished (multi-site Phase 5).
 
 ## Rollback
 
-**mdmc.co.jp** — re-point its route back to the old Worker (instant):
+**Order matters: roll back mdmc.co FIRST.** `mdmc-ja-proxy` fetches its pages
+from `https://mdmc.co`, so while mdmc.co is on mdmc-site, a co.jp-only rollback
+still serves whatever mdmc-site serves. If mdmc-site itself is broken, roll
+back both, mdmc.co first. A co.jp-only rollback helps only with a fault in the
+jp mapping.
+
+Each rollback is two steps: **the API call first** (takes effect at once), then
+**the config commit** (so the next deploy doesn't re-create the route). Route
+ids are NOT stable — every `wrangler deploy` of mdmc-site re-creates its routes
+with new ids — so the commands look them up.
+
+**1. mdmc.co / www.mdmc.co** — delete mdmc-site's routes on the zone; DNS still
+points at GitHub Pages, which keeps deploying until Phase 5:
+
+    T=$(cat ~/.cloudflare-token-mdmc-workers); Z=efaa22332cc50dd8f1dffa127e8b3f39
+    for R in $(curl -s -H "Authorization: Bearer $T" https://api.cloudflare.com/client/v4/zones/$Z/workers/routes \
+        | jq -r '.result[] | select(.script=="mdmc-site") | .id'); do
+      curl -s -X DELETE -H "Authorization: Bearer $T" https://api.cloudflare.com/client/v4/zones/$Z/workers/routes/$R
+    done
+
+Then remove the `mdmc.co/*` and `www.mdmc.co/*` entries from
+`workers/site/wrangler.jsonc` and push. If a deploy was already running, re-run
+the list call afterwards and delete anything it re-created.
+
+**2. mdmc.co.jp** — re-point its route back to the old Worker:
 
     T=$(cat ~/.cloudflare-token-mdmc-workers); Z=6aa496716cccb4f18268026bc040067c
     R=$(curl -s -H "Authorization: Bearer $T" https://api.cloudflare.com/client/v4/zones/$Z/workers/routes \
@@ -57,19 +81,15 @@ Write** once the move is finished (multi-site Phase 5).
       https://api.cloudflare.com/client/v4/zones/$Z/workers/routes/$R \
       -d '{"pattern":"mdmc.co.jp/*","script":"mdmc-ja-proxy"}'
 
-Route ids are NOT stable: every `wrangler deploy` of mdmc-site re-creates the
-routes in its config with new ids, so always look the id up first.
+Then, in one commit: remove the `mdmc.co.jp/*` entry from
+`workers/site/wrangler.jsonc`, and restore it in `workers/ja-proxy/wrangler.jsonc`
+(`"routes": [{ "pattern": "mdmc.co.jp/*", "zone_name": "mdmc.co.jp" }]`) — the
+retired config says `[]`, and a `wrangler deploy` of ja-proxy from it would
+strip the route it just got back.
 
-(Then drop the mdmc.co.jp route from workers/site/wrangler.jsonc, or the next
-deploy tries to take it back.)
+## When a deploy fails
 
-**mdmc.co / www.mdmc.co** — delete the two routes; DNS still points at GitHub
-Pages, which keeps deploying until Phase 5. First remove the two mdmc.co
-routes from workers/site/wrangler.jsonc and push (or the next deploy
-re-creates them), then:
-
-    T=$(cat ~/.cloudflare-token-mdmc-workers); Z=efaa22332cc50dd8f1dffa127e8b3f39
-    for R in $(curl -s -H "Authorization: Bearer $T" https://api.cloudflare.com/client/v4/zones/$Z/workers/routes \
-        | jq -r '.result[] | select(.script=="mdmc-site") | .id'); do
-      curl -s -X DELETE -H "Authorization: Bearer $T" https://api.cloudflare.com/client/v4/zones/$Z/workers/routes/$R
-    done
+A red **`deploy-worker`** job means **production did not update** (the site
+is still the previous build). A red **`deploy`** (Pages) job only means the
+rollback target is stale. Re-run failed jobs from the Actions run; both
+re-use the same build artifact.
