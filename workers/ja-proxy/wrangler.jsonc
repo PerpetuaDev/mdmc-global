@@ -2,7 +2,7 @@
   "name": "mdmc-ja-proxy",
   "main": "worker.js",
   "compatibility_date": "2026-08-20",
-  "routes": [
-    { "pattern": "mdmc.co.jp/*", "zone_name": "mdmc.co.jp" }
-  ]
+  // RETIRED 2026-09-25: mdmc.co.jp is served by mdmc-site (docs/HOSTING.md).
+  // Kept deployed, route-less, as the rollback target until multi-site Phase 5.
+  "routes": []
 }

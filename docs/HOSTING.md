@@ -33,7 +33,7 @@ status, redirect, title and canonical to `.audit/url-baseline.json`.
 
 | Domain | Served by | Since |
 |---|---|---|
-| mdmc.co.jp | mdmc-ja-proxy → GitHub Pages | 2026-08-21 |
+| mdmc.co.jp | mdmc-site | 2026-09-25 |
 | mdmc.co, www.mdmc.co | GitHub Pages | 2026-07 |
 
 ## Credentials
@@ -48,4 +48,12 @@ Write** once the move is finished (multi-site Phase 5).
 
 ## Rollback
 
-Filled in per domain at cutover (plan Tasks 6–7).
+**mdmc.co.jp** — re-point its route back to the old Worker (instant):
+
+    T=$(cat ~/.cloudflare-token-mdmc-workers); Z=6aa496716cccb4f18268026bc040067c
+    curl -s -X PUT -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
+      https://api.cloudflare.com/client/v4/zones/$Z/workers/routes/08b59fba86324065a0dafeb1a09cdec8 \
+      -d '{"pattern":"mdmc.co.jp/*","script":"mdmc-ja-proxy"}'
+
+(Then drop the mdmc.co.jp route from workers/site/wrangler.jsonc, or the next
+deploy tries to take it back.)
