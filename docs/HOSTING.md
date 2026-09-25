@@ -51,9 +51,14 @@ Write** once the move is finished (multi-site Phase 5).
 **mdmc.co.jp** — re-point its route back to the old Worker (instant):
 
     T=$(cat ~/.cloudflare-token-mdmc-workers); Z=6aa496716cccb4f18268026bc040067c
+    R=$(curl -s -H "Authorization: Bearer $T" https://api.cloudflare.com/client/v4/zones/$Z/workers/routes \
+      | jq -r '.result[] | select(.pattern=="mdmc.co.jp/*") | .id')
     curl -s -X PUT -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
-      https://api.cloudflare.com/client/v4/zones/$Z/workers/routes/08b59fba86324065a0dafeb1a09cdec8 \
+      https://api.cloudflare.com/client/v4/zones/$Z/workers/routes/$R \
       -d '{"pattern":"mdmc.co.jp/*","script":"mdmc-ja-proxy"}'
+
+Route ids are NOT stable: every `wrangler deploy` of mdmc-site re-creates the
+routes in its config with new ids, so always look the id up first.
 
 (Then drop the mdmc.co.jp route from workers/site/wrangler.jsonc, or the next
 deploy tries to take it back.)
