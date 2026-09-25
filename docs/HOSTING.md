@@ -17,7 +17,7 @@ Multi-site spec: `docs/superpowers/specs/2026-09-25-multi-site-infrastructure-de
 
 ## Preview
 
-`https://mdmc-site.<subdomain>.workers.dev/` serves global. Append `?site=jp`
+`https://mdmc-site.perpetua-software.workers.dev/` serves global. Append `?site=jp`
 once to switch the preview to co.jp (sticky cookie); `?site=global` switches
 back. Never submit the forms on preview — they send real mail, and Turnstile
 rejects the host.
@@ -35,6 +35,16 @@ status, redirect, title and canonical to `.audit/url-baseline.json`.
 |---|---|---|
 | mdmc.co.jp | mdmc-ja-proxy → GitHub Pages | 2026-08-21 |
 | mdmc.co, www.mdmc.co | GitHub Pages | 2026-07 |
+
+## Credentials
+
+CI deploys with the repo secrets `CLOUDFLARE_API_TOKEN` (token
+`mdmc-site-deploy`, account Finlayson Holdings New Zealand, no expiry) and
+`CLOUDFLARE_ACCOUNT_ID`; a local copy for route changes lives in
+`~/.cloudflare-token-mdmc-workers`. It holds **Workers Admin** because the
+first deploy had to create the Worker and the cutovers move routes between
+two Workers — narrow it to **Editor on `mdmc-site` + Zone › Workers Routes ›
+Write** once the move is finished (multi-site Phase 5).
 
 ## Rollback
 
