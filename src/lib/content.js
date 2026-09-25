@@ -132,10 +132,20 @@ function normalizeProject(item) {
   }
 }
 
-const ARTICLE_KIND_LABELS = { news: 'News', article: 'Article', case_study: 'Case Study' }
+// The News page is News & Case Studies only (user decision 2026-09-25). The
+// `article` kind (essays) was retired: it may still exist in Strapi's enum,
+// but any entry carrying it is dropped by listedArticlesOf and never renders.
+const ARTICLE_KIND_LABELS = { news: 'News', case_study: 'Case Study' }
 // PLACEHOLDER JA (machine-drafted 2026-08-20, pending native review) — same
 // status as i18n.js's PLACEHOLDER JA block.
-const ARTICLE_KIND_LABELS_JA = { news: 'ニュース', article: '記事', case_study: 'ケーススタディ' }
+const ARTICLE_KIND_LABELS_JA = { news: 'ニュース', case_study: 'ケーススタディ' }
+
+// Keeps only the listed kinds. Also catches a ja-only orphan left behind when
+// an entry's EN locale is deleted in Strapi admin but its ja locale is not —
+// mergeLocales passes ja-only items through, so it would otherwise render.
+function listedArticlesOf(articles) {
+  return articles.filter((a) => Object.hasOwn(ARTICLE_KIND_LABELS, a.kind))
+}
 
 // 2026年8月16日 — parsed straight off the YYYY-MM-DD string, so it can't
 // drift by timezone at all (mirrors dateLabelOf's UTC pinning).
@@ -371,7 +381,7 @@ async function _load() {
   const mergedArticles = mergeLocales(rawArticlesEn, rawArticlesJa, LOCALIZED_ARTICLE_FIELDS)
 
   const projects = assignSlugs(mergedProjects.map(normalizeProject))
-  const articles = assignSlugs(mergedArticles.map((item) => normalizeArticle(item, projects)))
+  const articles = assignSlugs(listedArticlesOf(mergedArticles.map((item) => normalizeArticle(item, projects))))
 
   const about = normalizeAbout(aboutRaw ?? snapshot.about ?? null)
   const aboutJapan = normalizeAboutJapan(aboutJapanRaw ?? snapshot.about_japan ?? null)
@@ -434,4 +444,5 @@ export {
   normalizeJob,
   ARTICLE_KIND_LABELS,
   ARTICLE_KIND_LABELS_JA,
+  listedArticlesOf,
 }

@@ -7,6 +7,8 @@ import {
   normalizeCareer,
   normalizeJob,
   ARTICLE_KIND_LABELS,
+  ARTICLE_KIND_LABELS_JA,
+  listedArticlesOf,
   heroSlidesOf,
   thumbSlidesOf,
 } from '../src/lib/content.js'
@@ -201,12 +203,24 @@ describe('ja label fields (PLACEHOLDER JA, pending native review)', () => {
 })
 
 describe('ARTICLE_KIND_LABELS', () => {
-  it('is importable and provides the three fixed article kinds', () => {
+  it('is importable and provides the two listed kinds (News & Case Studies only)', () => {
     expect(ARTICLE_KIND_LABELS).toEqual({
       news: 'News',
-      article: 'Article',
       case_study: 'Case Study',
     })
+    expect(Object.keys(ARTICLE_KIND_LABELS_JA)).toEqual(Object.keys(ARTICLE_KIND_LABELS))
+  })
+})
+
+describe('listedArticlesOf', () => {
+  it('drops kind=article entries, including a ja-only orphan, and keeps news + case_study', () => {
+    const items = [
+      { documentId: 'n1', kind: 'news' },
+      { documentId: 'c1', kind: 'case_study' },
+      { documentId: 'a1', kind: 'article' },
+      { documentId: 'a2', kind: 'article', title: '車輪のないカート' },
+    ].map((i) => normalizeArticle(i, []))
+    expect(listedArticlesOf(items).map((a) => a.documentId)).toEqual(['n1', 'c1'])
   })
 })
 
